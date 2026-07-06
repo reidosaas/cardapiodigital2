@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: cardapio-postgres
+    restart: unless-stopped
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: cardapio
+      POSTGRES_PASSWORD: cardapio123
+      POSTGRES_DB: cardapio
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - cardapio-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: cardapio-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    networks:
+      - cardapio-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ../docker/node/Dockerfile
+    container_name: cardapio-backend
+    restart: unless-stopped
+    ports:
+      - '3001:3001'
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://cardapio:cardapio123@postgres:5432/cardapio?schema=public
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - cardapio-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../docker/node/Dockerfile
+    container_name: cardapio-frontend
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    depends_on:
+      - backend
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:3001
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - cardapio-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: cardapio-nginx
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    depends_on:
+      - frontend
+      - backend
+    volumes:
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./docker/nginx/ssl:/etc/nginx/ssl
+    networks:
+      - cardapio-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  cardapio-network:
+    driver: bridge

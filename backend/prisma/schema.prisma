@@ -1,0 +1,691 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  VENDEDOR
+  CLIENTE
+}
+
+enum PedidoStatus {
+  PENDENTE
+  CONFIRMADO
+  PREPARANDO
+  SAIU_PARA_ENTREGA
+  ENTREGUE
+  CANCELADO
+}
+
+enum PagamentoStatus {
+  PENDENTE
+  APROVADO
+  RECUSADO
+  ESTORNADO
+}
+
+enum PagamentoMetodo {
+  PIX
+  CARTAO_CREDITO
+  CARTAO_DEBITO
+  DINHEIRO
+  BOLETO
+}
+
+enum AgendamentoStatus {
+  PENDENTE
+  CONFIRMADO
+  CANCELADO
+  REALIZADO
+}
+
+enum AssinaturaStatus {
+  ATIVA
+  CANCELADA
+  EXPIRADA
+  TENTATIVA_FALHOU
+}
+
+enum NotificacaoTipo {
+  PEDIDO
+  PAGAMENTO
+  AGENDAMENTO
+  MENSAGEM
+  SISTEMA
+  PROMOCAO
+}
+
+enum EntregaTipo {
+  RETIRADA
+  ENTREGA
+  LOCAL
+}
+
+// ========== USER / TENANT ==========
+
+model User {
+  id        String   @id @default(uuid()) @db.Uuid
+  nome      String
+  email     String   @unique
+  telefone  String?
+  senha     String
+  role      UserRole @default(VENDEDOR)
+  ativo     Boolean  @default(true)
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacoes
+  vendedor     Vendedor?
+  cliente      Cliente?
+  notificacoes Notificacao[]
+  logs         Log[]
+  sessoes      Sessao[]
+  ApiKey       ApiKey[]
+
+  @@map("users")
+}
+
+model Sessao {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @db.Uuid
+  refreshToken String
+  deviceInfo   String?
+  ip           String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessoes")
+}
+
+// ========== VENDEDOR ==========
+
+model Vendedor {
+  id                   String      @id @default(uuid()) @db.Uuid
+  userId               String      @unique @db.Uuid
+  nomeLoja             String
+  slug                 String      @unique
+  descricao            String?
+  logoUrl              String?
+  bannerUrl            String?
+  corPrimaria          String      @default("#6C63FF")
+  corSecundaria        String      @default("#F5F5F5")
+  dominio              String?
+  subdominio           String?
+  whatsappNumero       String?
+  whatsappConectado    Boolean     @default(false)
+  whatsappSessionId    String?
+  endereco             String?
+  cidade               String?
+  estado               String?
+  cep                  String?
+  latitude             Float?
+  longitude            Float?
+  entregaTipo          EntregaTipo @default(ENTREGA)
+  taxaEntrega          Decimal     @default(0) @db.Decimal(10, 2)
+  entregaGratisValor   Decimal?    @db.Decimal(10, 2)
+  horarioFuncionamento Json?
+  diasFuncionamento    Json?
+  tempoPreparoMin      Int?
+  ativo                Boolean     @default(true)
+  modoEscuro           Boolean     @default(false)
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  user                 User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  produtos             Produto[]
+  categorias           Categoria[]
+  banners              Banner[]
+  pedidos              Pedido[]
+  clientes             Cliente[]
+  cupons               Cupom[]
+  agendamentos         Agendamento[]
+  assinatura           Assinatura?
+  conversas            Conversa[]
+  mensagensAutomaticas MensagemAutomatica[]
+  leads                Lead[]
+  relatorios           Relatorio[]
+
+  @@map("vendedores")
+}
+
+// ========== ASSINATURA ==========
+
+model Assinatura {
+  id          String           @id @default(uuid()) @db.Uuid
+  vendedorId  String           @unique @db.Uuid
+  planoId     String?          @db.Uuid
+  plano       String           @default("basico")
+  status      AssinaturaStatus @default(ATIVA)
+  preco       Decimal          @db.Decimal(10, 2)
+  dataInicio  DateTime         @default(now())
+  dataFim     DateTime?
+  trialEndsAt DateTime?
+  canceladoEm DateTime?
+  stripeId    String?
+  pagamentoId String?          @db.Uuid
+
+  vendedor Vendedor @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
+  planos   Plano?   @relation(fields: [planoId], references: [id])
+
+  @@map("assinaturas")
+}
+
+// ========== PRODUTO ==========
+
+model Produto {
+  id                      String   @id @default(uuid()) @db.Uuid
+  vendedorId              String   @db.Uuid
+  categoriaId             String?  @db.Uuid
+  categoriaGlobalId       String?  @db.Uuid
+  nome                    String
+  descricao               String?
+  preco                   Decimal  @db.Decimal(10, 2)
+  precoPromocional        Decimal? @db.Decimal(10, 2)
+  imagens                 Json?
+  videoUrl                String?
+  ativo                   Boolean  @default(true)
+  destaque                Boolean  @default(false)
+  estoque                 Int      @default(0)
+  ilimitado               Boolean  @default(false)
+  variacoes               Json?
+  informacoesNutricionais Json?
+  tempoPreparoMin         Int?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  vendedor    Vendedor         @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
+  categoria   Categoria?       @relation(fields: [categoriaId], references: [id])
+  categoriaGlobal CategoriaGlobal? @relation(fields: [categoriaGlobalId], references: [id])
+  itensPedido ItemPedido[]
+  avaliacoes  Avaliacao[]
+  Favorito    Favorito[]
+
+  @@index([vendedorId])
+  @@index([categoriaId])
+  @@index([ativo, destaque])
+  @@map("produtos")
+}
+
+// ========== CATEGORIA GLOBAL (Admin) ==========
+
+model CategoriaGlobal {
+  id        String   @id @default(uuid()) @db.Uuid
+  nome      String
+  descricao String?
+  icone     String?
+  ordem     Int      @default(0)
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  produtos Produto[]
+
+  @@map("categorias_globais")
+}
+
+// ========== CATEGORIA ==========
+
+model Categoria {
+  id         String   @id @default(uuid()) @db.Uuid
+  vendedorId String   @db.Uuid
+  nome       String
+  descricao  String?
+  ordem      Int      @default(0)
+  icone      String?
+  ativo      Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  vendedor Vendedor  @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
+  produtos Produto[]
+
+  @@index([vendedorId])
+  @@map("categorias")
+}
+
+// ========== BANNER ==========
+
+model Banner {
+  id         String   @id @default(uuid()) @db.Uuid
+  vendedorId String   @db.Uuid
+  titulo     String?
+  descricao  String?
+  imagemUrl  String
+  linkUrl    String?
+  ordem      Int      @default(0)
+  ativo      Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  vendedor Vendedor @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
+
+  @@index([vendedorId])
+  @@map("banners")
+}
+
+// ========== LEAD ==========
+
+model Lead {
+  id              String    @id @default(uuid()) @db.Uuid
+  vendedorId      String    @db.Uuid
+  nome            String
+  telefone        String
+  origem          String    @default("whatsapp")
+  mensagemInicial String?
+  ultimaMensagem  String?
+  converted       Boolean   @default(false)
+  convertedAt     DateTime?
+  conversaId      String?   @db.Uuid
+  metadata        Json?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  vendedor Vendedor @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
+
+  @@index([vendedorId])
+  @@index([telefone])
+  @@map("leads")
+}
+
+// ========== CLIENTE ==========
+
+model Cliente {
+  id              String    @id @default(uuid()) @db.Uuid
+  userId          String?   @unique @db.Uuid
+  vendedorId      String    @db.Uuid
+  nome            String
+  email           String?
+  telefone        String?
+  endereco        String?
+  cidade          String?
+  estado          String?
+  cep             String?
+  observacoes     String?
+  totalCompras    Int       @default(0)
+  valorTotalGasto Decimal   @default(0) @db.Decimal(10, 2)
+  ultimaCompra    DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user        User?             @relation(fields: [userId], references: [id])
+  vendedor    Vendedor          @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
+  pedidos     Pedido[]
+  avaliacoes  Avaliacao[]
+  favoritos   Favorito[]
+  enderecos   EnderecoCliente[]
+  Agendamento Agendamento[]
+  Conversa    Conversa[]
+
+  @@index([vendedorId])
+  @@index([telefone])
+  @@map("clientes")
+}
+
+model EnderecoCliente {
+  id          String   @id @default(uuid()) @db.Uuid
+  clienteId   String   @db.Uuid
+  rotulo      String   @default("Casa")
+  logradouro  String
+  numero      String
+  complemento String?
+  bairro      String
+  cidade      String
+  estado      String
+  cep         String
+  principal   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  cliente Cliente @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@map("enderecos_cliente")
+}
+
+// ========== PEDIDO ==========
+
+model Pedido {
+  id              String       @id @default(uuid()) @db.Uuid
+  vendedorId      String       @db.Uuid
+  clienteId       String?      @db.Uuid
+  clienteNome     String?
+  clienteTelefone String?
+  clienteEndereco String?
+  status          PedidoStatus @default(PENDENTE)
+  items           Json?
+  total           Decimal      @db.Decimal(10, 2)
+  taxaEntrega     Decimal      @default(0) @db.Decimal(10, 2)
+  desconto        Decimal      @default(0) @db.Decimal(10, 2)
+  cupomId         String?      @db.Uuid
+  observacao      String?
+  tipoEntrega     EntregaTipo  @default(ENTREGA)
+  enderecoEntrega String?
+  origem          String       @default("catalogo")
+  conversationId  String?      @db.Uuid
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  vendedor    Vendedor     @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
+  cliente     Cliente?     @relation(fields: [clienteId], references: [id])
+  itens       ItemPedido[]
+  pagamento   Pagamento?
+  cupom       Cupom?       @relation(fields: [cupomId], references: [id])
+  conversa    Conversa?    @relation(fields: [conversationId], references: [id])
+  agendamento Agendamento?
+  entregas    Entrega[]
+
+  @@index([vendedorId])
+  @@index([clienteId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("pedidos")
+}
+
+model ItemPedido {
+  id            String  @id @default(uuid()) @db.Uuid
+  pedidoId      String  @db.Uuid
+  produtoId     String? @db.Uuid
+  nome          String
+  quantidade    Int     @default(1)
+  precoUnitario Decimal @db.Decimal(10, 2)
+  total         Decimal @db.Decimal(10, 2)
+  observacao    String?
+  variacao      String?
+
+  pedido  Pedido   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  produto Produto? @relation(fields: [produtoId], references: [id])
+
+  @@map("itens_pedido")
+}
+
+// ========== PAGAMENTO ==========
+
+model Pagamento {
+  id              String          @id @default(uuid()) @db.Uuid
+  pedidoId        String          @unique @db.Uuid
+  metodo          PagamentoMetodo
+  status          PagamentoStatus @default(PENDENTE)
+  valor           Decimal         @db.Decimal(10, 2)
+  taxa            Decimal         @default(0) @db.Decimal(10, 2)
+  linkPagamento   String?
+  qrCodePix       String?
+  codigoPix       String?
+  transactionId   String?
+  gatewayResponse Json?
+  pagoEm          DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  pedido Pedido @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+
+  @@map("pagamentos")
+}
+
+// ========== CUPOM ==========
+
+model Cupom {
+  id          String    @id @default(uuid()) @db.Uuid
+  vendedorId  String    @db.Uuid
+  codigo      String
+  descricao   String?
+  tipo        String    @default("porcentagem")
+  valor       Decimal   @db.Decimal(10, 2)
+  valorMinimo Decimal?  @db.Decimal(10, 2)
+  usoMaximo   Int       @default(100)
+  usosAtuais  Int       @default(0)
+  expiraEm    DateTime?
+  ativo       Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+
+  vendedor Vendedor @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
+  pedidos  Pedido[]
+
+  @@unique([vendedorId, codigo])
+  @@map("cupons")
+}
+
+// ========== ENTREGA ==========
+
+model Entrega {
+  id              String    @id @default(uuid()) @db.Uuid
+  pedidoId        String    @db.Uuid
+  status          String    @default("PENDENTE")
+  entregadorNome  String?
+  codigoRastreio  String?
+  endereco        String?
+  previsaoEntrega DateTime?
+  entregueEm      DateTime?
+  observacao      String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  pedido Pedido @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+
+  @@map("entregas")
+}
+
+// ========== AGENDAMENTO ==========
+
+model Agendamento {
+  id              String            @id @default(uuid()) @db.Uuid
+  vendedorId      String            @db.Uuid
+  pedidoId        String?           @unique @db.Uuid
+  clienteId       String?           @db.Uuid
+  clienteNome     String
+  clienteTelefone String?
+  data            DateTime
+  hora            String
+  tipo            String            @default("reserva")
+  status          AgendamentoStatus @default(PENDENTE)
+  observacao      String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  vendedor Vendedor @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
+  pedido   Pedido?  @relation(fields: [pedidoId], references: [id])
+  cliente  Cliente? @relation(fields: [clienteId], references: [id])
+
+  @@index([vendedorId])
+  @@index([data])
+  @@map("agendamentos")
+}
+
+// ========== WHATSAPP / CONVERSA ==========
+
+model Conversa {
+  id                  String   @id @default(uuid()) @db.Uuid
+  vendedorId          String   @db.Uuid
+  clienteId           String?  @db.Uuid
+  contatoNome         String
+  contatoTelefone     String
+  ultimaMensagem      String?
+  ultimaAtividade     DateTime @default(now())
+  naoLido             Int      @default(0)
+  status              String   @default("ativo")
+  origem              String   @default("whatsapp")
+  canal               String   @default("whatsapp")
+  isAtendimentoHumano Boolean  @default(false)
+  metadata            Json?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  vendedor  Vendedor   @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
+  cliente   Cliente?   @relation(fields: [clienteId], references: [id])
+  mensagens Mensagem[]
+  pedidos   Pedido[]
+
+  @@index([vendedorId])
+  @@index([contatoTelefone])
+  @@map("conversas")
+}
+
+model Mensagem {
+  id         String    @id @default(uuid()) @db.Uuid
+  conversaId String    @db.Uuid
+  remetente  String    @default("cliente")
+  conteudo   String?
+  tipo       String    @default("texto")
+  midiaUrl   String?
+  lida       Boolean   @default(false)
+  lidaEm     DateTime?
+  metadata   Json?
+  createdAt  DateTime  @default(now())
+
+  conversa Conversa @relation(fields: [conversaId], references: [id], onDelete: Cascade)
+
+  @@index([conversaId])
+  @@index([createdAt])
+  @@map("mensagens")
+}
+
+model MensagemAutomatica {
+  id            String   @id @default(uuid()) @db.Uuid
+  vendedorId    String   @db.Uuid
+  gatilho       String   @default("boas_vindas")
+  mensagem      String
+  tipo          String   @default("texto")
+  midiaUrl      String?
+  delaySegundos Int      @default(0)
+  ativo         Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  vendedor Vendedor @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
+
+  @@map("mensagens_automaticas")
+}
+
+// ========== AVALIACAO ==========
+
+model Avaliacao {
+  id         String   @id @default(uuid()) @db.Uuid
+  produtoId  String   @db.Uuid
+  clienteId  String   @db.Uuid
+  nota       Int
+  comentario String?
+  resposta   String?
+  ativo      Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  produto Produto @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+  cliente Cliente @relation(fields: [clienteId], references: [id])
+
+  @@map("avaliacoes")
+}
+
+// ========== FAVORITO ==========
+
+model Favorito {
+  id        String   @id @default(uuid()) @db.Uuid
+  clienteId String   @db.Uuid
+  produtoId String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  cliente Cliente @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  produto Produto @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, produtoId])
+  @@map("favoritos")
+}
+
+// ========== NOTIFICACAO ==========
+
+model Notificacao {
+  id        String          @id @default(uuid()) @db.Uuid
+  userId    String          @db.Uuid
+  tipo      NotificacaoTipo @default(SISTEMA)
+  titulo    String
+  mensagem  String
+  lida      Boolean         @default(false)
+  link      String?
+  metadata  Json?
+  createdAt DateTime        @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, lida])
+  @@map("notificacoes")
+}
+
+// ========== LOG ==========
+
+model Log {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  acao       String
+  entidade   String
+  entidadeId String?
+  dados      Json?
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("logs")
+}
+
+// ========== PLANO ==========
+
+model Plano {
+  id             String   @id @default(uuid()) @db.Uuid
+  nome           String
+  slug           String   @unique
+  descricao      String?
+  preco          Decimal  @db.Decimal(10, 2)
+  limiteProdutos Int      @default(10)
+  limitePedidos  Int      @default(50)
+  limiteUsuarios Int      @default(1)
+  features       Json?
+  ativo          Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  assinaturas Assinatura[]
+
+  @@map("planos")
+}
+
+// ========== API KEY ==========
+
+model ApiKey {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @db.Uuid
+  nome       String
+  key        String    @unique
+  provider   String    @default("custom")
+  permissoes Json?
+  ultimoUso  DateTime?
+  expiraEm   DateTime?
+  ativo      Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([key])
+  @@map("api_keys")
+}
+
+// ========== RELATORIO ==========
+
+model Relatorio {
+  id            String   @id @default(uuid()) @db.Uuid
+  vendedorId    String   @db.Uuid
+  tipo          String   @default("vendas")
+  periodoInicio DateTime
+  periodoFim    DateTime
+  dados         Json
+  createdAt     DateTime @default(now())
+
+  vendedor Vendedor @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
+
+  @@map("relatorios")
+}
