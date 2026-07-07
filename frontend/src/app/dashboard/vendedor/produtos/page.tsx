@@ -23,7 +23,7 @@ import { toast } from 'sonner';
 
 export default function ProdutosPage() {
   const { user } = useAuth();
-  const [produtos, setProdutos] = useState([]);
+  const [produtos, setProdutos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingProduto, setEditingProduto] = useState<any>(null);
