@@ -62,6 +62,14 @@ export class ConfigService {
     return this.get('FRONTEND_URL', 'http://localhost:3000');
   }
 
+  get uazapiUrl(): string {
+    return this.get('UAZAPI_URL', '');
+  }
+
+  get uazapiAdminToken(): string {
+    return this.get('UAZAPI_ADMIN_TOKEN', '');
+  }
+
   get whatsappApiUrl(): string {
     return this.get('WHATSAPP_API_URL', 'http://localhost:8080');
   }

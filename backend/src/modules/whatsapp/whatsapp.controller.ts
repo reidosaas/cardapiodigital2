@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, UseGuards, Req } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { WhatsAppService } from './whatsapp.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -8,24 +8,27 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 export class WhatsAppController {
   constructor(private whatsappService: WhatsAppService) {}
 
-  @Post('conectar/:vendedorId')
+  @Post('conectar')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  async conectar(@Param('vendedorId') vendedorId: string) {
+  async conectar(@Req() req: any) {
+    const vendedorId = req.user.vendedor?.id || req.user.vendedorId;
     return this.whatsappService.conectar(vendedorId);
   }
 
-  @Post('desconectar/:vendedorId')
+  @Post('desconectar')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  async desconectar(@Param('vendedorId') vendedorId: string) {
+  async desconectar(@Req() req: any) {
+    const vendedorId = req.user.vendedor?.id || req.user.vendedorId;
     return this.whatsappService.desconectar(vendedorId);
   }
 
-  @Get('status/:vendedorId')
+  @Get('status')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  async status(@Param('vendedorId') vendedorId: string) {
+  async status(@Req() req: any) {
+    const vendedorId = req.user.vendedor?.id || req.user.vendedorId;
     return this.whatsappService.status(vendedorId);
   }
 

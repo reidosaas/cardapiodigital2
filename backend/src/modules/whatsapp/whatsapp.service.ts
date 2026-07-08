@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import axios from 'axios';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '../../config/config.service';
 import { PedidosService } from '../pedidos/pedidos.service';
@@ -11,6 +10,7 @@ import { LeadsService } from '../leads/leads.service';
 @Injectable()
 export class WhatsAppService {
   private readonly logger = new Logger(WhatsAppService.name);
+  private uazapi: any = null;
 
   constructor(
     private prisma: PrismaService,
@@ -20,42 +20,57 @@ export class WhatsAppService {
     private chatGateway: ChatGateway,
     private aiAtendimentoService: AiAtendimentoService,
     private leadsService: LeadsService,
-  ) {}
+  ) {
+    const url = this.configService.uazapiUrl;
+    const token = this.configService.uazapiAdminToken;
+    if (url) {
+      const { UazapiClient } = require('@eziocm/uazapi');
+      this.uazapi = new UazapiClient({ baseUrl: url, adminToken: token });
+    }
+  }
+
+  private getClient() {
+    if (!this.uazapi) {
+      throw new Error('UAZAPI_URL nao configurada. Defina a URL da API Uazapi no .env');
+    }
+    return this.uazapi;
+  }
 
   async conectar(vendedorId: string) {
-    const apiUrl = this.configService.whatsappApiUrl;
-    const apiKey = this.configService.whatsappApiKey;
+    const client = this.getClient();
+    const instanceName = `vendedor_${vendedorId}`;
 
     try {
-      const response = await axios.post(`${apiUrl}/instance/create`, {
-        instanceName: `vendedor_${vendedorId}`,
-        token: apiKey,
-        qrcode: true,
-      });
-
-      const qrcode = response.data?.qrcode?.base64 || response.data?.qrcode;
+      const novaInstancia: any = await client.instance.create({ name: instanceName });
+      const instanceToken = novaInstancia?.token || instanceName;
 
       await this.prisma.vendedor.update({
         where: { id: vendedorId },
         data: {
-          whatsappSessionId: response.data?.instance?.instanceId || `vendedor_${vendedorId}`,
+          uazapiInstanceName: instanceName,
+          uazapiToken: instanceToken,
+          whatsappSessionId: instanceName,
         },
       });
 
-      return { qrcode, instanceId: response.data?.instance?.instanceId };
+      const connection = await client.instance.connect(instanceToken);
+      const conn: any = connection;
+      const qrcode = conn?.qrcode?.base64 || conn?.qrcode || conn;
+
+      return { qrcode, instanceName, instanceToken };
     } catch (error) {
       this.logger.error(`Erro ao conectar WhatsApp: ${error.message}`);
-      throw new Error('Erro ao conectar WhatsApp. Verifique se a Evolution API esta rodando.');
+      throw new Error('Erro ao conectar WhatsApp. Verifique a URL e token da Uazapi.');
     }
   }
 
   async desconectar(vendedorId: string) {
+    const client = this.getClient();
     const vendedor = await this.prisma.vendedor.findUnique({ where: { id: vendedorId } });
 
-    if (vendedor?.whatsappSessionId) {
+    if (vendedor?.uazapiInstanceName) {
       try {
-        const apiUrl = this.configService.whatsappApiUrl;
-        await axios.delete(`${apiUrl}/instance/delete/${vendedor.whatsappSessionId}`);
+        await client.instance.delete(vendedor.uazapiInstanceName);
       } catch (error) {
         this.logger.warn(`Erro ao deletar instancia: ${error.message}`);
       }
@@ -65,7 +80,8 @@ export class WhatsAppService {
       where: { id: vendedorId },
       data: {
         whatsappConectado: false,
-        whatsappSessionId: null,
+        uazapiInstanceName: null,
+        uazapiToken: null,
       },
     });
   }
@@ -73,17 +89,17 @@ export class WhatsAppService {
   async status(vendedorId: string) {
     const vendedor = await this.prisma.vendedor.findUnique({
       where: { id: vendedorId },
-      select: { whatsappConectado: true, whatsappSessionId: true },
+      select: { whatsappConectado: true, uazapiToken: true },
     });
 
-    if (!vendedor?.whatsappSessionId) {
+    if (!vendedor?.uazapiToken) {
       return { conectado: false };
     }
 
     try {
-      const apiUrl = this.configService.whatsappApiUrl;
-      const response = await axios.get(`${apiUrl}/instance/connectionState/${vendedor.whatsappSessionId}`);
-      const conectado = response.data?.instance?.state === 'open';
+      const client = this.getClient();
+      const info: any = await client.instance.getStatus(vendedor.uazapiToken);
+      const conectado = info?.state === 'connected' || info?.status === 'connected';
 
       if (conectado !== vendedor.whatsappConectado) {
         await this.prisma.vendedor.update({
@@ -92,24 +108,50 @@ export class WhatsAppService {
         });
       }
 
-      return { conectado, ...response.data };
+      return { conectado, ...info };
     } catch {
       return { conectado: vendedor.whatsappConectado };
     }
   }
 
   async enviarMensagem(telefone: string, mensagem: string) {
-    const apiUrl = this.configService.whatsappApiUrl;
+    const client = this.getClient();
+    const vendedor = await this.prisma.vendedor.findFirst({
+      where: { whatsappConectado: true },
+      select: { uazapiToken: true },
+    });
+
+    if (!vendedor?.uazapiToken) {
+      throw new Error('Nenhum vendedor com WhatsApp conectado');
+    }
 
     try {
-      const response = await axios.post(`${apiUrl}/message/sendText`, {
+      return await client.send.text(vendedor.uazapiToken, {
         number: telefone,
         text: mensagem,
       });
-      return response.data;
     } catch (error) {
       this.logger.error(`Erro ao enviar mensagem WhatsApp: ${error.message}`);
       throw error;
+    }
+  }
+
+  async configurarWebhook(vendedorId: string, webhookUrl: string) {
+    const client = this.getClient();
+    const vendedor = await this.prisma.vendedor.findUnique({
+      where: { id: vendedorId },
+      select: { uazapiToken: true },
+    });
+
+    if (!vendedor?.uazapiToken) return;
+
+    try {
+      await client.webhook.set(vendedor.uazapiToken, {
+        url: webhookUrl,
+        events: ['messages'],
+      });
+    } catch (error) {
+      this.logger.warn(`Erro ao configurar webhook Uazapi: ${error.message}`);
     }
   }
 
@@ -180,21 +222,27 @@ export class WhatsAppService {
   }
 
   async processarWebhook(payload: any) {
-    this.logger.log('Webhook WhatsApp recebido');
+    this.logger.log('Webhook Uazapi recebido');
 
-    const { instanceName, data } = payload;
-    const telefone = data?.key?.remoteJid?.replace('@s.whatsapp.net', '');
-    const mensagem = data?.message?.conversation || data?.message?.extendedTextMessage?.text || '';
-    const fromMe = data?.key?.fromMe;
+    const telefone = payload?.sender?.replace('@s.whatsapp.net', '') || payload?.from?.replace('@s.whatsapp.net', '');
+    const mensagem = payload?.message || payload?.text || payload?.body || '';
+    const pushName = payload?.pushName || payload?.senderName || payload?.notifyName || '';
+    const instanceToken = payload?.instanceToken || payload?.instance || '';
 
-    if (fromMe || !telefone) return { received: true };
+    if (!telefone) return { received: true };
 
-    const vendedor = await this.prisma.vendedor.findFirst({
-      where: { whatsappSessionId: instanceName },
+    let vendedor = await this.prisma.vendedor.findFirst({
+      where: { uazapiToken: instanceToken },
       select: { id: true, userId: true, nomeLoja: true },
     });
 
-    if (!vendedor) return { received: true };
+    if (!vendedor) {
+      vendedor = await this.prisma.vendedor.findFirst({
+        where: { uazapiInstanceName: instanceToken },
+        select: { id: true, userId: true, nomeLoja: true },
+      });
+      if (!vendedor) return { received: true };
+    }
 
     let conversa = await this.prisma.conversa.findFirst({
       where: { vendedorId: vendedor.id, contatoTelefone: telefone },
@@ -212,7 +260,7 @@ export class WhatsAppService {
         cliente = await this.prisma.cliente.create({
           data: {
             vendedorId: vendedor.id,
-            nome: data?.pushName || telefone,
+            nome: pushName || telefone,
             telefone,
           },
         });
@@ -222,7 +270,7 @@ export class WhatsAppService {
         data: {
           vendedorId: vendedor.id,
           clienteId: cliente.id,
-          contatoNome: data?.pushName || cliente.nome,
+          contatoNome: pushName || cliente.nome,
           contatoTelefone: telefone,
         },
         include: { cliente: true },
@@ -231,7 +279,7 @@ export class WhatsAppService {
 
     await this.leadsService.upsert({
       vendedorId: vendedor.id,
-      nome: data?.pushName || conversa.contatoNome,
+      nome: pushName || conversa.contatoNome,
       telefone,
       origem: 'whatsapp',
       mensagemInicial: isPrimeiraMensagem ? mensagem : undefined,
@@ -268,9 +316,7 @@ export class WhatsAppService {
 
     if (intencao === 'cardapio') {
       const resposta = await this.enviarRespostaAutomatica(vendedor.id, 'cardapio', conversa, vendedor.nomeLoja);
-      if (resposta) {
-        this.emitirEventosSocket(vendedor.id, conversa.id, 'new-message', resposta);
-      }
+      if (resposta) this.emitirEventosSocket(vendedor.id, conversa.id, 'new-message', resposta);
       return { received: true, conversaId: conversa.id, intencao };
     }
 

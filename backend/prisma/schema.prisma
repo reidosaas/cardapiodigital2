@@ -122,6 +122,8 @@ model Vendedor {
   whatsappNumero       String?
   whatsappConectado    Boolean     @default(false)
   whatsappSessionId    String?
+  uazapiInstanceName   String?
+  uazapiToken          String?
   endereco             String?
   cidade               String?
   estado               String?
