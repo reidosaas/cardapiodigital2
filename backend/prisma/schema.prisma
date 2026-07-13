@@ -136,7 +136,9 @@ model Vendedor {
   horarioFuncionamento Json?
   diasFuncionamento    Json?
   tempoPreparoMin      Int?
+  ultimoCodigoPedido   Int         @default(0)
   ativo                Boolean     @default(true)
+  lojaAberta           Boolean     @default(true)
   modoEscuro           Boolean     @default(false)
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt
@@ -153,7 +155,12 @@ model Vendedor {
   conversas            Conversa[]
   mensagensAutomaticas MensagemAutomatica[]
   leads                Lead[]
+  notificacoesLoja     NotificacaoLoja[]
+  despesas             Despesa[]
+  mesas                Mesa[]
   relatorios           Relatorio[]
+  garcons              Garcom[]
+  entregadores         Entregador[]
 
   @@map("vendedores")
 }
@@ -209,6 +216,7 @@ model Produto {
   itensPedido ItemPedido[]
   avaliacoes  Avaliacao[]
   Favorito    Favorito[]
+  cupons      Cupom[]          @relation("CupomProdutos")
 
   @@index([vendedorId])
   @@index([categoriaId])
@@ -296,6 +304,66 @@ model Lead {
   @@map("leads")
 }
 
+// ========== NOTIFICACAO LOJA (Avisar quando abrir) ==========
+
+model NotificacaoLoja {
+  id         String   @id @default(uuid()) @db.Uuid
+  vendedorId String   @db.Uuid
+  nome       String
+  telefone   String
+  notificado Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  vendedor Vendedor @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
+
+  @@index([vendedorId])
+  @@map("notificacoes_loja")
+}
+
+// ========== DESPESA ==========
+
+model Despesa {
+  id         String   @id @default(uuid()) @db.Uuid
+  vendedorId String   @db.Uuid
+  descricao  String
+  valor      Decimal  @db.Decimal(10, 2)
+  categoria  String?
+  data       DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  vendedor Vendedor @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
+
+  @@index([vendedorId])
+  @@index([vendedorId, data])
+  @@index([vendedorId, categoria])
+  @@map("despesas")
+}
+
+// ========== MESA ==========
+
+enum MesaStatus {
+  DISPONIVEL
+  EM_CONSUMO
+  PEDIU_CONTA
+}
+
+model Mesa {
+  id         String      @id @default(uuid()) @db.Uuid
+  vendedorId String      @db.Uuid
+  nome       String
+  status     MesaStatus  @default(DISPONIVEL)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  vendedor Vendedor @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
+  pedidos  Pedido[]
+
+  @@unique([vendedorId, nome])
+  @@index([vendedorId])
+  @@map("mesas")
+}
+
 // ========== CLIENTE ==========
 
 model Cliente {
@@ -353,6 +421,7 @@ model EnderecoCliente {
 
 model Pedido {
   id              String       @id @default(uuid()) @db.Uuid
+  codigo          Int?
   vendedorId      String       @db.Uuid
   clienteId       String?      @db.Uuid
   clienteNome     String?
@@ -374,6 +443,8 @@ model Pedido {
 
   vendedor    Vendedor     @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
   cliente     Cliente?     @relation(fields: [clienteId], references: [id])
+  mesaId      String?      @db.Uuid
+  mesa        Mesa?        @relation(fields: [mesaId], references: [id], onDelete: SetNull)
   itens       ItemPedido[]
   pagamento   Pagamento?
   cupom       Cupom?       @relation(fields: [cupomId], references: [id])
@@ -383,6 +454,7 @@ model Pedido {
 
   @@index([vendedorId])
   @@index([clienteId])
+  @@index([mesaId])
   @@index([status])
   @@index([createdAt])
   @@map("pedidos")
@@ -446,6 +518,7 @@ model Cupom {
 
   vendedor Vendedor @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
   pedidos  Pedido[]
+  produtos Produto[] @relation("CupomProdutos")
 
   @@unique([vendedorId, codigo])
   @@map("cupons")
@@ -454,19 +527,21 @@ model Cupom {
 // ========== ENTREGA ==========
 
 model Entrega {
-  id              String    @id @default(uuid()) @db.Uuid
-  pedidoId        String    @db.Uuid
-  status          String    @default("PENDENTE")
+  id              String       @id @default(uuid()) @db.Uuid
+  pedidoId        String       @db.Uuid
+  status          String       @default("PENDENTE")
+  entregadorId    String?      @db.Uuid
   entregadorNome  String?
   codigoRastreio  String?
   endereco        String?
   previsaoEntrega DateTime?
   entregueEm      DateTime?
   observacao      String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 
-  pedido Pedido @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  pedido    Pedido     @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  entregador Entregador? @relation(fields: [entregadorId], references: [id])
 
   @@map("entregas")
 }
@@ -690,4 +765,40 @@ model Relatorio {
   vendedor Vendedor @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
 
   @@map("relatorios")
+}
+
+// ========== GARCOM ==========
+
+model Garcom {
+  id         String   @id @default(uuid()) @db.Uuid
+  vendedorId String   @db.Uuid
+  nome       String
+  telefone   String?
+  diaria     Decimal  @default(0) @db.Decimal(10, 2)
+  ativo      Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  vendedor Vendedor @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
+
+  @@index([vendedorId])
+  @@map("garcons")
+}
+
+// ========== ENTREGADOR ==========
+
+model Entregador {
+  id              String     @id @default(uuid()) @db.Uuid
+  vendedorId      String     @db.Uuid
+  nome            String
+  telefone        String?
+  diaria          Decimal    @default(0) @db.Decimal(10, 2)
+  valorPorEntrega Decimal    @default(0) @db.Decimal(10, 2)
+  ativo           Boolean    @default(true)
+  createdAt       DateTime   @default(now())
+
+  vendedor  Vendedor  @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
+  entregas  Entrega[]
+
+  @@index([vendedorId])
+  @@map("entregadores")
 }

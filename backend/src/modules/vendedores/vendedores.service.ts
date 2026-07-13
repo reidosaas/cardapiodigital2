@@ -1,9 +1,13 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { WhatsAppService } from '../whatsapp/whatsapp.service';
 
 @Injectable()
 export class VendedoresService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private whatsappService: WhatsAppService,
+  ) {}
 
   async findAll() {
     return this.prisma.vendedor.findMany({
@@ -44,6 +48,48 @@ export class VendedoresService {
 
     if (!vendedor || !vendedor.ativo) throw new NotFoundException('Loja nao encontrada');
     return vendedor;
+  }
+
+  async toggleLoja(id: string) {
+    const vendedor = await this.prisma.vendedor.findUnique({ where: { id } });
+    if (!vendedor) throw new NotFoundException('Vendedor nao encontrado');
+
+    const lojaAberta = !vendedor.lojaAberta;
+
+    if (lojaAberta) {
+      const pendentes = await this.prisma.notificacaoLoja.findMany({
+        where: { vendedorId: id, notificado: false },
+      });
+      for (const n of pendentes) {
+        try {
+          await this.whatsappService.enviarMensagem(
+            n.telefone,
+            `Olá ${n.nome}! A loja "${vendedor.nomeLoja}" acabou de abrir! Ja estamos prontos para receber seu pedido.`,
+            id,
+          );
+          await this.prisma.notificacaoLoja.update({
+            where: { id: n.id },
+            data: { notificado: true },
+          });
+        } catch (err) {
+          console.error(`Erro ao notificar ${n.telefone}:`, err);
+        }
+      }
+    }
+
+    return this.prisma.vendedor.update({
+      where: { id },
+      data: { lojaAberta },
+      select: { id: true, lojaAberta: true },
+    });
+  }
+
+  async avisarAbertura(vendedorId: string, nome: string, telefone: string) {
+    const vendedor = await this.prisma.vendedor.findUnique({ where: { id: vendedorId } });
+    if (!vendedor) throw new NotFoundException('Vendedor nao encontrado');
+    return this.prisma.notificacaoLoja.create({
+      data: { vendedorId, nome, telefone },
+    });
   }
 
   async update(id: string, data: any) {
@@ -106,6 +152,7 @@ export class VendedoresService {
       totalProdutos,
       faturamentoMes: vendasMes._sum.total || 0,
       pedidosRecentes,
+      lojaAberta: vendedor?.lojaAberta ?? true,
     };
   }
 }

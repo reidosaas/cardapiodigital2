@@ -43,4 +43,24 @@ export class UploadController {
     const path = await this.uploadService.uploadImagem(file, 'logos');
     return { url: this.fullUrl(path, req) };
   }
+
+  @Post('banner')
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadBanner(@UploadedFile() file: Express.Multer.File, @Req() req: Request) {
+    if (!file) throw new BadRequestException('Arquivo nao enviado');
+    const path = await this.uploadService.uploadImagem(file, 'banners');
+    return { url: this.fullUrl(path, req) };
+  }
+
+  @Post('chat')
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadChatMedia(@UploadedFile() file: Express.Multer.File, @Req() req: Request) {
+    if (!file) throw new BadRequestException('Arquivo nao enviado');
+    const isAudio = file.mimetype?.startsWith('audio/');
+    const folder = isAudio ? 'audios' : 'chat-imagens';
+    const path = await this.uploadService.uploadImagem(file, folder);
+    return { url: this.fullUrl(path, req), tipo: isAudio ? 'audio' : 'image' };
+  }
 }

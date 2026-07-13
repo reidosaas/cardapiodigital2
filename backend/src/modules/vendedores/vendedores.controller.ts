@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Param, Body, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Patch, Post, Param, Body, UseGuards, Query } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { VendedoresService } from './vendedores.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -47,5 +47,20 @@ export class VendedoresController {
   @ApiBearerAuth()
   async update(@Param('id') id: string, @Body() data: any) {
     return this.vendedoresService.update(id, data);
+  }
+
+  @Post(':id/toggle-loja')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  async toggleLoja(@Param('id') id: string) {
+    return this.vendedoresService.toggleLoja(id);
+  }
+
+  @Post(':id/avisar-abertura')
+  async avisarAbertura(
+    @Param('id') id: string,
+    @Body() data: { nome: string; telefone: string },
+  ) {
+    return this.vendedoresService.avisarAbertura(id, data.nome, data.telefone);
   }
 }

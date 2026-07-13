@@ -25,6 +25,7 @@ import {
   X,
   UserPlus,
   Tags,
+  Table2,
 } from 'lucide-react';
 
 const vendedorLinks = [
@@ -32,11 +33,16 @@ const vendedorLinks = [
   { href: '/dashboard/vendedor/catalogo', icon: Store, label: 'Catalogo' },
   { href: '/dashboard/vendedor/produtos', icon: Package, label: 'Produtos' },
   { href: '/dashboard/vendedor/pedidos', icon: ShoppingCart, label: 'Pedidos' },
+  { href: '/dashboard/vendedor/mesas', icon: Table2, label: 'Mesas' },
   { href: '/dashboard/vendedor/clientes', icon: Users, label: 'Clientes' },
   { href: '/dashboard/vendedor/leads', icon: UserPlus, label: 'Leads' },
   { href: '/dashboard/vendedor/agenda', icon: Calendar, label: 'Agenda' },
   { href: '/dashboard/vendedor/conversas', icon: MessageCircle, label: 'Conversas' },
-  { href: '/dashboard/vendedor/financeiro', icon: DollarSign, label: 'Financeiro' },
+  { href: '/dashboard/vendedor/cupons', icon: BadgePercent, label: 'Cupons' },
+  { href: '/dashboard/vendedor/garcons', icon: Users, label: 'Garcons' },
+  { href: '/dashboard/vendedor/entregadores', icon: Truck, label: 'Entregadores' },
+  { href: '/dashboard/vendedor/despesas', icon: DollarSign, label: 'Despesas' },
+  { href: '/dashboard/vendedor/financeiro', icon: BarChart3, label: 'Financeiro' },
   { href: '/dashboard/vendedor/relatorios', icon: BarChart3, label: 'Relatorios' },
   { href: '/dashboard/vendedor/configuracoes', icon: Settings, label: 'Configuracoes' },
 ];
@@ -54,9 +60,10 @@ const adminLinks = [
 interface SidebarProps {
   isOpen: boolean;
   onToggle: () => void;
+  onLinkClick?: () => void;
 }
 
-export function Sidebar({ isOpen, onToggle }: SidebarProps) {
+export function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps) {
   const pathname = usePathname();
   const { user, loading } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
@@ -101,9 +108,7 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
                     ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400 font-medium'
                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800',
                 )}
-                onClick={() => {
-                  if (window.innerWidth < 1024) onToggle();
-                }}
+                onClick={onLinkClick}
               >
                 <link.icon size={20} />
                 {isOpen && <span>{link.label}</span>}

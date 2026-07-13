@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart, X, Package, Store, Phone, MapPin, Clock, MessageSquare, Heart } from 'lucide-react';
+import { ShoppingCart, X, Package, Store, Phone, MapPin, Clock, MessageSquare, Heart, Sun, Moon } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
 import { Loading } from '@/components/shared/loading';
@@ -27,6 +27,7 @@ export default function CatalogoPublico() {
   const [showMenu, setShowMenu] = useState(false);
   const [loading, setLoading] = useState(true);
   const [checkoutMode, setCheckoutMode] = useState(false);
+  const [clienteModoEscuro, setClienteModoEscuro] = useState<boolean | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -98,9 +99,10 @@ export default function CatalogoPublico() {
   );
 
   const corPrimaria = vendedor.corPrimaria || '#2563eb';
+  const temaEscuro = clienteModoEscuro !== null ? clienteModoEscuro : vendedor.modoEscuro;
 
   return (
-    <div className={`min-h-screen bg-gray-50 dark:bg-gray-950 ${vendedor.modoEscuro ? 'dark' : ''}`}>
+    <div className={`min-h-screen bg-gray-50 dark:bg-gray-950 ${temaEscuro ? 'dark' : ''}`}>
       <style>{`
         .catalog-bg-primary { background-color: ${corPrimaria} !important; }
         .catalog-text-primary { color: ${corPrimaria} !important; }
@@ -122,6 +124,9 @@ export default function CatalogoPublico() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <button onClick={() => setClienteModoEscuro(!temaEscuro)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title={temaEscuro ? 'Modo Claro' : 'Modo Escuro'}>
+              {temaEscuro ? <Sun size={20} className="text-yellow-400" /> : <Moon size={20} className="text-gray-600" />}
+            </button>
             <button onClick={() => setShowCart(true)} className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
               <ShoppingCart size={20} className="text-gray-700 dark:text-gray-300" />
               {cart.length > 0 && (
@@ -223,7 +228,7 @@ export default function CatalogoPublico() {
       </AnimatePresence>
 
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
-        <CatalogBanner banners={banners} corPrimaria={corPrimaria} />
+        <CatalogBanner banners={vendedor.bannerUrl ? [{ id: 'vendedor-banner', imagemUrl: vendedor.bannerUrl }, ...banners] : banners} corPrimaria={corPrimaria} />
 
         <SearchBar value={busca} onChange={setBusca} />
 

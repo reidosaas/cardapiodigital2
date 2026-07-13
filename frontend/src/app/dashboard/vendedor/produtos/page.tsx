@@ -151,7 +151,7 @@ export default function ProdutosPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <h2 className="text-2xl font-bold">Produtos</h2>
             <p className="text-gray-500">Gerencie seu catalogo de produtos</p>

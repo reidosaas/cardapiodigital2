@@ -51,12 +51,12 @@ export default function LeadsPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <h2 className="text-2xl font-bold">Leads</h2>
-            <p className="text-gray-500">{leads.length} leads capturados</p>
+            <p className="text-gray-500">Clientes que entraram em contato</p>
           </div>
-          <div className="relative w-64">
+          <div className="relative w-full sm:max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               placeholder="Buscar lead..."

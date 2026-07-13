@@ -26,7 +26,6 @@ export function ProductCard({ produto, slug, corPrimaria, onAddToCart }: Product
   const semEstoque = !produto.ilimitado && produto.estoque !== undefined && produto.estoque <= 0;
   const precoFinal = produto.precoPromocional || produto.preco;
   const temPromocao = !!produto.precoPromocional;
-
   return (
     <div className="group bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
       <Link href={`/catalogo/${slug}/produto/${produto.id}`} className="block relative aspect-square overflow-hidden bg-gray-50 dark:bg-gray-900">

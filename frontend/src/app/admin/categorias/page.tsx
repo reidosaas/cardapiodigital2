@@ -139,8 +139,8 @@ export default function AdminCategoriasPage() {
         {categorias.length === 0 ? (
           <EmptyState icon={Tags} title="Nenhuma categoria" description="Crie a primeira categoria acima" />
         ) : (
-          <div className="bg-white dark:bg-gray-900 rounded-xl border overflow-hidden">
-            <table className="w-full">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border overflow-x-auto">
+            <table className="w-full min-w-[600px]">
               <thead className="bg-gray-50 dark:bg-gray-800">
                 <tr>
                   <th className="w-12 p-4"></th>

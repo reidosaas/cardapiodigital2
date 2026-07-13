@@ -1,8 +1,18 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PedidoStatus } from '@prisma/client';
 import { AssinaturasService } from '../assinaturas/assinaturas.service';
+import { CuponsService } from '../cupons/cupons.service';
 import { LeadsService } from '../leads/leads.service';
+import { WhatsAppService } from '../whatsapp/whatsapp.service';
+
+const STATUS_MESSAGES: Record<string, string> = {
+  CONFIRMADO: 'Seu pedido foi confirmado! Ja estamos preparando tudo com muito carinho.',
+  PREPARANDO: 'Seu pedido esta sendo preparado. Em breve estara pronto!',
+  SAIU_PARA_ENTREGA: 'Seu pedido saiu para entrega! Fique atento.',
+  ENTREGUE: 'Seu pedido foi entregue! Obrigado pela preferencia. Volte sempre!',
+  CANCELADO: 'Seu pedido foi cancelado. Se tiver duvidas, entre em contato conosco.',
+};
 
 @Injectable()
 export class PedidosService {
@@ -11,7 +21,9 @@ export class PedidosService {
   constructor(
     private prisma: PrismaService,
     private assinaturasService: AssinaturasService,
+    private cuponsService: CuponsService,
     private leadsService: LeadsService,
+    @Inject(forwardRef(() => WhatsAppService)) private whatsappService: WhatsAppService,
   ) {}
 
   async findAll(vendedorId: string, params?: { status?: string; clienteId?: string }) {
@@ -59,6 +71,8 @@ export class PedidosService {
     enderecoEntrega?: string;
     origem?: string;
     conversationId?: string;
+    mesaId?: string;
+    cupomId?: string;
   }) {
     await this.assinaturasService.verificarLimites(data.vendedorId, 'pedido');
 
@@ -76,45 +90,95 @@ export class PedidosService {
       }
     }
 
-    return this.prisma.pedido.create({
-      data: {
-        vendedorId: data.vendedorId,
-        clienteId: data.clienteId,
-        clienteNome: data.clienteNome,
-        clienteTelefone: data.clienteTelefone,
-        total: data.total,
-        taxaEntrega: data.taxaEntrega || 0,
-        observacao: data.observacao,
-        tipoEntrega: data.tipoEntrega as any || 'ENTREGA',
-        enderecoEntrega: data.enderecoEntrega,
-        origem: data.origem || 'catalogo',
-        conversationId: data.conversationId,
-        itens: {
-          create: data.items.map((item: any) => ({
-            produtoId: item.produtoId,
-            nome: item.nome,
-            quantidade: item.quantidade || 1,
-            precoUnitario: item.precoUnitario,
-            total: item.total || item.precoUnitario * (item.quantidade || 1),
-            observacao: item.observacao,
-            variacao: item.variacao,
-          })),
+    const pedido = await this.prisma.$transaction(async (tx) => {
+      const vendedor = await tx.vendedor.update({
+        where: { id: data.vendedorId },
+        data: { ultimoCodigoPedido: { increment: 1 } },
+      });
+      return tx.pedido.create({
+        data: {
+          codigo: vendedor.ultimoCodigoPedido,
+          vendedorId: data.vendedorId,
+          clienteId: data.clienteId,
+          clienteNome: data.clienteNome,
+          clienteTelefone: data.clienteTelefone,
+          total: data.total,
+          taxaEntrega: data.taxaEntrega || 0,
+          observacao: data.observacao,
+          tipoEntrega: data.tipoEntrega as any || 'ENTREGA',
+          enderecoEntrega: data.enderecoEntrega,
+          origem: data.origem || 'catalogo',
+          conversationId: data.conversationId,
+          mesaId: data.mesaId,
+          cupomId: data.cupomId,
+          itens: {
+            create: data.items.map((item: any) => ({
+              produtoId: item.produtoId,
+              nome: item.nome,
+              quantidade: item.quantidade || 1,
+              precoUnitario: item.precoUnitario,
+              total: item.total || item.precoUnitario * (item.quantidade || 1),
+              observacao: item.observacao,
+              variacao: item.variacao,
+            })),
+          },
         },
-      },
-      include: {
-        itens: true,
-        pagamento: true,
-      },
+        include: {
+          itens: true,
+          pagamento: true,
+        },
+      });
     });
+
+    if (data.cupomId) {
+      try {
+        await this.cuponsService.usarCupom(data.cupomId);
+      } catch (e) {
+        this.logger.error(`Erro ao incrementar uso do cupom ${data.cupomId}: ${e.message}`);
+      }
+    }
+
+    return pedido;
   }
 
-  async updateStatus(id: string, status: PedidoStatus) {
-    await this.findById(id);
-    return this.prisma.pedido.update({
+  async updateStatus(id: string, status: PedidoStatus, entregadorId?: string, entregadorNome?: string) {
+    const pedido = await this.findById(id);
+    const updated = await this.prisma.pedido.update({
       where: { id },
       data: { status },
       include: { itens: true, pagamento: true },
     });
+
+    if (status === 'SAIU_PARA_ENTREGA') {
+      await this.prisma.entrega.create({
+        data: {
+          pedidoId: id,
+          status: 'EM_ROTA',
+          entregadorId: entregadorId || null,
+          entregadorNome: entregadorNome || null,
+          endereco: pedido.enderecoEntrega,
+        },
+      });
+    }
+
+    const msg = STATUS_MESSAGES[status];
+    const telefone = pedido.clienteTelefone;
+    if (msg && telefone) {
+      try {
+        const prefixo = `*${pedido.clienteNome || 'Cliente'}*`;
+        const numPedido = pedido.codigo ? `#${String(pedido.codigo).padStart(8, '0')}` : `#${pedido.id.slice(0, 8)}`;
+        await this.whatsappService.enviarMensagem(
+          telefone,
+          `${prefixo}, ${msg}\n\nPedido ${numPedido}`,
+          pedido.vendedorId,
+        );
+        this.logger.log(`Notificacao de ${status} enviada para ${telefone}`);
+      } catch (err) {
+        this.logger.error(`Erro ao enviar notificacao de ${status} para ${telefone}: ${err.message}`);
+      }
+    }
+
+    return updated;
   }
 
   async getFaturamento(vendedorId: string, dataInicio: Date, dataFim: Date) {

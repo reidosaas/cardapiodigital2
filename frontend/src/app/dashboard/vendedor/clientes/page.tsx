@@ -30,12 +30,12 @@ export default function ClientesPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <h2 className="text-2xl font-bold">Clientes</h2>
-            <p className="text-gray-500">{clientes.length} clientes cadastrados</p>
+            <p className="text-gray-500">Todos os clientes cadastrados</p>
           </div>
-          <div className="relative w-64">
+          <div className="relative w-full sm:max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input placeholder="Buscar cliente..." className="pl-9" value={busca} onChange={(e) => setBusca(e.target.value)} />
           </div>

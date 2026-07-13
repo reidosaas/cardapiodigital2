@@ -29,8 +29,8 @@ export function useSocket(userId?: string) {
     socketRef.current?.emit('join-conversa', conversaId);
   }, []);
 
-  const sendMessage = useCallback((conversaId: string, conteudo: string) => {
-    socketRef.current?.emit('send-message', { conversaId, conteudo });
+  const sendMessage = useCallback((conversaId: string, conteudo: string, midiaUrl?: string, tipo?: string) => {
+    socketRef.current?.emit('send-message', { conversaId, conteudo, midiaUrl, tipo });
   }, []);
 
   const onNewMessage = useCallback((callback: (data: any) => void) => {

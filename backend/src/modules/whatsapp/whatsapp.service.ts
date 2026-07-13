@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '../../config/config.service';
 import { PedidosService } from '../pedidos/pedidos.service';
@@ -15,7 +15,7 @@ export class WhatsAppService {
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
-    private pedidosService: PedidosService,
+    @Inject(forwardRef(() => PedidosService)) private pedidosService: PedidosService,
     private agendamentosService: AgendamentosService,
     private chatGateway: ChatGateway,
     private aiAtendimentoService: AiAtendimentoService,
@@ -38,11 +38,28 @@ export class WhatsAppService {
 
   async conectar(vendedorId: string) {
     const client = this.getClient();
-    const instanceName = `vendedor_${vendedorId}`;
+
+    let vendedor = await this.prisma.vendedor.findUnique({
+      where: { id: vendedorId },
+      select: { uazapiToken: true, uazapiInstanceName: true, nomeLoja: true, slug: true },
+    });
+
+    const baseNome = vendedor?.slug || vendedor?.nomeLoja || `vendedor_${vendedorId}`;
+    const instanceName = baseNome.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '').substring(0, 40);
 
     try {
-      const novaInstancia: any = await client.instance.create({ name: instanceName });
-      const instanceToken = novaInstancia?.token || instanceName;
+      let instanceToken = vendedor?.uazapiToken;
+
+      if (!instanceToken) {
+        const allInstances: any[] = await client.instance.listAll();
+        const existing = allInstances.find((i: any) => i.name === instanceName);
+        if (existing) {
+          instanceToken = existing.token;
+        } else {
+          const novaInstancia: any = await client.instance.create({ name: instanceName });
+          instanceToken = novaInstancia?.token || instanceName;
+        }
+      }
 
       await this.prisma.vendedor.update({
         where: { id: vendedorId },
@@ -55,7 +72,13 @@ export class WhatsAppService {
 
       const connection = await client.instance.connect(instanceToken);
       const conn: any = connection;
-      const qrcode = conn?.qrcode?.base64 || conn?.qrcode || conn;
+      const qrcode = conn?.instance?.qrcode || conn?.qrcode?.base64 || conn?.qrcode || conn;
+
+      const backendUrl = this.configService.get('BACKEND_URL', 'http://localhost:3001');
+      const webhookUrl = `${backendUrl.replace(/\/$/, '')}/api/whatsapp/webhook`;
+      await this.configurarWebhook(vendedorId, webhookUrl).catch(e =>
+        this.logger.warn(`Erro ao configurar webhook: ${e.message}`)
+      );
 
       return { qrcode, instanceName, instanceToken };
     } catch (error) {
@@ -114,24 +137,102 @@ export class WhatsAppService {
     }
   }
 
-  async enviarMensagem(telefone: string, mensagem: string) {
+  async enviarMensagem(telefone: string, mensagem: string, vendedorId?: string) {
     const client = this.getClient();
-    const vendedor = await this.prisma.vendedor.findFirst({
-      where: { whatsappConectado: true },
-      select: { uazapiToken: true },
-    });
+    let instanceToken: string | null = null;
 
-    if (!vendedor?.uazapiToken) {
+    if (vendedorId) {
+      const v = await this.prisma.vendedor.findUnique({
+        where: { id: vendedorId },
+        select: { uazapiToken: true },
+      });
+      instanceToken = v?.uazapiToken || null;
+    } else {
+      const v = await this.prisma.vendedor.findFirst({
+        where: { whatsappConectado: true },
+        select: { uazapiToken: true },
+      });
+      instanceToken = v?.uazapiToken || null;
+    }
+
+    if (!instanceToken) {
       throw new Error('Nenhum vendedor com WhatsApp conectado');
     }
 
     try {
-      return await client.send.text(vendedor.uazapiToken, {
+      return await client.send.text(instanceToken, {
         number: telefone,
         text: mensagem,
       });
     } catch (error) {
       this.logger.error(`Erro ao enviar mensagem WhatsApp: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async enviarImagem(telefone: string, mediaUrl: string, vendedorId?: string, caption?: string) {
+    const client = this.getClient();
+    let instanceToken: string | null = null;
+
+    if (vendedorId) {
+      const v = await this.prisma.vendedor.findUnique({
+        where: { id: vendedorId },
+        select: { uazapiToken: true },
+      });
+      instanceToken = v?.uazapiToken || null;
+    } else {
+      const v = await this.prisma.vendedor.findFirst({
+        where: { whatsappConectado: true },
+        select: { uazapiToken: true },
+      });
+      instanceToken = v?.uazapiToken || null;
+    }
+
+    if (!instanceToken) {
+      throw new Error('Nenhum vendedor com WhatsApp conectado');
+    }
+
+    try {
+      return await client.send.image(instanceToken, {
+        number: telefone,
+        path: mediaUrl,
+        caption,
+      });
+    } catch (error) {
+      this.logger.error(`Erro ao enviar imagem WhatsApp: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async enviarAudio(telefone: string, audioUrl: string, vendedorId?: string) {
+    const client = this.getClient();
+    let instanceToken: string | null = null;
+
+    if (vendedorId) {
+      const v = await this.prisma.vendedor.findUnique({
+        where: { id: vendedorId },
+        select: { uazapiToken: true },
+      });
+      instanceToken = v?.uazapiToken || null;
+    } else {
+      const v = await this.prisma.vendedor.findFirst({
+        where: { whatsappConectado: true },
+        select: { uazapiToken: true },
+      });
+      instanceToken = v?.uazapiToken || null;
+    }
+
+    if (!instanceToken) {
+      throw new Error('Nenhum vendedor com WhatsApp conectado');
+    }
+
+    try {
+      return await client.send.audio(instanceToken, {
+        number: telefone,
+        path: audioUrl,
+      });
+    } catch (error) {
+      this.logger.error(`Erro ao enviar audio WhatsApp: ${error.message}`);
       throw error;
     }
   }
@@ -193,7 +294,7 @@ export class WhatsAppService {
 
     if (!autoMsg && gatilho === 'encerramento') return null;
 
-    await this.enviarMensagem(conversa.contatoTelefone, resposta);
+    await this.enviarMensagem(conversa.contatoTelefone, resposta, vendedorId);
 
     const msgSalva = await this.prisma.mensagem.create({
       data: {
@@ -212,10 +313,14 @@ export class WhatsAppService {
     return msgSalva;
   }
 
-  private async emitirEventosSocket(vendedorId: string, conversaId: string, evento: string, dados: any) {
+  private emitirEventosSocket(vendedorId: string, conversaId: string, evento: string, dados: any) {
     try {
-      this.chatGateway.server.to(`user_${vendedorId}`).emit(evento, dados);
-      this.chatGateway.server.to(`conversa_${conversaId}`).emit('new-message', dados);
+      if (evento === 'new-message') {
+        this.chatGateway.server.to(`user_${vendedorId}`).emit(evento, dados);
+        this.chatGateway.server.to(`conversa_${conversaId}`).emit(evento, dados);
+      } else {
+        this.chatGateway.server.to(`user_${vendedorId}`).emit(evento, dados);
+      }
     } catch (error) {
       this.logger.warn(`Erro ao emitir evento Socket.IO: ${error.message}`);
     }
@@ -355,7 +460,7 @@ export class WhatsAppService {
           );
           const total = Number(pedido.total).toFixed(2);
           const confirma = `Pedido confirmado!\n\n${pedido.itens.map((i: any) => `${i.quantidade}x ${i.nome}${i.variacao ? ` (${i.variacao})` : ''}`).join('\n')}\nTotal: R$ ${total}\n\nObrigado pelo pedido, ${conversa.contatoNome}!`;
-          await this.enviarMensagem(telefone, confirma);
+          await this.enviarMensagem(telefone, confirma, vendedor.id);
           const msgConfirma = await this.prisma.mensagem.create({
             data: { conversaId: conversa.id, remetente: 'vendedor', conteudo: confirma, tipo: 'texto' },
           });
@@ -366,14 +471,14 @@ export class WhatsAppService {
       } catch (error) {
         this.logger.error(`Erro ao criar pedido do estado AI: ${error.message}`);
         const erroMsg = `Desculpe, tive um problema ao criar seu pedido. Fale com um atendente.`;
-        await this.enviarMensagem(telefone, erroMsg);
+        await this.enviarMensagem(telefone, erroMsg, vendedor.id);
         const msgErro = await this.prisma.mensagem.create({
           data: { conversaId: conversa.id, remetente: 'vendedor', conteudo: erroMsg, tipo: 'texto' },
         });
         this.emitirEventosSocket(vendedor.id, conversa.id, 'new-message', msgErro);
       }
     } else if (saida.resposta) {
-      await this.enviarMensagem(telefone, saida.resposta);
+      await this.enviarMensagem(telefone, saida.resposta, vendedor.id);
       const msgResposta = await this.prisma.mensagem.create({
         data: { conversaId: conversa.id, remetente: 'vendedor', conteudo: saida.resposta, tipo: 'texto' },
       });

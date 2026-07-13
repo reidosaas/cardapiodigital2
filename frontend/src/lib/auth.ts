@@ -14,6 +14,15 @@ export interface User {
     logoUrl?: string;
     corPrimaria: string;
     whatsappConectado: boolean;
+    descricao?: string;
+    modoEscuro?: boolean;
+    bannerUrl?: string;
+    tempoPreparoMin?: number;
+    entregaTipo?: string;
+    taxaEntrega?: number;
+    whatsappNumero?: string;
+    endereco?: string;
+    horarioFuncionamento?: any;
     assinatura?: any;
   };
 }

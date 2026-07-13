@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { Loading } from '@/components/shared/loading';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import api from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
-import { Store, QrCode, Link2, Palette, Image, Globe } from 'lucide-react';
+import { Store, QrCode, Link2, Palette, Image, Globe, Upload, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
 import { toast } from 'sonner';
@@ -16,14 +16,20 @@ export default function CatalogoPage() {
   const { user } = useAuth();
   const [vendedor, setVendedor] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const bannerRef = useRef<HTMLInputElement>(null);
+  const logoRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
+  const fetchVendedor = () => {
     if (user?.vendedor?.id) {
       api.get(`/api/vendedores/${user.vendedor.id}`)
         .then((res) => setVendedor(res.data))
         .finally(() => setLoading(false));
     }
-  }, [user]);
+  };
+
+  useEffect(() => { fetchVendedor(); }, [user]);
 
   const catalogoUrl = vendedor?.slug
     ? `${window.location.origin}/catalogo/${vendedor.slug}`
@@ -32,6 +38,31 @@ export default function CatalogoPage() {
   const copyLink = () => {
     navigator.clipboard.writeText(catalogoUrl);
     toast.success('Link copiado!');
+  };
+
+  const uploadFile = async (file: File, tipo: 'banner' | 'logo') => {
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await api.post(`/api/upload/${tipo}`, fd);
+    await api.patch(`/api/vendedores/${user?.vendedor?.id}`, { [`${tipo}Url`]: res.data.url });
+    fetchVendedor();
+    toast.success(`${tipo === 'logo' ? 'Logo' : 'Banner'} atualizado!`);
+  };
+
+  const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setUploadingBanner(true);
+    try { await uploadFile(f, 'banner'); } catch { toast.error('Erro ao fazer upload do banner'); }
+    finally { setUploadingBanner(false); if (bannerRef.current) bannerRef.current.value = ''; }
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setUploadingLogo(true);
+    try { await uploadFile(f, 'logo'); } catch { toast.error('Erro ao fazer upload da logo'); }
+    finally { setUploadingLogo(false); if (logoRef.current) logoRef.current.value = ''; }
   };
 
   if (loading) return <DashboardLayout><Loading /></DashboardLayout>;
@@ -59,7 +90,7 @@ export default function CatalogoPage() {
             <Card>
               <CardContent className="p-6">
                 <h3 className="font-semibold mb-4 flex items-center gap-2"><Palette size={18} /> Personalizacao</h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm text-gray-500">Cor Primaria</label>
                     <div className="flex gap-2 mt-1">
@@ -78,20 +109,34 @@ export default function CatalogoPage() {
             <Card>
               <CardContent className="p-6">
                 <h3 className="font-semibold mb-4 flex items-center gap-2"><Image size={18} /> Banner & Logo</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="aspect-video bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center text-gray-400 text-sm cursor-pointer hover:bg-gray-200 transition-colors">
-                    {vendedor?.bannerUrl ? (
-                      <img src={vendedor.bannerUrl} alt="Banner" className="w-full h-full object-cover rounded-lg" />
-                    ) : (
-                      'Adicionar Banner'
-                    )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-500 mb-2">Banner (1920x480px recomendado)</p>
+                    <input ref={bannerRef} type="file" accept="image/*" onChange={handleBannerUpload} className="hidden" />
+                    <div onClick={() => bannerRef.current?.click()}
+                      className="aspect-video bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center text-gray-400 text-sm cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors overflow-hidden border-2 border-dashed border-gray-200 dark:border-gray-700">
+                      {uploadingBanner ? (
+                        <div className="flex flex-col items-center gap-2"><Loader2 size={24} className="animate-spin text-primary" /><span>Enviando...</span></div>
+                      ) : vendedor?.bannerUrl ? (
+                        <img src={vendedor.bannerUrl} alt="Banner" className="w-full h-full object-cover rounded-lg" />
+                      ) : (
+                        <div className="flex flex-col items-center gap-2"><Upload size={24} /><span>Adicionar Banner</span></div>
+                      )}
+                    </div>
                   </div>
-                  <div className="aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center text-gray-400 text-sm cursor-pointer hover:bg-gray-200 transition-colors">
-                    {vendedor?.logoUrl ? (
-                      <img src={vendedor.logoUrl} alt="Logo" className="w-full h-full object-cover rounded-lg" />
-                    ) : (
-                      'Adicionar Logo'
-                    )}
+                  <div>
+                    <p className="text-sm text-gray-500 mb-2">Logo (quadrado recomendado)</p>
+                    <input ref={logoRef} type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
+                    <div onClick={() => logoRef.current?.click()}
+                      className="aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center text-gray-400 text-sm cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors overflow-hidden border-2 border-dashed border-gray-200 dark:border-gray-700">
+                      {uploadingLogo ? (
+                        <div className="flex flex-col items-center gap-2"><Loader2 size={24} className="animate-spin text-primary" /><span>Enviando...</span></div>
+                      ) : vendedor?.logoUrl ? (
+                        <img src={vendedor.logoUrl} alt="Logo" className="w-full h-full object-cover rounded-lg" />
+                      ) : (
+                        <div className="flex flex-col items-center gap-2"><Upload size={24} /><span>Adicionar Logo</span></div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </CardContent>

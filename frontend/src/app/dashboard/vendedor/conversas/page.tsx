@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useSocket } from '@/hooks/useSocket';
 import api from '@/lib/api';
-import { MessageSquare, Send, ArrowLeft, ShoppingCart, Calendar, Check, CheckCheck } from 'lucide-react';
+import { MessageSquare, Send, ArrowLeft, ShoppingCart, Calendar, Check, CheckCheck, Image, Mic } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 
@@ -32,6 +32,7 @@ interface Mensagem {
   remetente: string;
   conteudo: string | null;
   tipo: string;
+  midiaUrl?: string | null;
   lida: boolean;
   createdAt: string;
 }
@@ -49,6 +50,9 @@ export default function ConversasPage() {
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [showMobileList, setShowMobileList] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const audioInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
 
   const carregarConversas = useCallback(async () => {
     if (!vendedorId) return;
@@ -102,26 +106,39 @@ export default function ConversasPage() {
   const handleSend = () => {
     if (!texto.trim() || !conversaAtiva) return;
     sendMessage(conversaAtiva.id, texto.trim());
-    setMensagens((prev) => [
-      ...prev,
-      {
-        id: `temp-${Date.now()}`,
-        conversaId: conversaAtiva.id,
-        remetente: 'vendedor',
-        conteudo: texto.trim(),
-        tipo: 'texto',
-        lida: false,
-        createdAt: new Date().toISOString(),
-      },
-    ]);
-    setConversas((prev) =>
-      prev.map((c) =>
-        c.id === conversaAtiva.id
-          ? { ...c, ultimaMensagem: texto.trim(), ultimaAtividade: new Date().toISOString() }
-          : c
-      )
-    );
     setTexto('');
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !conversaAtiva) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const { data } = await api.post('/api/upload/chat', formData);
+      sendMessage(conversaAtiva.id, '', data.url, 'image');
+    } catch {
+      toast.error('Erro ao enviar imagem');
+    }
+    setUploading(false);
+    if (e.target) e.target.value = '';
+  };
+
+  const handleAudioUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !conversaAtiva) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const { data } = await api.post('/api/upload/chat', formData);
+      sendMessage(conversaAtiva.id, '', data.url, 'audio');
+    } catch {
+      toast.error('Erro ao enviar audio');
+    }
+    setUploading(false);
+    if (e.target) e.target.value = '';
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -134,7 +151,10 @@ export default function ConversasPage() {
   useEffect(() => {
     const unsubNewMsg = onNewMessage((data: any) => {
       if (conversaAtiva && data.conversaId === conversaAtiva.id) {
-        setMensagens((prev) => [...prev, data]);
+        setMensagens((prev) => {
+          if (prev.some((m) => m.id === data.id)) return prev;
+          return [...prev, data];
+        });
       }
       carregarConversas();
     });
@@ -273,7 +293,15 @@ export default function ConversasPage() {
                               : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-bl-sm'
                           }`}
                         >
-                          <p className="text-sm whitespace-pre-wrap break-words">{msg.conteudo}</p>
+                          {msg.tipo === 'image' && msg.midiaUrl && (
+                            <img src={msg.midiaUrl} alt="Imagem" className="max-w-full rounded-lg mb-1 max-h-64 object-contain" />
+                          )}
+                          {msg.tipo === 'audio' && msg.midiaUrl && (
+                            <audio src={msg.midiaUrl} controls className="max-w-full mb-1" />
+                          )}
+                          {msg.conteudo && (
+                            <p className="text-sm whitespace-pre-wrap break-words">{msg.conteudo}</p>
+                          )}
                           <div className={`flex items-center justify-end gap-1 mt-1 ${
                             msg.remetente === 'vendedor' ? 'text-white/70' : 'text-gray-400'
                           }`}>
@@ -293,7 +321,15 @@ export default function ConversasPage() {
               </div>
 
               <div className="p-3 border-t border-gray-200 dark:border-gray-800">
+                <input type="file" ref={imageInputRef} accept="image/*" className="hidden" onChange={handleImageUpload} />
+                <input type="file" ref={audioInputRef} accept="audio/*" className="hidden" onChange={handleAudioUpload} />
                 <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" onClick={() => imageInputRef.current?.click()} disabled={uploading} title="Enviar imagem">
+                    <Image size={18} />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" onClick={() => audioInputRef.current?.click()} disabled={uploading} title="Enviar audio">
+                    <Mic size={18} />
+                  </Button>
                   <Input
                     value={texto}
                     onChange={(e) => setTexto(e.target.value)}
@@ -301,7 +337,7 @@ export default function ConversasPage() {
                     placeholder="Digite sua mensagem..."
                     className="flex-1"
                   />
-                  <Button onClick={handleSend} disabled={!texto.trim()} size="icon" className="h-10 w-10 shrink-0 rounded-full">
+                  <Button onClick={handleSend} disabled={!texto.trim() || uploading} size="icon" className="h-10 w-10 shrink-0 rounded-full">
                     <Send size={16} />
                   </Button>
                 </div>

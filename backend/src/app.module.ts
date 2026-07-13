@@ -27,6 +27,10 @@ import { ApiKeysModule } from './modules/api-keys/api-keys.module';
 import { AiModule } from './modules/ai/ai.module';
 import { LeadsModule } from './modules/leads/leads.module';
 import { CategoriasGlobaisModule } from './modules/categorias-globais/categorias-globais.module';
+import { DespesasModule } from './modules/despesas/despesas.module';
+import { MesasModule } from './modules/mesas/mesas.module';
+import { GarconsModule } from './modules/garcons/garcons.module';
+import { EntregadoresModule } from './modules/entregadores/entregadores.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 
@@ -35,7 +39,7 @@ import { APP_GUARD } from '@nestjs/core';
     ConfigModule,
     PrismaModule,
     ThrottlerModule.forRoot({
-      throttlers: [{ limit: 100, ttl: 60000 }],
+      throttlers: [{ limit: 10000, ttl: 60000 }],
     }),
     AuthModule,
     UsersModule,
@@ -63,6 +67,10 @@ import { APP_GUARD } from '@nestjs/core';
     AiModule,
     LeadsModule,
     CategoriasGlobaisModule,
+    DespesasModule,
+    MesasModule,
+    GarconsModule,
+    EntregadoresModule,
   ],
   providers: [
     {

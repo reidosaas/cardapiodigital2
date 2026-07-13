@@ -5,31 +5,61 @@ import { StatCard } from '@/components/shared/stat-card';
 import { Loading } from '@/components/shared/loading';
 import api from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
-import { ShoppingCart, DollarSign, Users, Package, TrendingUp, Clock } from 'lucide-react';
+import { ShoppingCart, DollarSign, Users, Package, Store, Power, PowerOff } from 'lucide-react';
 import { formatCurrency, getStatusColor, formatDate } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 export default function VendedorDashboard() {
   const { user } = useAuth();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [toggling, setToggling] = useState(false);
 
-  useEffect(() => {
+  const fetchDashboard = () => {
     if (user?.vendedor?.id) {
       api.get(`/api/vendedores/dashboard`)
         .then((res) => setData(res.data))
         .finally(() => setLoading(false));
     }
-  }, [user]);
+  };
+
+  useEffect(() => { fetchDashboard(); }, [user]);
+
+  const toggleLoja = async () => {
+    if (!user?.vendedor?.id) return;
+    setToggling(true);
+    try {
+      const res = await api.post(`/api/vendedores/${user.vendedor.id}/toggle-loja`);
+      setData((prev: any) => ({ ...prev, lojaAberta: res.data.lojaAberta }));
+      toast.success(res.data.lojaAberta ? 'Loja aberta!' : 'Loja fechada!');
+    } catch {
+      toast.error('Erro ao alterar status da loja');
+    } finally {
+      setToggling(false);
+    }
+  };
 
   if (loading) return <DashboardLayout><Loading /></DashboardLayout>;
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-bold">Dashboard</h2>
-          <p className="text-gray-500">Bem-vindo, {user?.nome}!</p>
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <h2 className="text-2xl font-bold">Dashboard</h2>
+            <p className="text-gray-500">Bem-vindo, {user?.nome}!</p>
+          </div>
+          <Button
+            onClick={toggleLoja}
+            disabled={toggling}
+            variant={data?.lojaAberta ? 'destructive' : 'default'}
+            className="flex items-center gap-2"
+          >
+            {data?.lojaAberta ? <PowerOff size={16} /> : <Power size={16} />}
+            {data?.lojaAberta ? 'Fechar Loja' : 'Abrir Loja'}
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

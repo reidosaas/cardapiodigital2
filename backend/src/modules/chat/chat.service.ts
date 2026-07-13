@@ -33,6 +33,7 @@ export class ChatService {
     conteudo: string;
     remetente?: string;
     tipo?: string;
+    midiaUrl?: string;
   }) {
     const mensagem = await this.prisma.mensagem.create({
       data: {
@@ -40,6 +41,7 @@ export class ChatService {
         remetente: data.remetente || 'vendedor',
         conteudo: data.conteudo,
         tipo: data.tipo || 'texto',
+        midiaUrl: data.midiaUrl || null,
       },
     });
 

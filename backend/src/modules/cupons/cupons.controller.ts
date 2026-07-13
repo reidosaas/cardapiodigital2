@@ -15,6 +15,16 @@ export class CuponsController {
     return this.cuponsService.findAll(vendedorId);
   }
 
+  @Get('produto/:produtoId')
+  async findByProduto(@Param('produtoId') produtoId: string) {
+    return this.cuponsService.findByProduto(produtoId);
+  }
+
+  @Get('ativos/vendedor/:vendedorId')
+  async findAtivosByVendedor(@Param('vendedorId') vendedorId: string) {
+    return this.cuponsService.findAtivosByVendedor(vendedorId);
+  }
+
   @Get('validar/:vendedorId/:codigo')
   async validar(@Param('vendedorId') vendedorId: string, @Param('codigo') codigo: string) {
     return this.cuponsService.findByCodigo(vendedorId, codigo);

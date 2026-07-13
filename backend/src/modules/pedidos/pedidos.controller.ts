@@ -31,7 +31,12 @@ export class PedidosController {
   @Patch(':id/status')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  async updateStatus(@Param('id') id: string, @Body('status') status: any) {
-    return this.pedidosService.updateStatus(id, status);
+  async updateStatus(
+    @Param('id') id: string,
+    @Body('status') status: any,
+    @Body('entregadorId') entregadorId?: string,
+    @Body('entregadorNome') entregadorNome?: string,
+  ) {
+    return this.pedidosService.updateStatus(id, status, entregadorId, entregadorNome);
   }
 }

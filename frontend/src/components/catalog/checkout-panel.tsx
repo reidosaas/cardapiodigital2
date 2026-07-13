@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Send, Loader2, CreditCard, MapPin, User, Phone } from 'lucide-react';
+import { Send, Loader2, CreditCard, MapPin, User, Phone, X } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 
@@ -12,6 +12,7 @@ interface CheckoutPanelProps {
     whatsappNumero?: string | null;
     taxaEntrega?: number | null;
     entregaTipo?: string | null;
+    lojaAberta?: boolean;
   };
   corPrimaria?: string;
   onSuccess: () => void;
@@ -21,6 +22,13 @@ export function CheckoutPanel({ cartItems, total, vendedor, corPrimaria, onSucce
   const [step, setStep] = useState<'form' | 'confirm'>('form');
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ nome: '', telefone: '', observacao: '', tipoEntrega: 'RETIRADA', enderecoEntrega: '' });
+  const [avisoOpen, setAvisoOpen] = useState(false);
+  const [cupomCode, setCupomCode] = useState('');
+  const [cupomAtivo, setCupomAtivo] = useState<any>(null);
+  const [cupomLoading, setCupomLoading] = useState(false);
+  const [avisoNome, setAvisoNome] = useState('');
+  const [avisoTel, setAvisoTel] = useState('');
+  const [avisoSent, setAvisoSent] = useState(false);
 
   const handleSubmit = async () => {
     if (!form.nome || !form.telefone) {
@@ -29,6 +37,7 @@ export function CheckoutPanel({ cartItems, total, vendedor, corPrimaria, onSucce
     }
     setSubmitting(true);
     try {
+      const desconto = cupomAtivo ? total * cupomAtivo.valor / 100 : 0;
       const pedido = await api.post('/api/pedidos', {
         vendedorId: vendedor.id,
         clienteNome: form.nome,
@@ -41,12 +50,13 @@ export function CheckoutPanel({ cartItems, total, vendedor, corPrimaria, onSucce
           total: i.preco * i.quantidade,
           observacao: i.observacao,
         })),
-        total,
+        total: total - desconto,
         taxaEntrega: form.tipoEntrega === 'ENTREGA' ? (vendedor.taxaEntrega || 0) : 0,
         observacao: form.observacao,
         tipoEntrega: form.tipoEntrega,
         enderecoEntrega: form.tipoEntrega === 'ENTREGA' ? form.enderecoEntrega : undefined,
         origem: 'catalogo',
+        cupomId: cupomAtivo?.id,
       });
 
       if (vendedor.whatsappNumero) {
@@ -108,6 +118,42 @@ export function CheckoutPanel({ cartItems, total, vendedor, corPrimaria, onSucce
             />
           </div>
         )}
+        <div className="flex items-center gap-2">
+          <input
+            type="text" placeholder="Cupom de desconto" value={cupomCode}
+            onChange={(e) => { setCupomCode(e.target.value.toUpperCase()); setCupomAtivo(null); }}
+            className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+          />
+          <button
+            onClick={async () => {
+              if (!cupomCode) { toast.error('Digite um codigo de cupom'); return; }
+              setCupomLoading(true);
+              try {
+                const res = await api.get(`/api/cupons/validar/${vendedor.id}/${cupomCode}`);
+                setCupomAtivo(res.data);
+                toast.success(`Cupom aplicado: ${res.data.valor}% OFF`);
+              } catch (err: any) {
+                setCupomAtivo(null);
+                toast.error(err.response?.data?.message?.[0] || 'Cupom invalido');
+              } finally {
+                setCupomLoading(false);
+              }
+            }}
+            disabled={cupomLoading}
+            className="px-4 py-2.5 rounded-xl text-white text-sm font-medium transition-all hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
+            style={{ backgroundColor: corPrimaria || '#2563eb' }}
+          >
+            {cupomLoading ? <Loader2 size={16} className="animate-spin" /> : 'Aplicar'}
+          </button>
+        </div>
+        {cupomAtivo && (
+          <div className="flex items-center justify-between text-sm bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-3 py-2 rounded-xl">
+            <span className="font-medium">{cupomAtivo.codigo} - {cupomAtivo.valor}% OFF</span>
+            <button onClick={() => { setCupomAtivo(null); setCupomCode(''); }} className="text-green-500 hover:text-green-700">
+              <X size={16} />
+            </button>
+          </div>
+        )}
         <textarea
           placeholder="Observacao (opcional)"
           value={form.observacao}
@@ -122,6 +168,12 @@ export function CheckoutPanel({ cartItems, total, vendedor, corPrimaria, onSucce
           <span className="text-gray-500">Subtotal</span>
           <span className="font-medium">R$ {total.toFixed(2)}</span>
         </div>
+        {cupomAtivo && (
+          <div className="flex justify-between text-sm text-green-600">
+            <span>Desconto ({cupomAtivo.valor}%)</span>
+            <span>-R$ {(total * cupomAtivo.valor / 100).toFixed(2)}</span>
+          </div>
+        )}
         {form.tipoEntrega === 'ENTREGA' && vendedor.taxaEntrega && (
           <div className="flex justify-between text-sm">
             <span className="text-gray-500">Taxa de entrega</span>
@@ -130,10 +182,61 @@ export function CheckoutPanel({ cartItems, total, vendedor, corPrimaria, onSucce
         )}
         <div className="flex justify-between text-base font-bold pt-2 border-t border-gray-200 dark:border-gray-700">
           <span>Total</span>
-          <span>R$ {(total + (form.tipoEntrega === 'ENTREGA' ? Number(vendedor.taxaEntrega || 0) : 0)).toFixed(2)}</span>
+          <span className={cupomAtivo ? 'text-green-600' : ''}>
+            R$ {(total - (cupomAtivo ? total * cupomAtivo.valor / 100 : 0) + (form.tipoEntrega === 'ENTREGA' ? Number(vendedor.taxaEntrega || 0) : 0)).toFixed(2)}
+          </span>
         </div>
       </div>
 
+      {vendedor.lojaAberta === false ? (
+        <div className="space-y-3">
+          <div className="w-full py-3 rounded-xl bg-gray-300 text-gray-600 font-semibold text-center">
+            Loja fechada no momento
+          </div>
+          {avisoSent ? (
+            <div className="text-sm text-green-600 text-center font-medium py-2">
+              Avisaremos quando a loja abrir!
+            </div>
+          ) : avisoOpen ? (
+            <div className="space-y-2 border rounded-xl p-3 bg-white dark:bg-gray-800">
+              <input
+                type="text" placeholder="Seu nome *" value={avisoNome}
+                onChange={(e) => setAvisoNome(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+              <input
+                type="tel" placeholder="WhatsApp *" value={avisoTel}
+                onChange={(e) => setAvisoTel(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+              <button
+                onClick={async () => {
+                  if (!avisoNome || !avisoTel) { toast.error('Preencha nome e telefone'); return; }
+                  try {
+                    await api.post(`/api/vendedores/${vendedor.id}/avisar-abertura`, { nome: avisoNome, telefone: avisoTel });
+                    setAvisoSent(true);
+                    toast.success('Avisaremos quando a loja abrir!');
+                  } catch {
+                    toast.error('Erro ao salvar aviso');
+                  }
+                }}
+                className="w-full py-2 rounded-lg text-white font-medium text-sm"
+                style={{ backgroundColor: corPrimaria || '#2563eb' }}
+              >
+                Salvar aviso
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setAvisoOpen(true)}
+              className="w-full py-2.5 rounded-xl text-white font-medium text-sm transition-all hover:opacity-90"
+              style={{ backgroundColor: corPrimaria || '#2563eb' }}
+            >
+              Avisar quando a loja abrir
+            </button>
+          )}
+        </div>
+      ) : (
       <button
         onClick={handleSubmit}
         disabled={submitting}
@@ -143,6 +246,7 @@ export function CheckoutPanel({ cartItems, total, vendedor, corPrimaria, onSucce
         {submitting ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
         {submitting ? 'Enviando...' : 'Fazer Pedido'}
       </button>
+      )}
     </div>
   );
 }
