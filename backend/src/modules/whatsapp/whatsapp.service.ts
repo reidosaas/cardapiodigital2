@@ -72,7 +72,7 @@ export class WhatsAppService {
 
       const connection = await client.instance.connect(instanceToken);
       const conn: any = connection;
-      const qrcode = conn?.instance?.qrcode || conn?.qrcode?.base64 || conn?.qrcode || conn;
+      const qrcode = conn?.instance?.qrcode || conn?.qrcode?.base64 || conn?.qrcode || conn?.base64 || conn?.qr || conn;
 
       const backendUrl = this.configService.get('BACKEND_URL', 'http://localhost:3001');
       const webhookUrl = `${backendUrl.replace(/\/$/, '')}/api/whatsapp/webhook`;

@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 import * as helmet from 'helmet';
 import * as express from 'express';
 import { resolve } from 'path';
@@ -18,9 +19,11 @@ async function bootstrap() {
     crossOriginResourcePolicy: { policy: 'cross-origin' },
   }));
 
+  app.useWebSocketAdapter(new IoAdapter(app));
+
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
   app.enableCors({
-    origin: [frontendUrl, 'http://localhost:3000', 'http://localhost:3002'],
+    origin: [frontendUrl, 'http://localhost:3000', 'http://localhost:3002', 'https://cardapioai.reidosaas.com.br'],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,
   });
