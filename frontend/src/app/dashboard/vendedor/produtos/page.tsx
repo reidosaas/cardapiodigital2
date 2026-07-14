@@ -243,7 +243,7 @@ export default function ProdutosPage() {
                   <SelectContent>
                     {categoriasGlobais.map((cat: any) => (
                       <SelectItem key={cat.id} value={cat.id}>
-                        {cat.nome}
+                        {cat.icone} {cat.nome}
                       </SelectItem>
                     ))}
                   </SelectContent>
