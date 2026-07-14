@@ -1,9 +1,8 @@
 'use client';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { login } from '@/lib/auth';
+import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -14,20 +13,21 @@ export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const data = await login(email, senha);
+      const { data } = await api.post('/api/auth/login', { email, senha });
+
       if (data.user.role !== 'ADMIN') {
         toast.error('Acesso negado. Use o login do lojista.');
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
         return;
       }
+
+      localStorage.setItem('token', data.accessToken);
+      localStorage.setItem('refreshToken', data.refreshToken);
       toast.success('Login admin realizado!');
       window.location.href = '/admin';
     } catch (err: any) {

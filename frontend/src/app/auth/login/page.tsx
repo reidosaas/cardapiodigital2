@@ -22,13 +22,16 @@ export default function LoginPage() {
 
     try {
       const data = await login(email, senha);
-      toast.success('Login realizado com sucesso!');
-      
+
       if (data.user.role === 'ADMIN') {
-        window.location.href = '/admin';
-      } else {
-        window.location.href = '/dashboard/vendedor';
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        toast.error('Use o login administrativo em /admin/login');
+        return;
       }
+
+      toast.success('Login realizado com sucesso!');
+      window.location.href = '/dashboard/vendedor';
     } catch (err: any) {
       const message = err.response?.data?.message;
       const errorText = Array.isArray(message)
@@ -83,11 +86,6 @@ export default function LoginPage() {
             <span className="text-gray-500">Nao tem conta? </span>
             <Link href="/auth/register" className="text-primary font-medium hover:underline">
               Cadastre-se
-            </Link>
-          </div>
-          <div className="mt-2 text-center text-sm">
-            <Link href="/admin/login" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xs">
-              Acesso administrativo
             </Link>
           </div>
         </CardContent>

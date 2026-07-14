@@ -1,21 +1,25 @@
 'use client';
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2 } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const isLoginPage = pathname === '/admin/login';
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (loading) return;
+    if (isLoginPage) return;
+    if (!user) {
       router.push('/admin/login');
     }
-    if (!loading && user && user.role !== 'ADMIN') {
+    if (user && user.role !== 'ADMIN') {
       router.push('/dashboard/vendedor');
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, isLoginPage]);
 
   if (loading) {
     return (
@@ -25,7 +29,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  if (!user || user.role !== 'ADMIN') return null;
+  if (!isLoginPage && (!user || user.role !== 'ADMIN')) return null;
 
   return <>{children}</>;
 }

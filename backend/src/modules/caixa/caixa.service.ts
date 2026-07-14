@@ -32,7 +32,7 @@ export class CaixaService {
         createdAt: { gte: dataInicio },
       },
       include: {
-        entregador: { select: { id: true, nome: true, valorPorEntrega: true } },
+        entregador: { select: { id: true, nome: true, valorPorEntrega: true, diaria: true } },
       },
     });
 
@@ -61,6 +61,36 @@ export class CaixaService {
       .filter((e) => e.status === 'ENTREGUE')
       .reduce((acc, e) => acc + Number(e.entregador?.valorPorEntrega || 0), 0);
 
+    const entregadoresMap = new Map<string, { nome: string; diaria: number; entregueCount: number }>();
+    for (const e of entregas) {
+      if (!e.entregadorId || !e.entregador) continue;
+      const existing = entregadoresMap.get(e.entregadorId);
+      if (existing) {
+        if (e.status === 'ENTREGUE') existing.entregueCount++;
+      } else {
+        entregadoresMap.set(e.entregadorId, {
+          nome: e.entregador.nome,
+          diaria: Number(e.entregador.diaria || 0),
+          entregueCount: e.status === 'ENTREGUE' ? 1 : 0,
+        });
+      }
+    }
+
+    const despesasEntrega: { id: string; descricao: string; valor: number; categoria: string }[] = [];
+    let idx = 0;
+    for (const [, info] of entregadoresMap) {
+      if (info.diaria > 0) {
+        despesasEntrega.push({
+          id: `diaria-${idx++}`,
+          descricao: `Diaria - ${info.nome}`,
+          valor: info.diaria,
+          categoria: 'Entrega',
+        });
+      }
+    }
+    const totalDespesasEntrega = despesasEntrega.reduce((a, d) => a + d.valor, 0);
+    const totalDespesas = despesas.reduce((acc, d) => acc + Number(d.valor || 0), 0) + totalDespesasEntrega;
+
     const totalPedidos = pedidosFinalizados.filter((p) => p.status === 'ENTREGUE').length;
     const totalEntregas = entregas.filter((e) => e.status === 'ENTREGUE').length;
     const totalCancelados = pedidos.filter((p) => p.status === 'CANCELADO').length;
@@ -73,7 +103,7 @@ export class CaixaService {
           codigo: p.codigo,
           cliente: p.clienteNome || 'Anonimo',
           total: Number(p.total),
-          pagamento: p.pagamento?.forma || 'N/A',
+          pagamento: p.pagamento?.metodo || 'N/A',
         })),
       entregas: entregas
         .filter((e) => e.status === 'ENTREGUE')
@@ -82,12 +112,15 @@ export class CaixaService {
           entregador: e.entregador?.nome || e.entregadorNome || 'Terceirizado',
           ganho: Number(e.entregador?.valorPorEntrega || 0),
         })),
-      despesas: despesas.map((d) => ({
-        id: d.id,
-        descricao: d.descricao,
-        valor: Number(d.valor),
-        categoria: d.categoria || 'Sem categoria',
-      })),
+      despesas: [
+        ...despesas.map((d) => ({
+          id: d.id,
+          descricao: d.descricao,
+          valor: Number(d.valor),
+          categoria: d.categoria || 'Sem categoria',
+        })),
+        ...despesasEntrega,
+      ],
     };
 
     const caixa = await this.prisma.caixa.create({
