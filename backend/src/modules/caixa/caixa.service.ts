@@ -55,8 +55,6 @@ export class CaixaService {
       .filter((p) => p.status === 'ENTREGUE')
       .reduce((acc, p) => acc + Number(p.total || 0), 0);
 
-    const totalDespesas = despesas.reduce((acc, d) => acc + Number(d.valor || 0), 0);
-
     const totalGanhosEntregas = entregas
       .filter((e) => e.status === 'ENTREGUE')
       .reduce((acc, e) => acc + Number(e.entregador?.valorPorEntrega || 0), 0);
