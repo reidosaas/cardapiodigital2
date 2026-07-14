@@ -161,6 +161,7 @@ model Vendedor {
   relatorios           Relatorio[]
   garcons              Garcom[]
   entregadores         Entregador[]
+  caixas               Caixa[]
 
   @@map("vendedores")
 }
@@ -801,4 +802,27 @@ model Entregador {
 
   @@index([vendedorId])
   @@map("entregadores")
+}
+
+// ========== CAIXA ==========
+
+model Caixa {
+  id              String   @id @default(uuid()) @db.Uuid
+  vendedorId      String   @db.Uuid
+  dataInicio      DateTime
+  dataFim         DateTime @default(now())
+  totalVendas     Decimal  @default(0) @db.Decimal(10, 2)
+  totalDespesas   Decimal  @default(0) @db.Decimal(10, 2)
+  totalGanhos     Decimal  @default(0) @db.Decimal(10, 2)
+  totalPedidos    Int      @default(0)
+  totalEntregas   Int      @default(0)
+  totalCancelados Int      @default(0)
+  pedidosIds      Json     @default("[]")
+  resumo          Json?
+  createdAt       DateTime @default(now())
+
+  vendedor Vendedor @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
+
+  @@index([vendedorId])
+  @@map("caixas")
 }

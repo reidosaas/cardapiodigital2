@@ -147,9 +147,11 @@ export default function PedidosPage() {
   const [entregadorTipo, setEntregadorTipo] = useState<'cadastrado' | 'terceirizado'>('cadastrado');
   const [entregadorSelecionado, setEntregadorSelecionado] = useState('');
   const [entregadorNomeTerceiro, setEntregadorNomeTerceiro] = useState('');
+  const [ultimoCaixa, setUltimoCaixa] = useState<any>(null);
 
   useEffect(() => {
     if (!user?.vendedor?.id) return;
+    api.get('/api/caixa/ultimo').then((r) => setUltimoCaixa(r.data)).catch(() => {});
     api.get(`/api/entregadores/vendedor/${user.vendedor.id}`).then((r) => setEntregadores(r.data)).catch(() => {});
   }, [user]);
 
@@ -174,7 +176,18 @@ export default function PedidosPage() {
     if (!user?.vendedor?.id) return;
     try {
       const res = await api.get(`/api/pedidos/vendedor/${user.vendedor.id}`, { params: { status: undefined } });
-      const novos: Order[] = res.data;
+      let novos: Order[] = res.data;
+
+      if (ultimoCaixa?.dataFim) {
+        const desde = new Date(ultimoCaixa.dataFim).getTime();
+        novos = novos.filter((p) => {
+          if (p.status === 'ENTREGUE' || p.status === 'CANCELADO') {
+            return new Date(p.createdAt).getTime() > desde;
+          }
+          return true;
+        });
+      }
+
       setPedidos(novos);
 
       const pendentesIds = novos.filter((p) => p.status === 'PENDENTE').map((p) => p.id);
@@ -190,7 +203,7 @@ export default function PedidosPage() {
     } finally {
       setLoading(false);
     }
-  }, [user, play]);
+  }, [user, play, ultimoCaixa]);
 
   useEffect(() => {
     carregarPedidos();
