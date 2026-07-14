@@ -25,7 +25,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/auth/login');
+      const isAdminArea = window.location.pathname.startsWith('/admin');
+      router.push(isAdminArea ? '/admin/login' : '/auth/login');
     }
   }, [user, loading, router]);
 

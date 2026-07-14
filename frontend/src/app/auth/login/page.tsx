@@ -85,6 +85,11 @@ export default function LoginPage() {
               Cadastre-se
             </Link>
           </div>
+          <div className="mt-2 text-center text-sm">
+            <Link href="/admin/login" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xs">
+              Acesso administrativo
+            </Link>
+          </div>
         </CardContent>
       </Card>
     </motion.div>
