@@ -161,6 +161,19 @@ export class PedidosService {
       });
     }
 
+    if (status === 'ENTREGUE') {
+      const entrega = await this.prisma.entrega.findFirst({
+        where: { pedidoId: id, status: { not: 'ENTREGUE' } },
+        orderBy: { createdAt: 'desc' },
+      });
+      if (entrega) {
+        await this.prisma.entrega.update({
+          where: { id: entrega.id },
+          data: { status: 'ENTREGUE', entregueEm: new Date() },
+        });
+      }
+    }
+
     const msg = STATUS_MESSAGES[status];
     const telefone = pedido.clienteTelefone;
     if (msg && telefone) {
