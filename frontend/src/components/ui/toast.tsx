@@ -1,9 +1,9 @@
 'use client';
 import { Toaster as SonnerToaster } from 'sonner';
-import { useTheme } from 'next-themes';
+import { useAppTheme } from '@/hooks/useAppTheme';
 
 export function Toaster() {
-  const { theme } = useTheme();
+  const { theme } = useAppTheme();
 
   return (
     <SonnerToaster

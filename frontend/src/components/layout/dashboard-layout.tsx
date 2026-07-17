@@ -1,13 +1,22 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
 import { Sidebar } from './sidebar';
 import { Navbar } from './navbar';
 import { useAuth } from '@/hooks/useAuth';
-import { Loader2 } from 'lucide-react';
+import { Loader2, LayoutDashboard, ShoppingCart, Package, Settings } from 'lucide-react';
+
+const mobileNavItems = [
+  { href: '/dashboard/vendedor', icon: LayoutDashboard, label: 'Inicio' },
+  { href: '/dashboard/vendedor/pedidos', icon: ShoppingCart, label: 'Pedidos' },
+  { href: '/dashboard/vendedor/produtos', icon: Package, label: 'Produtos' },
+  { href: '/dashboard/vendedor/configuracoes', icon: Settings, label: 'Config' },
+];
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const pathname = usePathname();
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 1024px)');
     setSidebarOpen(mq.matches);
@@ -18,7 +27,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
 
-  // Ao clicar em link no mobile (<1024px), fecha o sidebar
   const handleLinkClick = useCallback(() => {
     if (window.innerWidth < 1024) setSidebarOpen(false);
   }, []);
@@ -45,10 +53,31 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} onLinkClick={handleLinkClick} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Navbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6 pb-20 lg:pb-6">
           {children}
         </main>
       </div>
+
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t z-50 safe-area-bottom">
+        <div className="flex items-center justify-around h-14">
+          {mobileNavItems.map((item) => {
+            const Icon = item.icon;
+            const active = pathname === item.href || pathname.startsWith(item.href + '/');
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg text-[10px] font-medium transition-colors ${
+                  active ? 'text-primary' : 'text-gray-500'
+                }`}
+              >
+                <Icon className="h-5 w-5" />
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }

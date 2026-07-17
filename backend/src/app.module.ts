@@ -31,6 +31,9 @@ import { DespesasModule } from './modules/despesas/despesas.module';
 import { MesasModule } from './modules/mesas/mesas.module';
 import { GarconsModule } from './modules/garcons/garcons.module';
 import { EntregadoresModule } from './modules/entregadores/entregadores.module';
+import { EntregadorAuthModule } from './modules/entregador-auth/entregador-auth.module';
+import { EntregadorDashboardModule } from './modules/entregador-dashboard/entregador-dashboard.module';
+import { AdminEntregadoresModule } from './modules/admin-entregadores/admin-entregadores.module';
 import { CaixaModule } from './modules/caixa/caixa.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
@@ -72,6 +75,9 @@ import { APP_GUARD } from '@nestjs/core';
     MesasModule,
     GarconsModule,
     EntregadoresModule,
+    EntregadorAuthModule,
+    EntregadorDashboardModule,
+    AdminEntregadoresModule,
     CaixaModule,
   ],
   providers: [

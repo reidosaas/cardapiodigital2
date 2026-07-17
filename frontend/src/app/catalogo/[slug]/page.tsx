@@ -30,6 +30,33 @@ export default function CatalogoPublico() {
   const [clienteModoEscuro, setClienteModoEscuro] = useState<boolean | null>(null);
 
   useEffect(() => {
+    const linkEl = document.getElementById('dynamic-manifest') as HTMLLinkElement || document.createElement('link');
+    linkEl.id = 'dynamic-manifest';
+    linkEl.rel = 'manifest';
+    linkEl.href = `/pwa/manifest/${slug}`;
+    if (!document.getElementById('dynamic-manifest')) {
+      document.head.appendChild(linkEl);
+    }
+
+    const iconEl = document.getElementById('dynamic-icon') as HTMLLinkElement || document.createElement('link');
+    iconEl.id = 'dynamic-icon';
+    iconEl.rel = 'icon';
+    iconEl.type = 'image/svg+xml';
+    iconEl.href = `/pwa/icon/${slug}?size=192`;
+    if (!document.getElementById('dynamic-icon')) {
+      document.head.appendChild(iconEl);
+    }
+
+    const appleIcon = document.getElementById('dynamic-apple-icon') as HTMLLinkElement || document.createElement('link');
+    appleIcon.id = 'dynamic-apple-icon';
+    appleIcon.rel = 'apple-touch-icon';
+    appleIcon.href = `/pwa/icon/${slug}?size=192`;
+    if (!document.getElementById('dynamic-apple-icon')) {
+      document.head.appendChild(appleIcon);
+    }
+  }, [slug]);
+
+  useEffect(() => {
     const loadData = async () => {
       try {
         const vRes = await api.get(`/api/vendedores/slug/${slug}`);

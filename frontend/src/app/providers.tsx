@@ -1,15 +1,15 @@
 'use client';
-import { ThemeProvider } from 'next-themes';
 import { AuthProvider } from '@/hooks/useAuth';
+import { AppThemeProvider } from '@/hooks/useAppTheme';
 import { Toaster } from '@/components/ui/toast';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+    <AppThemeProvider>
       <AuthProvider>
         {children}
         <Toaster />
       </AuthProvider>
-    </ThemeProvider>
+    </AppThemeProvider>
   );
 }

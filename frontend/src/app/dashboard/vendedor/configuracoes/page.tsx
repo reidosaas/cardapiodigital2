@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,35 +8,53 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import api from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
-import { Store, Globe, Clock, Palette, Save, MessageCircle, QrCode, Power, PowerOff, RefreshCw, Upload } from 'lucide-react';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import { Store, Globe, Clock, Palette, Save, MessageCircle, QrCode, Power, PowerOff, RefreshCw, Upload, Truck, Smartphone, Key, Link2, MapPin, Building2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 
 export default function ConfiguracoesPage() {
   const { user } = useAuth();
+  const { setTheme } = useAppTheme();
   const [whatsStatus, setWhatsStatus] = useState<any>(null);
   const [qrcode, setQrcode] = useState('');
   const [connecting, setConnecting] = useState(false);
   const [form, setForm] = useState<any>({});
   const [saving, setSaving] = useState(false);
+  const [entregadorLoginUrl, setEntregadorLoginUrl] = useState('');
 
+  const themeInitRef = useRef(false);
   useEffect(() => {
+    if (themeInitRef.current) return;
     if (user?.vendedor) {
+      themeInitRef.current = true;
+      const modoEscuro = user.vendedor.modoEscuro;
+      const horario = user.vendedor.horarioFuncionamento || {};
       setForm({
         nomeLoja: user.vendedor.nomeLoja || '',
         slug: user.vendedor.slug || '',
         descricao: user.vendedor.descricao || '',
         corPrimaria: user.vendedor.corPrimaria || '#6C63FF',
-        modoEscuro: user.vendedor.modoEscuro ? 'true' : 'false',
+        modoEscuro: modoEscuro ? 'true' : 'false',
         logoUrl: user.vendedor.logoUrl || '',
         bannerUrl: user.vendedor.bannerUrl || '',
         tempoPreparoMin: user.vendedor.tempoPreparoMin || 30,
         entregaTipo: user.vendedor.entregaTipo || 'ENTREGA',
         taxaEntrega: user.vendedor.taxaEntrega || 0,
         whatsappNumero: user.vendedor.whatsappNumero || '',
+        rua: user.vendedor.rua || '',
+        numero: user.vendedor.numero || '',
+        bairro: user.vendedor.bairro || '',
+        cidade: user.vendedor.cidade || '',
+        estado: user.vendedor.estado || '',
+        cep: user.vendedor.cep || '',
+        horarioAbertura: horario.abre || '08:00',
+        horarioFechamento: horario.fecha || '22:00',
       });
+      setTheme(modoEscuro ? 'dark' : 'light');
+      setEntregadorLoginUrl(`${window.location.origin}/entregador/login`);
     }
-  }, [user]);
+  }, [user, setTheme]);
 
   const checkWhatsStatus = useCallback(async () => {
     if (!user?.vendedor?.id) return;
@@ -90,20 +108,31 @@ export default function ConfiguracoesPage() {
   const salvar = async () => {
     setSaving(true);
     try {
+      const isDark = form.modoEscuro === 'true';
       const payload = {
         nomeLoja: form.nomeLoja,
-        slug: form.slug,
         descricao: form.descricao,
         corPrimaria: form.corPrimaria,
-        modoEscuro: form.modoEscuro === 'true',
+        modoEscuro: isDark,
         logoUrl: form.logoUrl,
         bannerUrl: form.bannerUrl,
         tempoPreparoMin: Number(form.tempoPreparoMin),
         entregaTipo: form.entregaTipo,
         taxaEntrega: Number(form.taxaEntrega),
         whatsappNumero: form.whatsappNumero,
+        rua: form.rua,
+        numero: form.numero,
+        bairro: form.bairro,
+        cidade: form.cidade,
+        estado: form.estado,
+        cep: form.cep,
+        horarioFuncionamento: {
+          abre: form.horarioAbertura,
+          fecha: form.horarioFechamento,
+        },
       };
       await api.patch(`/api/vendedores/${user?.vendedor?.id}`, payload);
+      setTheme(isDark ? 'dark' : 'light');
       toast.success('Configuracoes salvas!');
     } catch {
       toast.error('Erro ao salvar');
@@ -139,15 +168,54 @@ export default function ConfiguracoesPage() {
               </div>
               <div>
                 <label className="text-sm text-gray-500">Descricao</label>
-                <textarea value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })}
-                  className="flex w-full rounded-lg border border-input bg-background px-3 py-2 text-sm mt-1" rows={3} />
+                <textarea value={form.descricao} readOnly
+                  className="flex w-full rounded-lg border border-input bg-gray-50 dark:bg-gray-800 px-3 py-2 text-sm mt-1" rows={3} />
+                <p className="text-xs text-gray-400 mt-1">A descricao nao pode ser alterada</p>
               </div>
               <div>
-                <label className="text-sm text-gray-500">Slug (link do cardapio)</label>
-                <Input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} className="mt-1" placeholder="minha-loja" />
-                <p className="text-xs text-gray-400 mt-1">
-                  Link: {typeof window !== 'undefined' ? `${window.location.origin}/catalogo/${form.slug || '...'}` : ''}
-                </p>
+                <label className="text-sm text-gray-500">Link do Cardapio</label>
+                <div className="mt-1 flex items-center gap-2 p-3 rounded-lg border bg-gray-50 dark:bg-gray-800">
+                  <Globe className="h-4 w-4 text-gray-400 shrink-0" />
+                  <span className="text-sm text-gray-600 dark:text-gray-300 break-all">
+                    {typeof window !== 'undefined' ? `${window.location.origin}/catalogo/${form.slug || '...'}` : ''}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6 space-y-4">
+              <h3 className="font-semibold flex items-center gap-2"><MapPin size={18} /> Endereco da Loja</h3>
+              <div className="grid grid-cols-1 gap-3">
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="col-span-2">
+                    <label className="text-sm text-gray-500">Rua / Avenida</label>
+                    <Input value={form.rua} onChange={(e) => setForm({ ...form, rua: e.target.value })} className="mt-1" placeholder="Rua Exemplo" />
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-500">Numero</label>
+                    <Input value={form.numero} onChange={(e) => setForm({ ...form, numero: e.target.value })} className="mt-1" placeholder="123" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-500">Bairro</label>
+                  <Input value={form.bairro} onChange={(e) => setForm({ ...form, bairro: e.target.value })} className="mt-1" placeholder="Centro" />
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="col-span-2">
+                    <label className="text-sm text-gray-500">Cidade</label>
+                    <Input value={form.cidade} onChange={(e) => setForm({ ...form, cidade: e.target.value })} className="mt-1" placeholder="Sao Paulo" />
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-500">UF</label>
+                    <Input value={form.estado} onChange={(e) => setForm({ ...form, estado: e.target.value })} className="mt-1" placeholder="SP" maxLength={2} />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-500">CEP</label>
+                  <Input value={form.cep} onChange={(e) => setForm({ ...form, cep: e.target.value })} className="mt-1" placeholder="01001-000" />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -171,6 +239,16 @@ export default function ConfiguracoesPage() {
           <Card>
             <CardContent className="p-6 space-y-4">
               <h3 className="font-semibold flex items-center gap-2"><Clock size={18} /> Horarios & Entrega</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm text-gray-500">Horario de Abertura</label>
+                  <Input type="time" value={form.horarioAbertura} onChange={(e) => setForm({ ...form, horarioAbertura: e.target.value })} className="mt-1" />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-500">Horario de Fechamento</label>
+                  <Input type="time" value={form.horarioFechamento} onChange={(e) => setForm({ ...form, horarioFechamento: e.target.value })} className="mt-1" />
+                </div>
+              </div>
               <div>
                 <label className="text-sm text-gray-500">Tempo de preparo (min)</label>
                 <Input type="number" value={form.tempoPreparoMin} onChange={(e) => setForm({ ...form, tempoPreparoMin: e.target.value })} className="mt-1" />
@@ -232,14 +310,18 @@ export default function ConfiguracoesPage() {
                   <input type="color" value={form.corPrimaria} onChange={(e) => setForm({ ...form, corPrimaria: e.target.value })} className="h-10 w-full rounded mt-1 cursor-pointer" />
                 </div>
                 <div>
-                  <label className="text-sm text-gray-500">Modo Escuro</label>
-                  <Select value={form.modoEscuro} onValueChange={(v) => setForm({ ...form, modoEscuro: v })}>
+                  <label className="text-sm text-gray-500">Tema do Painel</label>
+                  <Select value={form.modoEscuro} onValueChange={(v) => {
+                    setForm({ ...form, modoEscuro: v });
+                    setTheme(v === 'true' ? 'dark' : 'light');
+                  }}>
                     <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="false">Claro</SelectItem>
                       <SelectItem value="true">Escuro</SelectItem>
                     </SelectContent>
                   </Select>
+                  <p className="text-[10px] text-gray-400 mt-1">Altera o tema do painel e do catalogo</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 pt-2">
@@ -257,6 +339,23 @@ export default function ConfiguracoesPage() {
                 <Input placeholder="meusalgados.com.br" className="mt-1" />
                 <p className="text-xs text-gray-400 mt-1">Faca o apontamento do DNS para o IP do servidor</p>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6 space-y-4">
+              <h3 className="font-semibold flex items-center gap-2"><Smartphone size={18} /> Login do Entregador</h3>
+              <p className="text-sm text-gray-500">QR Code para o entregador acessar a area de trabalho</p>
+              <div className="flex gap-2">
+                <Input value={entregadorLoginUrl} readOnly className="flex-1" />
+                <Button variant="outline" onClick={() => { navigator.clipboard.writeText(entregadorLoginUrl); toast.success('Link copiado!'); }}>
+                  <Link2 className="mr-2 h-4 w-4" /> Copiar
+                </Button>
+              </div>
+              <div className="bg-white p-4 rounded-xl inline-block mb-4">
+                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(entregadorLoginUrl)}`} alt="QR Code Entregador" className="mx-auto w-48 h-48" />
+              </div>
+              <p className="text-xs text-gray-400">Entregador escaneia para acessar: /entregador/login</p>
             </CardContent>
           </Card>
         </div>

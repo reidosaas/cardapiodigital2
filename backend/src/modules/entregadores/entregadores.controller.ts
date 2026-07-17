@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards, Req, ForbiddenException } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { EntregadoresService } from './entregadores.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -70,5 +70,47 @@ export class EntregadoresController {
   @ApiBearerAuth()
   async remove(@Param('id') id: string) {
     return this.entregadoresService.remove(id);
+  }
+
+  @Post(':id/checkin')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  async checkin(@Param('id') id: string, @Req() req: any) {
+    return this.entregadoresService.checkin(id, req.user.vendedor?.id);
+  }
+
+  @Post(':id/pagar')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  async pagarEntregador(@Param('id') id: string, @Req() req: any) {
+    return this.entregadoresService.pagarEntregador(id, req.user.vendedor?.id);
+  }
+
+  @Get('para-pagar/vendedor/:vendedorId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  async getEntregadoresParaPagar(
+    @Param('vendedorId') vendedorId: string,
+    @Req() req: any,
+  ) {
+    if (req.user.vendedor?.id !== vendedorId) {
+      throw new ForbiddenException('Acesso negado');
+    }
+    return this.entregadoresService.getEntregadoresParaPagar(vendedorId);
+  }
+
+  @Get('checkins/:vendedorId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  async getCheckins(
+    @Param('vendedorId') vendedorId: string,
+    @Req() req: any,
+    @Query('data') data?: string,
+  ) {
+    // Verifica se o vendedorId pertence ao usuario logado
+    if (req.user.vendedor?.id !== vendedorId) {
+      throw new ForbiddenException('Acesso negado');
+    }
+    return this.entregadoresService.getCheckins(vendedorId, data);
   }
 }

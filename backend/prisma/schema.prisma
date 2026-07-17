@@ -11,6 +11,7 @@ enum UserRole {
   ADMIN
   VENDEDOR
   CLIENTE
+  ENTREGADOR
 }
 
 enum PedidoStatus {
@@ -124,6 +125,9 @@ model Vendedor {
   whatsappSessionId    String?
   uazapiInstanceName   String?
   uazapiToken          String?
+  rua                  String?
+  numero               String?
+  bairro               String?
   endereco             String?
   cidade               String?
   estado               String?
@@ -161,6 +165,7 @@ model Vendedor {
   relatorios           Relatorio[]
   garcons              Garcom[]
   entregadores         Entregador[]
+  entregadorLojas      EntregadorLoja[]
   caixas               Caixa[]
 
   @@map("vendedores")
@@ -302,6 +307,7 @@ model Lead {
 
   @@index([vendedorId])
   @@index([telefone])
+  @@index([vendedorId, telefone])
   @@map("leads")
 }
 
@@ -437,6 +443,10 @@ model Pedido {
   observacao      String?
   tipoEntrega     EntregaTipo  @default(ENTREGA)
   enderecoEntrega String?
+  rua             String?
+  numero          String?
+  bairro          String?
+  complemento     String?
   origem          String       @default("catalogo")
   conversationId  String?      @db.Uuid
   createdAt       DateTime     @default(now())
@@ -458,6 +468,9 @@ model Pedido {
   @@index([mesaId])
   @@index([status])
   @@index([createdAt])
+  @@index([vendedorId, status])
+  @@index([vendedorId, createdAt])
+  @@index([clienteId, createdAt])
   @@map("pedidos")
 }
 
@@ -535,6 +548,10 @@ model Entrega {
   entregadorNome  String?
   codigoRastreio  String?
   endereco        String?
+  valorEntrega    Decimal?     @db.Decimal(10, 2)
+  valorCobrado    Decimal?     @db.Decimal(10, 2)
+  aceitoEm        DateTime?
+  saiuEm          DateTime?
   previsaoEntrega DateTime?
   entregueEm      DateTime?
   observacao      String?
@@ -544,6 +561,10 @@ model Entrega {
   pedido    Pedido     @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
   entregador Entregador? @relation(fields: [entregadorId], references: [id])
 
+  @@index([pedidoId])
+  @@index([entregadorId, createdAt])
+  @@index([entregadorId, status])
+  @@index([status])
   @@map("entregas")
 }
 
@@ -599,6 +620,7 @@ model Conversa {
 
   @@index([vendedorId])
   @@index([contatoTelefone])
+  @@index([vendedorId, ultimaAtividade])
   @@map("conversas")
 }
 
@@ -618,6 +640,8 @@ model Mensagem {
 
   @@index([conversaId])
   @@index([createdAt])
+  @@index([conversaId, createdAt])
+  @@index([conversaId, remetente, lida])
   @@map("mensagens")
 }
 
@@ -686,6 +710,7 @@ model Notificacao {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, lida])
+  @@index([userId, createdAt])
   @@map("notificacoes")
 }
 
@@ -789,19 +814,68 @@ model Garcom {
 
 model Entregador {
   id              String     @id @default(uuid()) @db.Uuid
-  vendedorId      String     @db.Uuid
+  vendedorId      String?    @db.Uuid
   nome            String
+  email           String?    @unique
+  senha           String?
   telefone        String?
   diaria          Decimal    @default(0) @db.Decimal(10, 2)
   valorPorEntrega Decimal    @default(0) @db.Decimal(10, 2)
   ativo           Boolean    @default(true)
   createdAt       DateTime   @default(now())
 
-  vendedor  Vendedor  @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
+  vendedor  Vendedor?       @relation(fields: [vendedorId], references: [id], onDelete: SetNull)
   entregas  Entrega[]
+  lojas     EntregadorLoja[]
+  checkins  EntregadorCheckin[]
 
   @@index([vendedorId])
+  @@index([email])
   @@map("entregadores")
+}
+
+// ========== ENTREGADOR x LOJA (multi-loja) ==========
+
+model EntregadorLoja {
+  id              String   @id @default(uuid()) @db.Uuid
+  entregadorId    String   @db.Uuid
+  vendedorId      String   @db.Uuid
+  status          String   @default("PENDENTE")
+  diaria          Decimal  @default(0) @db.Decimal(10, 2)
+  valorPorEntrega Decimal  @default(0) @db.Decimal(10, 2)
+  ativo           Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  entregador Entregador @relation(fields: [entregadorId], references: [id], onDelete: Cascade)
+  vendedor   Vendedor   @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
+
+  @@unique([entregadorId, vendedorId])
+  @@index([vendedorId])
+  @@map("entregador_lojas")
+}
+
+model EntregadorCheckin {
+  id              String      @id @default(uuid()) @db.Uuid
+  entregadorId    String      @db.Uuid
+  vendedorId      String      @db.Uuid
+  lojaId          String      @db.Uuid
+  data            DateTime    @db.Date
+  checkinEm       DateTime    @default(now())
+  valorDiaria     Decimal     @db.Decimal(10, 2)
+  valorEntregas   Decimal     @default(0) @db.Decimal(10, 2)
+  valorTotal      Decimal     @default(0) @db.Decimal(10, 2)
+  totalEntregas   Int         @default(0)
+  pago            Boolean     @default(false)
+  pagoEm          DateTime?
+  observacao      String?
+
+  entregador      Entregador  @relation(fields: [entregadorId], references: [id])
+
+  @@unique([entregadorId, vendedorId, data])
+  @@index([vendedorId])
+  @@index([entregadorId])
+  @@index([vendedorId, data])
+  @@map("entregador_checkins")
 }
 
 // ========== CAIXA ==========

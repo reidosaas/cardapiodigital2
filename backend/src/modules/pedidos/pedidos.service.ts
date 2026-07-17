@@ -69,6 +69,10 @@ export class PedidosService {
     observacao?: string;
     tipoEntrega?: string;
     enderecoEntrega?: string;
+    rua?: string;
+    numero?: string;
+    bairro?: string;
+    complemento?: string;
     origem?: string;
     conversationId?: string;
     mesaId?: string;
@@ -107,6 +111,10 @@ export class PedidosService {
           observacao: data.observacao,
           tipoEntrega: data.tipoEntrega as any || 'ENTREGA',
           enderecoEntrega: data.enderecoEntrega,
+          rua: data.rua,
+          numero: data.numero,
+          bairro: data.bairro,
+          complemento: data.complemento,
           origem: data.origem || 'catalogo',
           conversationId: data.conversationId,
           mesaId: data.mesaId,

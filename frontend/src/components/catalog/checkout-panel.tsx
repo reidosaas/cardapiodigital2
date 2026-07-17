@@ -21,7 +21,18 @@ interface CheckoutPanelProps {
 export function CheckoutPanel({ cartItems, total, vendedor, corPrimaria, onSuccess }: CheckoutPanelProps) {
   const [step, setStep] = useState<'form' | 'confirm'>('form');
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState({ nome: '', telefone: '', observacao: '', tipoEntrega: 'RETIRADA', enderecoEntrega: '' });
+  const [form, setForm] = useState({ 
+    nome: '', 
+    telefone: '', 
+    observacao: '', 
+    tipoEntrega: vendedor.entregaTipo || 'ENTREGA', 
+    enderecoEntrega: '',
+    rua: '',
+    numero: '',
+    bairro: '',
+    cep: '',
+    complemento: ''
+  });
   const [avisoOpen, setAvisoOpen] = useState(false);
   const [cupomCode, setCupomCode] = useState('');
   const [cupomAtivo, setCupomAtivo] = useState<any>(null);
@@ -35,9 +46,16 @@ export function CheckoutPanel({ cartItems, total, vendedor, corPrimaria, onSucce
       toast.error('Preencha nome e telefone');
       return;
     }
+    if (form.tipoEntrega === 'ENTREGA' && (!form.rua || !form.numero || !form.bairro)) {
+      toast.error('Preencha rua, número e bairro para entrega');
+      return;
+    }
     setSubmitting(true);
     try {
       const desconto = cupomAtivo ? total * cupomAtivo.valor / 100 : 0;
+      const enderecoCompleto = form.tipoEntrega === 'ENTREGA' 
+        ? `${form.rua}, ${form.numero} - ${form.bairro}${form.cep ? `, CEP ${form.cep}` : ''}${form.complemento ? `, ${form.complemento}` : ''}`
+        : '';
       const pedido = await api.post('/api/pedidos', {
         vendedorId: vendedor.id,
         clienteNome: form.nome,
@@ -54,7 +72,12 @@ export function CheckoutPanel({ cartItems, total, vendedor, corPrimaria, onSucce
         taxaEntrega: form.tipoEntrega === 'ENTREGA' ? (vendedor.taxaEntrega || 0) : 0,
         observacao: form.observacao,
         tipoEntrega: form.tipoEntrega,
-        enderecoEntrega: form.tipoEntrega === 'ENTREGA' ? form.enderecoEntrega : undefined,
+        enderecoEntrega: enderecoCompleto,
+        rua: form.rua,
+        numero: form.numero,
+        bairro: form.bairro,
+        cep: form.cep,
+        complemento: form.complemento,
         origem: 'catalogo',
         cupomId: cupomAtivo?.id,
       });
@@ -109,13 +132,47 @@ export function CheckoutPanel({ cartItems, total, vendedor, corPrimaria, onSucce
           ))}
         </div>
         {form.tipoEntrega === 'ENTREGA' && (
-          <div className="relative">
-            <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text" placeholder="Endereco de entrega *" value={form.enderecoEntrega}
-              onChange={(e) => setForm({ ...form, enderecoEntrega: e.target.value })}
-              className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
-            />
+          <div className="space-y-3">
+            <div className="relative">
+              <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text" placeholder="Rua/Avenida *" value={form.rua}
+                onChange={(e) => setForm({ ...form, rua: e.target.value })}
+                className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="relative">
+                <input
+                  type="text" placeholder="Número *" value={form.numero}
+                  onChange={(e) => setForm({ ...form, numero: e.target.value })}
+                  className="w-full pl-3 pr-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+                />
+              </div>
+              <div className="col-span-2 relative">
+                <input
+                  type="text" placeholder="Bairro *" value={form.bairro}
+                  onChange={(e) => setForm({ ...form, bairro: e.target.value })}
+                  className="w-full pl-3 pr-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="relative">
+                <input
+                  type="text" placeholder="CEP (opcional)" value={form.cep}
+                  onChange={(e) => setForm({ ...form, cep: e.target.value })}
+                  className="w-full pl-3 pr-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+                />
+              </div>
+              <div className="relative">
+                <input
+                  type="text" placeholder="Complemento (opcional)" value={form.complemento}
+                  onChange={(e) => setForm({ ...form, complemento: e.target.value })}
+                  className="w-full pl-3 pr-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+                />
+              </div>
+            </div>
           </div>
         )}
         <div className="flex items-center gap-2">
@@ -253,13 +310,16 @@ export function CheckoutPanel({ cartItems, total, vendedor, corPrimaria, onSucce
 
 function formatWhatsAppMessage(pedido: any, form: any): string {
   const itens = pedido.itens?.map((i: any) => `${i.quantidade}x ${i.nome} - R$ ${Number(i.total).toFixed(2)}`).join('\n') || '';
+  const endereco = form.tipoEntrega === 'ENTREGA' 
+    ? `${form.rua}, ${form.numero} - ${form.bairro}${form.cep ? `, CEP ${form.cep}` : ''}${form.complemento ? `, ${form.complemento}` : ''}`
+    : '';
   return [
     `*Novo Pedido - Cardapio Digital*`,
     ``,
     `*Cliente:* ${form.nome}`,
     `*Telefone:* ${form.telefone}`,
     `*Tipo:* ${form.tipoEntrega === 'ENTREGA' ? 'Entrega' : 'Retirada'}`,
-    form.tipoEntrega === 'ENTREGA' ? `*Endereco:* ${form.enderecoEntrega}` : '',
+    endereco ? `*Endereco:* ${endereco}` : '',
     form.observacao ? `*Obs:* ${form.observacao}` : '',
     ``,
     `*Itens:*`,

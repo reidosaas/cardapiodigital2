@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class EntregadoresService {
@@ -18,13 +19,94 @@ export class EntregadoresService {
     return e;
   }
 
-  async create(data: { vendedorId: string; nome: string; telefone?: string; diaria?: number; valorPorEntrega?: number }) {
-    return this.prisma.entregador.create({ data });
+  async create(data: { vendedorId: string; nome?: string; telefone?: string; diaria?: number; valorPorEntrega?: number; email?: string }) {
+    const email = data.email?.trim()?.toLowerCase() || undefined;
+
+    if (!email && !data.nome) {
+      throw new Error('Informe o email ou o nome do entregador');
+    }
+
+    let entregador;
+
+    if (email) {
+      entregador = await this.prisma.entregador.findFirst({ where: { email } });
+      if (entregador) {
+        const vinculoExistente = await this.prisma.entregadorLoja.findFirst({
+          where: { entregadorId: entregador.id, vendedorId: data.vendedorId },
+        });
+        if (vinculoExistente) {
+          if (vinculoExistente.status === 'ACEITO') throw new ConflictException('Entregador ja vinculado a esta loja');
+          if (vinculoExistente.status === 'PENDENTE') throw new ConflictException('Vinculo ja solicitado, aguardando aceite do entregador');
+          if (vinculoExistente.status === 'RECUSADO') {
+            await this.prisma.entregadorLoja.update({
+              where: { id: vinculoExistente.id },
+              data: { status: 'PENDENTE', ativo: true, diaria: data.diaria ?? 0, valorPorEntrega: data.valorPorEntrega ?? 0 },
+            });
+            return { ...entregador, vinculado: true, status: 'PENDENTE' };
+          }
+        }
+
+        await this.prisma.entregadorLoja.create({
+          data: {
+            entregadorId: entregador.id,
+            vendedorId: data.vendedorId,
+            status: 'PENDENTE',
+            diaria: data.diaria ?? 0,
+            valorPorEntrega: data.valorPorEntrega ?? 0,
+          },
+        });
+        return { ...entregador, vinculado: true, status: 'PENDENTE' };
+      }
+    }
+
+    entregador = await this.prisma.entregador.create({
+      data: {
+        vendedorId: data.vendedorId,
+        nome: data.nome || 'Entregador',
+        telefone: data.telefone || undefined,
+        email,
+      },
+    });
+
+    await this.prisma.entregadorLoja.create({
+      data: {
+        entregadorId: entregador.id,
+        vendedorId: data.vendedorId,
+        status: 'PENDENTE',
+        diaria: data.diaria ?? 0,
+        valorPorEntrega: data.valorPorEntrega ?? 0,
+      },
+    });
+
+    return { ...entregador, vinculado: true, status: 'PENDENTE' };
   }
 
-  async update(id: string, data: { nome?: string; telefone?: string; diaria?: number; valorPorEntrega?: number; ativo?: boolean }) {
+  async update(id: string, data: { nome?: string; telefone?: string; diaria?: number; valorPorEntrega?: number; ativo?: boolean; senha?: string }) {
     await this.findById(id);
-    return this.prisma.entregador.update({ where: { id }, data });
+    const senha = data.senha?.trim() || undefined;
+
+    const updateData: any = {};
+    if (data.nome) updateData.nome = data.nome;
+    if (data.telefone !== undefined) updateData.telefone = data.telefone || undefined;
+    if (senha) updateData.senha = await bcrypt.hash(senha, 10);
+    if (data.ativo !== undefined) updateData.ativo = data.ativo;
+
+    const updated = await this.prisma.entregador.update({ where: { id }, data: updateData });
+
+    if (data.diaria !== undefined || data.valorPorEntrega !== undefined) {
+      const loja = await this.prisma.entregadorLoja.findFirst({ where: { entregadorId: id } });
+      if (loja) {
+        await this.prisma.entregadorLoja.update({
+          where: { id: loja.id },
+          data: {
+            ...(data.diaria !== undefined && { diaria: data.diaria }),
+            ...(data.valorPorEntrega !== undefined && { valorPorEntrega: data.valorPorEntrega }),
+          },
+        });
+      }
+    }
+
+    return updated;
   }
 
   async remove(id: string) {
@@ -129,30 +211,231 @@ export class EntregadoresService {
     inicioMes.setDate(1);
     inicioMes.setHours(0, 0, 0, 0);
 
-    const entregadores = await this.prisma.entregador.findMany({
-      where: { vendedorId },
-      orderBy: { nome: 'asc' },
+    const inicioHoje = new Date();
+    inicioHoje.setHours(0, 0, 0, 0);
+
+    const vinculos = await this.prisma.entregadorLoja.findMany({
+      where: { vendedorId, ativo: true },
+      include: {
+        entregador: true,
+      },
     });
 
-    const stats = await Promise.all(
-      entregadores.map(async (e) => {
-        const entregas = await this.prisma.entrega.findMany({
-          where: {
-            entregadorId: e.id,
-            createdAt: { gte: inicioMes },
-          },
-        });
-        const totalEntregues = entregas.filter((en) => en.status === 'ENTREGUE').length;
-        const totalGanho = totalEntregues * Number(e.valorPorEntrega);
-        return {
-          ...e,
-          totalEntregasMes: entregas.length,
-          totalEntreguesMes: totalEntregues,
-          totalGanhoMes: totalGanho,
-        };
-      }),
-    );
+    if (vinculos.length === 0) return [];
 
-    return stats;
+    const entregadorIds = vinculos.map((v) => v.entregadorId);
+
+    const statsRaw: any[] = await this.prisma.$queryRaw`
+      SELECT
+        e."id" AS "entregadorId",
+        COUNT(en.id) FILTER (WHERE en."createdAt" >= ${inicioMes}) AS "totalEntregasMes",
+        COUNT(en.id) FILTER (WHERE en."createdAt" >= ${inicioMes} AND en.status = 'ENTREGUE') AS "totalEntreguesMes",
+        COUNT(en.id) FILTER (WHERE en."createdAt" >= ${inicioMes} AND en.status IN ('ACEITO','EM_ROTA')) AS "emAndamentoMes",
+        COUNT(en.id) FILTER (WHERE en."createdAt" >= ${inicioHoje}) AS "totalHoje",
+        COUNT(en.id) FILTER (WHERE en."createdAt" >= ${inicioHoje} AND en.status = 'ENTREGUE') AS "entreguesHoje",
+        COUNT(en.id) FILTER (WHERE en."createdAt" >= ${inicioHoje} AND en.status IN ('ACEITO','EM_ROTA')) AS "emAndamentoHoje"
+      FROM entregadores e
+      LEFT JOIN entregas en ON en."entregadorId" = e.id
+      WHERE e.id IN (${entregadorIds.join(',')})
+      GROUP BY e.id
+    `;
+
+    const statsMap = new Map<string, any>();
+    for (const row of statsRaw) {
+      statsMap.set(row.entregadorId, {
+        totalEntregasMes: Number(row.totalEntregasMes),
+        totalEntreguesMes: Number(row.totalEntreguesMes),
+        emAndamentoMes: Number(row.emAndamentoMes),
+        totalHoje: Number(row.totalHoje),
+        entreguesHoje: Number(row.entreguesHoje),
+        emAndamentoHoje: Number(row.emAndamentoHoje),
+      });
+    }
+
+    return vinculos.map((v) => {
+      const e = v.entregador;
+      const s = statsMap.get(e.id) || { totalEntregasMes: 0, totalEntreguesMes: 0, emAndamentoMes: 0, totalHoje: 0, entreguesHoje: 0, emAndamentoHoje: 0 };
+      return {
+        ...e,
+        diaria: v.diaria,
+        valorPorEntrega: v.valorPorEntrega,
+        lojaVinculoId: v.id,
+        vinculoStatus: v.status,
+        totalEntregasMes: s.totalEntregasMes,
+        totalEntreguesMes: s.totalEntreguesMes,
+        emAndamentoMes: s.emAndamentoMes,
+        totalGanhoMes: s.totalEntreguesMes * Number(v.valorPorEntrega),
+        totalHoje: s.totalHoje,
+        entreguesHoje: s.entreguesHoje,
+        emAndamentoHoje: s.emAndamentoHoje,
+      };
+    });
+  }
+
+  async checkin(entregadorId: string, vendedorId: string, observacao?: string) {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    const vinculo = await this.prisma.entregadorLoja.findFirst({
+      where: { entregadorId, vendedorId, ativo: true, status: 'ACEITO' },
+    });
+
+    if (!vinculo) {
+      throw new Error('Vinculo nao encontrado ou nao aceito');
+    }
+
+    const checkinExistente = await this.prisma.entregadorCheckin.findFirst({
+      where: {
+        entregadorId,
+        vendedorId,
+        lojaId: vinculo.id,
+        data: hoje,
+      },
+    });
+
+    if (checkinExistente) {
+      throw new Error('Ja fez check-in hoje');
+    }
+
+    const inicioHoje = new Date();
+    inicioHoje.setHours(0, 0, 0, 0);
+
+    const entregasHoje = await this.prisma.entrega.findMany({
+      where: {
+        entregadorId,
+        pedido: { vendedorId },
+        status: 'ENTREGUE',
+        entregueEm: { gte: inicioHoje },
+      },
+    });
+
+    const totalEntregas = entregasHoje.length;
+    const valorEntregas = totalEntregas * Number(vinculo.valorPorEntrega);
+    const valorDiaria = Number(vinculo.diaria);
+    const valorTotal = valorDiaria + valorEntregas;
+
+    const checkin = await this.prisma.entregadorCheckin.create({
+      data: {
+        entregadorId,
+        vendedorId,
+        lojaId: vinculo.id,
+        data: hoje,
+        valorDiaria: vinculo.diaria,
+        valorEntregas,
+        valorTotal,
+        totalEntregas,
+        observacao,
+      },
+    });
+
+    return { checkin, message: 'Check-in realizado com sucesso' };
+  }
+
+  async pagarEntregador(checkinId: string, vendedorId: string) {
+    const checkin = await this.prisma.entregadorCheckin.findFirst({
+      where: { id: checkinId, vendedorId },
+    });
+
+    if (!checkin) {
+      throw new Error('Check-in nao encontrado');
+    }
+
+    if (checkin.pago) {
+      throw new Error('Pagamento ja foi realizado');
+    }
+
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    if (checkin.data.getTime() !== hoje.getTime()) {
+      throw new Error('So e possivel pagar check-ins de hoje');
+    }
+
+    const atualizado = await this.prisma.entregadorCheckin.update({
+      where: { id: checkinId },
+      data: {
+        pago: true,
+        pagoEm: new Date(),
+      },
+    });
+
+    return { checkin: atualizado, message: 'Pagamento registrado com sucesso' };
+  }
+
+  async getCheckins(vendedorId: string, data?: string) {
+    const where: any = { vendedorId };
+    if (data) {
+      const dataObj = new Date(data);
+      dataObj.setHours(0, 0, 0, 0);
+      where.data = dataObj;
+    }
+
+    return this.prisma.entregadorCheckin.findMany({
+      where,
+      include: {
+        entregador: { select: { id: true, nome: true } },
+      },
+      orderBy: { checkinEm: 'desc' },
+    });
+  }
+
+  async getEntregadoresParaPagar(vendedorId: string) {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    const vinculos = await this.prisma.entregadorLoja.findMany({
+      where: { vendedorId, ativo: true, status: 'ACEITO' },
+      include: { entregador: true },
+    });
+
+    if (vinculos.length === 0) return [];
+
+    const entregadorIds = vinculos.map((v) => v.entregadorId);
+
+    const statsRaw: any[] = await this.prisma.$queryRaw`
+      SELECT
+        e."id" AS "entregadorId",
+        COUNT(en.id) FILTER (WHERE en.status = 'ENTREGUE' AND en."entregueEm" >= ${hoje}) AS "totalEntregasHoje",
+        ec."pago" AS "pago",
+        ec."pagoEm" AS "pagoEm",
+        ec."id" AS "checkinId"
+      FROM entregadores e
+      LEFT JOIN entregas en ON en."entregadorId" = e.id AND en."pedidoId" IN (
+        SELECT p.id FROM pedidos p WHERE p."vendedorId" = ${vendedorId}
+      )
+      LEFT JOIN entregador_checkins ec ON ec."entregadorId" = e.id AND ec."vendedorId" = ${vendedorId} AND ec.data = ${hoje}
+      WHERE e.id IN (${entregadorIds.join(',')})
+      GROUP BY e.id, ec."pago", ec."pagoEm", ec."id"
+    `;
+
+    const statsMap = new Map<string, any>();
+    for (const row of statsRaw) {
+      statsMap.set(row.entregadorId, {
+        totalEntregasHoje: Number(row.totalEntregasHoje),
+        checkinId: row.checkinId || null,
+        pago: row.pago || false,
+        pagoEm: row.pagoEm || null,
+      });
+    }
+
+    return vinculos.map((v) => {
+      const e = v.entregador;
+      const s = statsMap.get(e.id) || { totalEntregasHoje: 0, checkinId: null, pago: false, pagoEm: null };
+      const valorEntregasHoje = s.totalEntregasHoje * Number(v.valorPorEntrega);
+      const valorDiaria = Number(v.diaria);
+      return {
+        entregadorId: e.id,
+        nome: e.nome,
+        diaria: v.diaria,
+        valorPorEntrega: v.valorPorEntrega,
+        totalEntregasHoje: s.totalEntregasHoje,
+        valorEntregasHoje,
+        valorDiaria,
+        valorTotalHoje: valorDiaria + valorEntregasHoje,
+        checkin: s.checkinId ? { id: s.checkinId } : null,
+        pago: s.pago,
+        pagoEm: s.pagoEm,
+      };
+    });
   }
 }

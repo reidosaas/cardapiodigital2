@@ -152,7 +152,7 @@ export default function PedidosPage() {
   useEffect(() => {
     if (!user?.vendedor?.id) return;
     api.get('/api/caixa/ultimo').then((r) => setUltimoCaixa(r.data)).catch(() => {});
-    api.get(`/api/entregadores/vendedor/${user.vendedor.id}`).then((r) => setEntregadores(r.data)).catch(() => {});
+    api.get(`/api/entregadores/stats/vendedor/${user.vendedor.id}`).then((r) => setEntregadores(r.data.filter((e: any) => e.vinculoStatus === 'ACEITO'))).catch(() => {});
   }, [user]);
 
   const confirmarEntrega = async () => {
@@ -344,25 +344,25 @@ export default function PedidosPage() {
           )}
         </AnimatePresence>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2 md:gap-3">
           {colunas.map((coluna) => {
             const Icon = coluna.icon;
             const lista = pedidosPorStatus(coluna.key);
             return (
-              <div key={coluna.key} className="bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-800 min-h-[200px] md:min-h-[300px]">
-                <div className={`sticky top-0 z-10 ${coluna.color} text-white px-3 py-2 rounded-t-xl flex items-center justify-between`}>
-                  <div className="flex items-center gap-1.5 text-sm font-semibold">
-                    <Icon size={14} />
+              <div key={coluna.key} className="bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-800 flex flex-col">
+                <div className={`sticky top-0 z-10 ${coluna.color} text-white px-2.5 py-1.5 rounded-t-xl flex items-center justify-between`}>
+                  <div className="flex items-center gap-1 text-xs font-semibold">
+                    <Icon size={12} />
                     {coluna.label}
                   </div>
-                  <span className="text-xs bg-white/20 rounded-full px-2 py-0.5">{lista.length}</span>
+                  <span className="text-[10px] bg-white/20 rounded-full px-1.5 py-0.5">{lista.length}</span>
                 </div>
 
-                <div className="p-2 space-y-2 max-h-[calc(100vh-280px)] overflow-y-auto">
+                <div className="p-1.5 space-y-1.5 max-h-[60vh] overflow-y-auto">
                   {lista.length === 0 && (
-                    <div className="text-center py-6 text-gray-400 text-xs">
-                      <Package size={24} className="mx-auto mb-1 opacity-50" />
-                      Nenhum pedido
+                    <div className="text-center py-4 text-gray-400 text-[10px]">
+                      <Package size={16} className="mx-auto mb-0.5 opacity-50" />
+                      Nenhum
                     </div>
                   )}
                   <AnimatePresence>
@@ -373,34 +373,34 @@ export default function PedidosPage() {
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 p-3 cursor-pointer hover:shadow-md transition-shadow"
+                        className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 p-2 cursor-pointer hover:shadow-md transition-shadow"
                         onClick={() => setExpandido(expandido === pedido.id ? null : pedido.id)}
                       >
-                        <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-start justify-between mb-1">
                           <div className="min-w-0 flex-1">
-                            <p className="font-semibold text-sm truncate">{pedido.clienteNome || 'Anonimo'}</p>
-                            <div className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
-                              <Clock size={11} />
+                            <p className="font-semibold text-xs truncate">{pedido.clienteNome || 'Anonimo'}</p>
+                            <div className="flex items-center gap-1 text-[10px] text-gray-400 mt-0.5">
+                              <Clock size={9} />
                               <span>{calcularTempo(pedido.createdAt)}</span>
                             </div>
                           </div>
-                          <div className="text-right flex-shrink-0 ml-2">
-                            <p className="font-bold text-sm">{formatCurrency(pedido.total)}</p>
-                            <p className="text-xs text-gray-400">#{pedido.codigo ? String(pedido.codigo).padStart(8, '0') : pedido.id.slice(0, 6)}</p>
+                          <div className="text-right flex-shrink-0 ml-1">
+                            <p className="font-bold text-xs">{formatCurrency(pedido.total)}</p>
+                            <p className="text-[10px] text-gray-400">#{pedido.codigo ? String(pedido.codigo).padStart(8, '0') : pedido.id.slice(0, 6)}</p>
                           </div>
                         </div>
 
-                        <div className="space-y-1">
+                        <div className="space-y-0.5">
                           {pedido.itens.slice(0, expandido === pedido.id ? pedido.itens.length : 2).map((item) => (
-                            <div key={item.id} className="flex items-center justify-between text-xs">
+                            <div key={item.id} className="flex items-center justify-between text-[10px]">
                               <span className="text-gray-600 dark:text-gray-300 truncate">
                                 <span className="font-medium">{item.quantidade}x</span> {item.nome}
                               </span>
-                              <span className="text-gray-500 flex-shrink-0 ml-2">{formatCurrency(item.total)}</span>
+                              <span className="text-gray-500 flex-shrink-0 ml-1">{formatCurrency(item.total)}</span>
                             </div>
                           ))}
                           {pedido.itens.length > 2 && expandido !== pedido.id && (
-                            <button className="text-xs text-primary hover:underline mt-1">+{pedido.itens.length - 2} itens</button>
+                            <button className="text-[10px] text-primary hover:underline mt-0.5">+{pedido.itens.length - 2} itens</button>
                           )}
                         </div>
 
@@ -415,6 +415,24 @@ export default function PedidosPage() {
                               <div className="flex items-center gap-1">
                                 <MapPin size={11} /> {pedido.tipoEntrega === 'ENTREGA' ? 'Entrega' : 'Retirada'}
                                 {pedido.enderecoEntrega && ` - ${pedido.enderecoEntrega}`}
+                              </div>
+                            )}
+                            {pedido.tipoEntrega === 'ENTREGA' && pedido.enderecoEntrega && (
+                              <div className="flex gap-1 mt-1">
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(pedido.enderecoEntrega || '')}`, '_blank'); }}
+                                  className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors flex-shrink-0"
+                                  title="Abrir no Google Maps"
+                                >
+                                  <MapPin size={12} />
+                                </button>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); window.open(`https://waze.com/ul?navigate=yes&address=${encodeURIComponent(pedido.enderecoEntrega || '')}`, '_blank'); }}
+                                  className="p-1.5 rounded-lg hover:bg-purple-50 text-purple-600 transition-colors flex-shrink-0"
+                                  title="Abrir no Waze"
+                                >
+                                  <Bike size={12} />
+                                </button>
                               </div>
                             )}
                             {pedido.observacao && (
