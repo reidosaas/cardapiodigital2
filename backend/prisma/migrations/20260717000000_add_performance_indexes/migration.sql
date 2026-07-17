@@ -21,6 +21,3 @@ CREATE INDEX "leads_vendedorId_telefone_idx" ON "leads"("vendedorId", "telefone"
 
 -- CreateIndex: Notificacao history
 CREATE INDEX "notificacoes_userId_createdAt_idx" ON "notificacoes"("userId", "createdAt");
-
--- CreateIndex: EntregadorCheckin by vendor+date
-CREATE INDEX "entregador_checkins_vendedorId_data_idx" ON "entregador_checkins"("vendedorId", "data");
