@@ -57,6 +57,8 @@ services:
       - backend
     env_file:
       - .env
+    environment:
+      - PORT=3000
     networks:
       - cardapio-network
 
