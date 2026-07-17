@@ -21,6 +21,12 @@ export interface User {
     entregaTipo?: string;
     taxaEntrega?: number;
     whatsappNumero?: string;
+    rua?: string;
+    numero?: string;
+    bairro?: string;
+    cidade?: string;
+    estado?: string;
+    cep?: string;
     endereco?: string;
     horarioFuncionamento?: any;
     assinatura?: any;
