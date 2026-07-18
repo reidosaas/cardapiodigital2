@@ -245,6 +245,52 @@ export class EntregadorAuthService {
     };
   }
 
+  async getPerfil(entregadorId: string) {
+    const entregador = await this.prisma.entregador.findUnique({
+      where: { id: entregadorId },
+      select: {
+        id: true,
+        nome: true,
+        email: true,
+        telefone: true,
+        cpf: true,
+        chavePix: true,
+      },
+    });
+    if (!entregador) throw new NotFoundException('Entregador nao encontrado');
+    return entregador;
+  }
+
+  async updatePerfil(
+    entregadorId: string,
+    data: { nome?: string; cpf?: string; chavePix?: string; senhaAtual?: string; novaSenha?: string },
+  ) {
+    const entregador = await this.prisma.entregador.findUnique({ where: { id: entregadorId } });
+    if (!entregador) throw new NotFoundException('Entregador nao encontrado');
+
+    const updateData: any = {};
+
+    if (data.nome !== undefined) updateData.nome = data.nome.trim();
+    if (data.cpf !== undefined) updateData.cpf = data.cpf.replace(/\D/g, '') || null;
+    if (data.chavePix !== undefined) updateData.chavePix = data.chavePix.trim() || null;
+
+    const novaSenha = data.novaSenha?.trim();
+    if (novaSenha) {
+      if (!entregador.senha) {
+        throw new UnauthorizedException('Conta sem senha definida');
+      }
+      const senhaValida = await bcrypt.compare(data.senhaAtual || '', entregador.senha);
+      if (!senhaValida) {
+        throw new UnauthorizedException('Senha atual incorreta');
+      }
+      updateData.senha = await bcrypt.hash(novaSenha, 10);
+    }
+
+    await this.prisma.entregador.update({ where: { id: entregadorId }, data: updateData });
+
+    return { mensagem: 'Perfil atualizado com sucesso' };
+  }
+
   async getLojas(entregadorId: string) {
     const lojas = await this.prisma.entregadorLoja.findMany({
       where: { entregadorId, ativo: true },

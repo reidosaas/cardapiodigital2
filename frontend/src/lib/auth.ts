@@ -11,6 +11,7 @@ export interface User {
     id: string;
     nomeLoja: string;
     slug: string;
+    documento?: string;
     logoUrl?: string;
     corPrimaria: string;
     whatsappConectado: boolean;

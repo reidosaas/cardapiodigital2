@@ -123,6 +123,7 @@ export class AuthService {
             nomeLoja: true,
             slug: true,
             descricao: true,
+            documento: true,
             logoUrl: true,
             bannerUrl: true,
             corPrimaria: true,
@@ -151,6 +152,23 @@ export class AuthService {
     });
 
     return user;
+  }
+
+  async changePassword(userId: string, senhaAtual: string, novaSenha: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException('Usuario nao encontrado');
+
+    const senhaValida = await bcrypt.compare(senhaAtual || '', user.senha);
+    if (!senhaValida) throw new UnauthorizedException('Senha atual incorreta');
+
+    if (!novaSenha || novaSenha.trim().length < 6) {
+      throw new ConflictException('A nova senha deve ter pelo menos 6 caracteres');
+    }
+
+    const senhaHash = await bcrypt.hash(novaSenha.trim(), 10);
+    await this.prisma.user.update({ where: { id: userId }, data: { senha: senhaHash } });
+
+    return { mensagem: 'Senha alterada com sucesso' };
   }
 
   private async generateTokens(user: any) {

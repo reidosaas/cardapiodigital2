@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Truck, Package, BarChart3, Map, LogOut, Menu, X, Store, Sun, Moon } from 'lucide-react';
+import { Truck, Package, BarChart3, Map, LogOut, Menu, X, Store, Sun, Moon, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppTheme } from '@/hooks/useAppTheme';
 
@@ -12,6 +12,7 @@ const navItems = [
   { href: '/entregador/lojas', label: 'Lojas', icon: Store },
   { href: '/entregador/relatorio', label: 'Relatorios', icon: BarChart3 },
   { href: '/entregador/rotas', label: 'Rotas', icon: Map },
+  { href: '/entregador/perfil', label: 'Perfil', icon: User },
 ];
 
 export default function EntregadorLayout({ children }: { children: React.ReactNode }) {

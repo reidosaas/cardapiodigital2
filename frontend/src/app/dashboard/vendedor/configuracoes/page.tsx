@@ -22,6 +22,8 @@ export default function ConfiguracoesPage() {
   const [form, setForm] = useState<any>({});
   const [saving, setSaving] = useState(false);
   const [entregadorLoginUrl, setEntregadorLoginUrl] = useState('');
+  const [senhaForm, setSenhaForm] = useState({ senhaAtual: '', novaSenha: '', confirmar: '' });
+  const [salvandoSenha, setSalvandoSenha] = useState(false);
 
   const themeInitRef = useRef(false);
   useEffect(() => {
@@ -34,6 +36,7 @@ export default function ConfiguracoesPage() {
         nomeLoja: user.vendedor.nomeLoja || '',
         slug: user.vendedor.slug || '',
         descricao: user.vendedor.descricao || '',
+        documento: user.vendedor.documento || '',
         corPrimaria: user.vendedor.corPrimaria || '#6C63FF',
         modoEscuro: modoEscuro ? 'true' : 'false',
         logoUrl: user.vendedor.logoUrl || '',
@@ -112,6 +115,7 @@ export default function ConfiguracoesPage() {
       const payload = {
         nomeLoja: form.nomeLoja,
         descricao: form.descricao,
+        documento: form.documento,
         corPrimaria: form.corPrimaria,
         modoEscuro: isDark,
         logoUrl: form.logoUrl,
@@ -139,6 +143,34 @@ export default function ConfiguracoesPage() {
       toast.error('Erro ao salvar');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const alterarSenha = async () => {
+    if (!senhaForm.senhaAtual || !senhaForm.novaSenha) {
+      toast.error('Preencha a senha atual e a nova senha');
+      return;
+    }
+    if (senhaForm.novaSenha.length < 6) {
+      toast.error('A nova senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+    if (senhaForm.novaSenha !== senhaForm.confirmar) {
+      toast.error('A confirmacao nao confere com a nova senha');
+      return;
+    }
+    setSalvandoSenha(true);
+    try {
+      await api.patch('/api/auth/senha', {
+        senhaAtual: senhaForm.senhaAtual,
+        novaSenha: senhaForm.novaSenha,
+      });
+      setSenhaForm({ senhaAtual: '', novaSenha: '', confirmar: '' });
+      toast.success('Senha alterada com sucesso!');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Erro ao alterar senha');
+    } finally {
+      setSalvandoSenha(false);
     }
   };
 
@@ -218,6 +250,47 @@ export default function ConfiguracoesPage() {
                   <Input value={form.cep} onChange={(e) => setForm({ ...form, cep: e.target.value })} className="mt-1" placeholder="01001-000" />
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6 space-y-4">
+              <h3 className="font-semibold flex items-center gap-2"><Building2 size={18} /> Dados do Titular</h3>
+              <div>
+                <label className="text-sm text-gray-500">CNPJ ou CPF</label>
+                <Input value={form.documento} onChange={(e) => setForm({ ...form, documento: e.target.value })} className="mt-1" placeholder="00.000.000/0000-00 ou 000.000.000-00" />
+              </div>
+              <div>
+                <label className="text-sm text-gray-500">Email de acesso</label>
+                <Input value={user?.email || ''} readOnly className="mt-1 bg-gray-50 dark:bg-gray-800" />
+                <p className="text-xs text-gray-400 mt-1">O email de acesso nao pode ser alterado</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-500">Telefone</label>
+                <Input value={user?.telefone || ''} readOnly className="mt-1 bg-gray-50 dark:bg-gray-800" />
+                <p className="text-xs text-gray-400 mt-1">O telefone nao pode ser alterado</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6 space-y-4">
+              <h3 className="font-semibold flex items-center gap-2"><Key size={18} /> Seguranca (Alterar Senha)</h3>
+              <div>
+                <label className="text-sm text-gray-500">Senha atual</label>
+                <Input type="password" value={senhaForm.senhaAtual} onChange={(e) => setSenhaForm({ ...senhaForm, senhaAtual: e.target.value })} className="mt-1" placeholder="********" />
+              </div>
+              <div>
+                <label className="text-sm text-gray-500">Nova senha</label>
+                <Input type="password" value={senhaForm.novaSenha} onChange={(e) => setSenhaForm({ ...senhaForm, novaSenha: e.target.value })} className="mt-1" placeholder="Minimo 6 caracteres" />
+              </div>
+              <div>
+                <label className="text-sm text-gray-500">Confirmar nova senha</label>
+                <Input type="password" value={senhaForm.confirmar} onChange={(e) => setSenhaForm({ ...senhaForm, confirmar: e.target.value })} className="mt-1" placeholder="Repita a nova senha" />
+              </div>
+              <Button onClick={alterarSenha} disabled={salvandoSenha} variant="outline" className="w-full">
+                <Key className="mr-2 h-4 w-4" /> {salvandoSenha ? 'Alterando...' : 'Alterar Senha'}
+              </Button>
             </CardContent>
           </Card>
 

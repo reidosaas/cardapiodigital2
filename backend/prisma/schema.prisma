@@ -114,6 +114,7 @@ model Vendedor {
   nomeLoja             String
   slug                 String      @unique
   descricao            String?
+  documento            String?
   logoUrl              String?
   bannerUrl            String?
   corPrimaria          String      @default("#6C63FF")
@@ -819,6 +820,8 @@ model Entregador {
   email           String?    @unique
   senha           String?
   telefone        String?    @unique
+  cpf             String?
+  chavePix        String?
   diaria          Decimal    @default(0) @db.Decimal(10, 2)
   valorPorEntrega Decimal    @default(0) @db.Decimal(10, 2)
   ativo           Boolean    @default(true)

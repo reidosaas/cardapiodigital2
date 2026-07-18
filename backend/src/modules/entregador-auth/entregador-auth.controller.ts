@@ -1,5 +1,6 @@
-import { Controller, Post, Body, Get, Req } from '@nestjs/common';
+import { Controller, Post, Body, Get, Patch, Req, UseGuards } from '@nestjs/common';
 import { EntregadorAuthService } from './entregador-auth.service';
+import { EntregadorAuthGuard } from './entregador-auth.guard';
 
 @Controller('entregador-auth')
 export class EntregadorAuthController {
@@ -29,5 +30,20 @@ export class EntregadorAuthController {
   @Get('me')
   async me(@Req() req: any) {
     return this.service.validateToken({ sub: req.user?.sub || req.headers['x-entregador-id'], ...req.user });
+  }
+
+  @UseGuards(EntregadorAuthGuard)
+  @Get('perfil')
+  async getPerfil(@Req() req: any) {
+    return this.service.getPerfil(req.user.id);
+  }
+
+  @UseGuards(EntregadorAuthGuard)
+  @Patch('perfil')
+  async updatePerfil(
+    @Req() req: any,
+    @Body() body: { nome?: string; cpf?: string; chavePix?: string; senhaAtual?: string; novaSenha?: string },
+  ) {
+    return this.service.updatePerfil(req.user.id, body);
   }
 }
