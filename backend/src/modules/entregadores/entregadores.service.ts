@@ -357,11 +357,45 @@ export class EntregadoresService {
       throw new Error('Pagamento ja foi realizado');
     }
 
+    const vinculo = await this.prisma.entregadorLoja.findFirst({
+      where: { entregadorId: checkin.entregadorId, vendedorId, ativo: true },
+    });
+
+    const inicioDia = new Date(checkin.data);
+    inicioDia.setHours(0, 0, 0, 0);
+    const fimDia = new Date(checkin.data);
+    fimDia.setHours(23, 59, 59, 999);
+
+    const pedidosLoja = await this.prisma.pedido.findMany({
+      where: { vendedorId },
+      select: { id: true },
+    });
+    const pedidoIds = pedidosLoja.map((p: any) => p.id);
+
+    const entregasDia = await this.prisma.entrega.findMany({
+      where: {
+        entregadorId: checkin.entregadorId,
+        pedidoId: { in: pedidoIds },
+        status: 'ENTREGUE',
+        entregueEm: { gte: inicioDia, lte: fimDia },
+      },
+    });
+
+    const valorPorEntrega = vinculo ? Number(vinculo.valorPorEntrega) : 0;
+    const valorDiaria = vinculo ? Number(vinculo.diaria) : Number(checkin.valorDiaria);
+    const totalEntregas = entregasDia.length;
+    const valorEntregas = totalEntregas * valorPorEntrega;
+    const valorTotal = valorDiaria + valorEntregas;
+
     const atualizado = await this.prisma.entregadorCheckin.update({
       where: { id: checkinId },
       data: {
         pago: true,
         pagoEm: new Date(),
+        valorDiaria,
+        valorEntregas,
+        valorTotal,
+        totalEntregas,
       },
     });
 

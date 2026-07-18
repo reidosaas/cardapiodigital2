@@ -170,17 +170,16 @@ export class EntregadorDashboardService {
       where: { entregadorId, vendedorId: { in: vendedorIds }, ativo: true },
     });
 
-    const totalEntregas = entregas.length;
-    const valorEntregas = entregas.reduce(
-      (acc, e) => acc + (Number(e.valorEntrega) || 0),
-      0,
-    );
     const diaria = loja ? Number(loja.diaria) : 0;
+    const valorPorEntrega = loja ? Number(loja.valorPorEntrega) : 0;
+    const totalEntregas = entregas.length;
+    const valorEntregas = totalEntregas * valorPorEntrega;
     const diasTrabalhados = this.contarDiasTrabalhados(entregas);
     const totalDiarias = diaria * diasTrabalhados;
     const totalGanhos = valorEntregas + totalDiarias;
 
-    const jaRecebido = await this.somarPago(entregadorId, vendedorIds, inicio);
+    const diasPagos = await this.diasPagos(entregadorId, vendedorIds, inicio);
+    const jaRecebido = this.calcularRecebido(entregas, diasPagos, valorPorEntrega, diaria);
     const aReceber = Math.max(totalGanhos - jaRecebido, 0);
 
     return {
@@ -190,7 +189,7 @@ export class EntregadorDashboardService {
       diaria,
       diasTrabalhados,
       totalDiarias,
-      valorPorEntrega: loja ? Number(loja.valorPorEntrega) : 0,
+      valorPorEntrega,
       totalGanhos,
       jaRecebido,
       aReceber,
@@ -214,12 +213,17 @@ export class EntregadorDashboardService {
     return dias.size;
   }
 
-  private async somarPago(
+  private diaKey(d: Date): string {
+    const dt = new Date(d);
+    return `${dt.getFullYear()}-${dt.getMonth()}-${dt.getDate()}`;
+  }
+
+  private async diasPagos(
     entregadorId: string,
     vendedorIds: string[],
     inicio: Date,
     fim?: Date,
-  ): Promise<number> {
+  ): Promise<Set<string>> {
     const checkins = await this.prisma.entregadorCheckin.findMany({
       where: {
         entregadorId,
@@ -227,9 +231,29 @@ export class EntregadorDashboardService {
         pago: true,
         data: fim ? { gte: inicio, lte: fim } : { gte: inicio },
       },
-      select: { valorTotal: true },
+      select: { data: true },
     });
-    return checkins.reduce((acc, c) => acc + (Number(c.valorTotal) || 0), 0);
+    return new Set(checkins.map((c) => this.diaKey(c.data)));
+  }
+
+  private calcularRecebido(
+    entregas: { entregueEm: Date | null }[],
+    diasPagos: Set<string>,
+    valorPorEntrega: number,
+    diaria: number,
+  ): number {
+    const entregasPorDia = new Map<string, number>();
+    for (const e of entregas) {
+      if (!e.entregueEm) continue;
+      const k = this.diaKey(e.entregueEm);
+      entregasPorDia.set(k, (entregasPorDia.get(k) || 0) + 1);
+    }
+    let recebido = 0;
+    for (const dia of diasPagos) {
+      const qtd = entregasPorDia.get(dia) || 0;
+      recebido += diaria + qtd * valorPorEntrega;
+    }
+    return recebido;
   }
 
   async getRelatorio(entregadorId: string, vendedorId: string, dataInicio: string, dataFim: string) {
@@ -264,13 +288,15 @@ export class EntregadorDashboardService {
     });
 
     const diaria = loja ? Number(loja.diaria) : 0;
+    const valorPorEntrega = loja ? Number(loja.valorPorEntrega) : 0;
     const totalEntregas = entregas.length;
-    const valorEntregas = entregas.reduce((acc, e) => acc + (Number(e.valorEntrega) || 0), 0);
+    const valorEntregas = totalEntregas * valorPorEntrega;
     const diasTrabalhados = this.contarDiasTrabalhados(entregas);
     const totalDiarias = diaria * diasTrabalhados;
     const totalGanhos = valorEntregas + totalDiarias;
 
-    const jaRecebido = await this.somarPago(entregadorId, vendedorIds, inicio, fim);
+    const diasPagos = await this.diasPagos(entregadorId, vendedorIds, inicio, fim);
+    const jaRecebido = this.calcularRecebido(entregas, diasPagos, valorPorEntrega, diaria);
     const aReceber = Math.max(totalGanhos - jaRecebido, 0);
 
     return {
@@ -281,7 +307,7 @@ export class EntregadorDashboardService {
       diaria,
       diasTrabalhados,
       totalDiarias,
-      valorPorEntrega: loja ? Number(loja.valorPorEntrega) : 0,
+      valorPorEntrega,
       totalGanhos,
       jaRecebido,
       aReceber,
