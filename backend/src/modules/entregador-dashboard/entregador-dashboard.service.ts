@@ -180,6 +180,9 @@ export class EntregadorDashboardService {
     const totalDiarias = diaria * diasTrabalhados;
     const totalGanhos = valorEntregas + totalDiarias;
 
+    const jaRecebido = await this.somarPago(entregadorId, vendedorIds, inicio);
+    const aReceber = Math.max(totalGanhos - jaRecebido, 0);
+
     return {
       periodo,
       totalEntregas,
@@ -189,6 +192,8 @@ export class EntregadorDashboardService {
       totalDiarias,
       valorPorEntrega: loja ? Number(loja.valorPorEntrega) : 0,
       totalGanhos,
+      jaRecebido,
+      aReceber,
       entregas: entregas.map((e) => ({
         id: e.id,
         pedidoId: e.pedidoId,
@@ -207,6 +212,24 @@ export class EntregadorDashboardService {
       }
     }
     return dias.size;
+  }
+
+  private async somarPago(
+    entregadorId: string,
+    vendedorIds: string[],
+    inicio: Date,
+    fim?: Date,
+  ): Promise<number> {
+    const checkins = await this.prisma.entregadorCheckin.findMany({
+      where: {
+        entregadorId,
+        vendedorId: { in: vendedorIds },
+        pago: true,
+        data: fim ? { gte: inicio, lte: fim } : { gte: inicio },
+      },
+      select: { valorTotal: true },
+    });
+    return checkins.reduce((acc, c) => acc + (Number(c.valorTotal) || 0), 0);
   }
 
   async getRelatorio(entregadorId: string, vendedorId: string, dataInicio: string, dataFim: string) {
@@ -247,6 +270,9 @@ export class EntregadorDashboardService {
     const totalDiarias = diaria * diasTrabalhados;
     const totalGanhos = valorEntregas + totalDiarias;
 
+    const jaRecebido = await this.somarPago(entregadorId, vendedorIds, inicio, fim);
+    const aReceber = Math.max(totalGanhos - jaRecebido, 0);
+
     return {
       dataInicio,
       dataFim,
@@ -257,6 +283,8 @@ export class EntregadorDashboardService {
       totalDiarias,
       valorPorEntrega: loja ? Number(loja.valorPorEntrega) : 0,
       totalGanhos,
+      jaRecebido,
+      aReceber,
       entregas: entregas.map((e) => ({
         id: e.id,
         codigo: e.pedido.codigo,

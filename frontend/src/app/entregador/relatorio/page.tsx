@@ -89,8 +89,8 @@ export default function EntregadorRelatorioPage() {
   const ganhoDiarias = Number(relatorio.totalDiarias || 0);
   const totalGanho = ganhoEntregas + ganhoDiarias;
 
-  const jaRecebido = 0;
-  const aReceber = totalGanho;
+  const jaRecebido = Number(relatorio.jaRecebido || 0);
+  const aReceber = relatorio.aReceber !== undefined ? Number(relatorio.aReceber) : Math.max(totalGanho - jaRecebido, 0);
 
   const periodoLabel = periodo === 'hoje' ? 'Hoje' : periodo === 'semana' ? 'Ultimos 7 Dias' : periodo === 'mes' ? 'Este Mes' : 'Periodo Personalizado';
 

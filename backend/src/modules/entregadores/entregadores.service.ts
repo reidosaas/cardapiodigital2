@@ -357,13 +357,6 @@ export class EntregadoresService {
       throw new Error('Pagamento ja foi realizado');
     }
 
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-
-    if (checkin.data.getTime() !== hoje.getTime()) {
-      throw new Error('So e possivel pagar check-ins de hoje');
-    }
-
     const atualizado = await this.prisma.entregadorCheckin.update({
       where: { id: checkinId },
       data: {
