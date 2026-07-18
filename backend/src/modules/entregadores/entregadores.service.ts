@@ -119,9 +119,15 @@ export class EntregadoresService {
     const fim = dataFim ? new Date(dataFim) : new Date();
     fim.setHours(23, 59, 59, 999);
 
+    const pedidosLoja = await this.prisma.pedido.findMany({
+      where: { vendedorId },
+      select: { id: true },
+    });
+    const pedidoIds = pedidosLoja.map((p: any) => p.id);
+
     const entregas = await this.prisma.entrega.findMany({
       where: {
-        pedido: { vendedorId },
+        pedidoId: { in: pedidoIds },
         createdAt: { gte: inicio, lte: fim },
       },
       include: {
@@ -407,7 +413,7 @@ export class EntregadoresService {
         ec."id" AS "checkinId"
       FROM entregadores e
       LEFT JOIN entregas en ON en."entregadorId" = e.id AND en."pedidoId" IN (
-        SELECT p.id FROM pedidos p WHERE p."vendedorId" = ${vendedorId}
+        SELECT p.id FROM pedidos p WHERE p."vendedorId" = ${vendedorId}::uuid
       )
       LEFT JOIN entregador_checkins ec ON ec."entregadorId" = e.id AND ec."vendedorId" = ${vendedorId} AND ec.data = ${hoje}
       WHERE e.id::text = ANY(${entregadorIds})
