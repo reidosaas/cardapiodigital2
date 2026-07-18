@@ -415,7 +415,7 @@ export class EntregadoresService {
       LEFT JOIN entregas en ON en."entregadorId" = e.id AND en."pedidoId" IN (
         SELECT p.id FROM pedidos p WHERE p."vendedorId" = ${vendedorId}::uuid
       )
-      LEFT JOIN entregador_checkins ec ON ec."entregadorId" = e.id AND ec."vendedorId" = ${vendedorId} AND ec.data = ${hoje}
+      LEFT JOIN entregador_checkins ec ON ec."entregadorId" = e.id AND ec."vendedorId" = ${vendedorId}::uuid AND ec.data = ${hoje}
       WHERE e.id::text = ANY(${entregadorIds})
       GROUP BY e.id, ec."pago", ec."pagoEm", ec."id"
     `;
