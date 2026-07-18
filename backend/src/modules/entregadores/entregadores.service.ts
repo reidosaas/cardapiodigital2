@@ -300,10 +300,16 @@ export class EntregadoresService {
     const inicioHoje = new Date();
     inicioHoje.setHours(0, 0, 0, 0);
 
+    const pedidosLoja = await this.prisma.pedido.findMany({
+      where: { vendedorId },
+      select: { id: true },
+    });
+    const pedidoIds = pedidosLoja.map((p: any) => p.id);
+
     const entregasHoje = await this.prisma.entrega.findMany({
       where: {
         entregadorId,
-        pedido: { vendedorId },
+        pedidoId: { in: pedidoIds },
         status: 'ENTREGUE',
         entregueEm: { gte: inicioHoje },
       },
