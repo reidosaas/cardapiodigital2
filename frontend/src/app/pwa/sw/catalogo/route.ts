@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   const sw = `
-const CACHE = 'cardapio-catalogo-v1';
+const CACHE = 'cardapio-catalogo-v2';
 self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
