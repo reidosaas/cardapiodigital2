@@ -121,7 +121,7 @@ export default function MesasPage() {
   }, [user]);
 
   useEffect(() => { carregar(); }, [carregar]);
-  useEffect(() => { const iv = setInterval(carregar, 15000); return () => clearInterval(iv); }, [carregar]);
+  useEffect(() => { const iv = setInterval(carregar, 5000); return () => clearInterval(iv); }, [carregar]);
 
   // Mantem mesaSelecionada sincronizada com dados frescos
   useEffect(() => {
@@ -161,17 +161,31 @@ export default function MesasPage() {
   };
 
   const mudarStatus = async (id: string, status: MesaStatus) => {
+    const anterior = mesas;
+    setMesas((prev) => prev.map((m) => (m.id === id ? { ...m, status } : m)));
+    setMesaSelecionada((prev) => (prev && prev.id === id ? { ...prev, status } : prev));
+    toast.success('Mesa: ' + STATUS_CONFIG[status].label);
     try {
       await api.patch('/api/mesas/' + id + '/status', { status });
-      carregar(); toast.success('Mesa: ' + STATUS_CONFIG[status].label);
-    } catch { toast.error('Erro ao mudar status'); }
+      carregar();
+    } catch {
+      setMesas(anterior);
+      toast.error('Erro ao mudar status');
+    }
   };
 
   const liberarMesa = async (id: string) => {
+    const anterior = mesas;
+    setMesas((prev) => prev.map((m) => (m.id === id ? { ...m, status: 'DISPONIVEL' as MesaStatus, pedidos: [] } : m)));
+    fecharPainel();
+    toast.success('Mesa liberada!');
     try {
       await api.patch('/api/mesas/' + id + '/liberar');
-      fecharPainel(); carregar(); toast.success('Mesa liberada!');
-    } catch { toast.error('Erro ao liberar'); }
+      carregar();
+    } catch {
+      setMesas(anterior);
+      toast.error('Erro ao liberar');
+    }
   };
 
   const abrirNovoPedido = async () => {
