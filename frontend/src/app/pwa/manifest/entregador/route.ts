@@ -8,6 +8,7 @@ export async function GET(req: NextRequest) {
     name: 'Entregador CardapioAI',
     short_name: 'Entregador',
     description: 'Area do Entregador - CardapioAI',
+    id: '/entregador',
     start_url: '/entregador/login',
     scope: '/entregador',
     display: 'standalone',

@@ -30,13 +30,12 @@ export default function CatalogoPublico() {
   const [clienteModoEscuro, setClienteModoEscuro] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const linkEl = document.getElementById('dynamic-manifest') as HTMLLinkElement || document.createElement('link');
+    document.querySelectorAll('link[rel="manifest"]').forEach((el) => el.parentElement?.removeChild(el));
+    const linkEl = document.createElement('link');
     linkEl.id = 'dynamic-manifest';
     linkEl.rel = 'manifest';
     linkEl.href = `/pwa/manifest/${slug}`;
-    if (!document.getElementById('dynamic-manifest')) {
-      document.head.appendChild(linkEl);
-    }
+    document.head.appendChild(linkEl);
 
     const iconEl = document.getElementById('dynamic-icon') as HTMLLinkElement || document.createElement('link');
     iconEl.id = 'dynamic-icon';

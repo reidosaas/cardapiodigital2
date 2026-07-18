@@ -24,17 +24,16 @@ export default function EntregadorLayout({ children }: { children: React.ReactNo
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    const linkEl = document.getElementById('dynamic-manifest') as HTMLLinkElement || document.createElement('link');
+    document.querySelectorAll('link[rel="manifest"]').forEach((el) => el.parentElement?.removeChild(el));
+    const linkEl = document.createElement('link');
     linkEl.id = 'dynamic-manifest';
     linkEl.rel = 'manifest';
     linkEl.href = '/pwa/manifest/entregador';
-    if (!document.getElementById('dynamic-manifest')) {
-      document.head.appendChild(linkEl);
-    }
+    document.head.appendChild(linkEl);
+
     const iconEl = document.getElementById('dynamic-icon') as HTMLLinkElement || document.createElement('link');
     iconEl.id = 'dynamic-icon';
-    iconEl.rel = 'icon';
-    iconEl.type = 'image/svg+xml';
+    iconEl.rel = 'apple-touch-icon';
     iconEl.href = '/pwa/icon/entregador?size=192';
     if (!document.getElementById('dynamic-icon')) {
       document.head.appendChild(iconEl);

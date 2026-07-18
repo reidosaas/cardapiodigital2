@@ -4,7 +4,6 @@ import '@/styles/globals.css';
 export const metadata = {
   title: 'CardapioAI - Catalogo Online',
   description: 'Cardapio Digital Inteligente - Peca online e receba em casa',
-  manifest: '/manifest.json',
   viewport: {
     width: 'device-width',
     initialScale: 1,
@@ -32,7 +31,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="application-name" content="CardapioAI" />
-        <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/icons/icon-192.png" sizes="192x192" />
         <link rel="icon" type="image/png" href="/icons/icon-192.png" sizes="192x192" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
