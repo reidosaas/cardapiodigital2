@@ -34,7 +34,6 @@ const vendedorLinks = [
   { href: '/dashboard/vendedor/produtos', icon: Package, label: 'Produtos' },
   { href: '/dashboard/vendedor/pedidos', icon: ShoppingCart, label: 'Pedidos' },
   { href: '/dashboard/vendedor/mesas', icon: Table2, label: 'Mesas' },
-  { href: '/dashboard/vendedor/clientes', icon: Users, label: 'Clientes' },
   { href: '/dashboard/vendedor/leads', icon: UserPlus, label: 'Leads' },
   { href: '/dashboard/vendedor/agenda', icon: Calendar, label: 'Agenda' },
   { href: '/dashboard/vendedor/conversas', icon: MessageCircle, label: 'Conversas' },
