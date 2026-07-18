@@ -13,7 +13,9 @@ export class UploadController {
   constructor(private uploadService: UploadService) {}
 
   private fullUrl(path: string, req: Request): string {
-    const base = `${req.protocol}://${req.get('host')}`;
+    const base =
+      process.env.BACKEND_URL ||
+      `${req.protocol}://${req.get('host')}`;
     return `${base}${path}`;
   }
 
