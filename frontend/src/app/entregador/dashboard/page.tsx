@@ -160,6 +160,25 @@ export default function EntregadorDashboardPage() {
   const updateStatus = async (entregaId: string, newStatus: string) => {
     if (!token) return;
     setUpdatingId(entregaId);
+
+    const prevAtivas = entregasAtivas;
+    const prevHistorico = entregasHistorico;
+
+    if (newStatus === 'ENTREGUE' || newStatus === 'CANCELADO') {
+      const alvo = entregasAtivas.find((p) => p.id === entregaId);
+      setEntregasAtivas((cur) => cur.filter((p) => p.id !== entregaId));
+      if (alvo) {
+        setEntregasHistorico((cur) => [
+          { ...alvo, status: newStatus, entregueEm: new Date().toISOString() },
+          ...cur,
+        ]);
+      }
+    } else {
+      setEntregasAtivas((cur) =>
+        cur.map((p) => (p.id === entregaId ? { ...p, status: newStatus } : p)),
+      );
+    }
+
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/entregador/entrega/${entregaId}/status`, {
         method: 'PATCH',
@@ -170,6 +189,8 @@ export default function EntregadorDashboardPage() {
       toast.success(`Status atualizado para ${statusLabels[newStatus]}`);
       fetchData();
     } catch (err: any) {
+      setEntregasAtivas(prevAtivas);
+      setEntregasHistorico(prevHistorico);
       toast.error(err.message);
     } finally {
       setUpdatingId(null);
