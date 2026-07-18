@@ -236,7 +236,7 @@ export class EntregadoresService {
         COUNT(en.id) FILTER (WHERE en."createdAt" >= ${inicioHoje} AND en.status IN ('ACEITO','EM_ROTA')) AS "emAndamentoHoje"
       FROM entregadores e
       LEFT JOIN entregas en ON en."entregadorId" = e.id
-      WHERE e.id IN (${entregadorIds.join(',')})
+      WHERE e.id IN (${entregadorIds})
       GROUP BY e.id
     `;
 
@@ -404,7 +404,7 @@ export class EntregadoresService {
         SELECT p.id FROM pedidos p WHERE p."vendedorId" = ${vendedorId}
       )
       LEFT JOIN entregador_checkins ec ON ec."entregadorId" = e.id AND ec."vendedorId" = ${vendedorId} AND ec.data = ${hoje}
-      WHERE e.id IN (${entregadorIds.join(',')})
+      WHERE e.id IN (${entregadorIds})
       GROUP BY e.id, ec."pago", ec."pagoEm", ec."id"
     `;
 
