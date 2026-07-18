@@ -14,7 +14,7 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 
 export default function ConfiguracoesPage() {
-  const { user } = useAuth();
+  const { user, refresh } = useAuth();
   const { setTheme } = useAppTheme();
   const [whatsStatus, setWhatsStatus] = useState<any>(null);
   const [qrcode, setQrcode] = useState('');
@@ -133,6 +133,7 @@ export default function ConfiguracoesPage() {
       };
       await api.patch(`/api/vendedores/${user?.vendedor?.id}`, payload);
       setTheme(isDark ? 'dark' : 'light');
+      await refresh();
       toast.success('Configuracoes salvas!');
     } catch {
       toast.error('Erro ao salvar');
