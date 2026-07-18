@@ -1,11 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['localhost', 'res.cloudinary.com', 'images.unsplash.com', 'cardapioai.reidosaas.com.br'],
+    unoptimized: true,
     remotePatterns: [
       { protocol: 'http', hostname: 'localhost', port: '3001' },
       { protocol: 'https', hostname: '**.vercel.app' },
       { protocol: 'https', hostname: 'cardapioai.reidosaas.com.br' },
+      { protocol: 'https', hostname: 'res.cloudinary.com' },
+      { protocol: 'https', hostname: 'images.unsplash.com' },
     ],
   },
   async rewrites() {
