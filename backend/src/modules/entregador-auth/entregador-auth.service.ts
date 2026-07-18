@@ -44,12 +44,12 @@ export class EntregadorAuthService {
     });
 
     if (!entregador || !entregador.senha) {
-      throw new NotFoundException('Email ou senha incorretos');
+      throw new UnauthorizedException('Email ou senha incorretos');
     }
 
     const senhaValida = await bcrypt.compare(senha, entregador.senha);
     if (!senhaValida) {
-      throw new NotFoundException('Email ou senha incorretos');
+      throw new UnauthorizedException('Email ou senha incorretos');
     }
 
     const lojasAtivas = entregador.lojas.filter((l) => l.status === 'ACEITO');
