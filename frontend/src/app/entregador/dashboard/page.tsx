@@ -1,10 +1,10 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 import {
   Loader2,
   Package,
@@ -17,8 +17,6 @@ import {
   X,
   Navigation,
   Wallet,
-  Calendar,
-  Download,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -91,8 +89,6 @@ interface RelatorioStats {
 }
 
 export default function EntregadorDashboardPage() {
-  const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'entregas' | 'relatorio'>('entregas');
   const [entregasAtivas, setEntregasAtivas] = useState<PedidoEntrega[]>([]);
   const [entregasHistorico, setEntregasHistorico] = useState<PedidoEntrega[]>([]);
   const [vinculos, setVinculos] = useState<Vinculo[]>([]);
@@ -101,7 +97,6 @@ export default function EntregadorDashboardPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [filtro, setFiltro] = useState<string>('todos');
   const [processandoVinculo, setProcessandoVinculo] = useState<string | null>(null);
-  const [relatorioPeriodo, setRelatorioPeriodo] = useState<'hoje' | 'semana' | 'mes'>('mes');
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('token_entregador') : null;
 
@@ -234,9 +229,6 @@ export default function EntregadorDashboardPage() {
 
   // Calculos para o relatorio
   const ganhoDiario = stats ? Number(stats.diaria) + (Number(stats.totalEntregasHoje) * Number(stats.valorPorEntrega)) : 0;
-  const ganhoMesEntregas = stats ? Number(stats.valorPorEntrega) * Number(stats.totalEntregasMes || 0) : 0;
-  const ganhoMesDiarias = stats ? Number(stats.diaria) * 30 : 0;
-  const totalGanhoMes = ganhoMesEntregas + ganhoMesDiarias;
 
   if (loading) {
     return (
@@ -308,15 +300,9 @@ export default function EntregadorDashboardPage() {
 
       {vinculosAtivos.length > 0 && (
         <>
-          {/* Tabs */}
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="entregas">Entregas</TabsTrigger>
-              <TabsTrigger value="relatorio">Relatorio</TabsTrigger>
-            </TabsList>
-
-            {/* Aba Entregas */}
-            <TabsContent value="entregas" className="space-y-4">
+          {/* Entregas */}
+            <div className="w-full">
+            <div className="space-y-4">
               {/* Stats cards */}
               {stats && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -474,136 +460,8 @@ export default function EntregadorDashboardPage() {
                 </div>
               )}
 
-            </TabsContent>
-
-            {/* Aba Relatorio */}
-            <TabsContent value="relatorio" className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold">Relatorio Financeiro</h2>
-                <div className="flex gap-2">
-                  {['hoje', 'semana', 'mes'].map((p) => (
-                    <Button
-                      key={p}
-                      variant={relatorioPeriodo === p ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setRelatorioPeriodo(p as 'hoje' | 'semana' | 'mes')}
-                    >
-                      {p === 'hoje' ? 'Hoje' : p === 'semana' ? 'Semana' : 'Mes'}
-                    </Button>
-                  ))}
-              </div>
             </div>
-
-            {/* Dashboard Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Diaria (Hoje)</p>
-                        <p className="text-2xl font-bold text-green-600">R$ {Number(stats?.diaria || 0).toFixed(2)}</p>
-                      </div>
-                      <Calendar className="h-6 w-6 text-gray-400" />
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Por Entrega</p>
-                        <p className="text-2xl font-bold text-blue-600">R$ {Number(stats?.valorPorEntrega || 0).toFixed(2)}</p>
-                      </div>
-                      <Package className="h-6 w-6 text-gray-400" />
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Entregas Hoje</p>
-                        <p className="text-2xl font-bold text-purple-600">{stats?.totalEntregasHoje || 0}</p>
-                      </div>
-                      <Truck className="h-6 w-6 text-gray-400" />
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Ganho Hoje</p>
-                        <p className="text-2xl font-bold text-orange-600">R$ {ganhoDiario.toFixed(2)}</p>
-                      </div>
-                      <Wallet className="h-6 w-6 text-gray-400" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Resumo do Mes */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5" />
-                    Resumo do Mes
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Total Entregas</p>
-                    <p className="text-2xl font-bold">{stats?.totalEntregasMes || 0}</p>
-                  </div>
-                  <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Valor Entregas</p>
-                    <p className="text-2xl font-bold text-blue-600">R$ {ganhoMesEntregas.toFixed(2)}</p>
-                  </div>
-                  <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Total Diarias</p>
-                    <p className="text-2xl font-bold text-green-600">R$ {ganhoMesDiarias.toFixed(2)}</p>
-                  </div>
-                  <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Total a Receber</p>
-                    <p className="text-2xl font-bold text-orange-600">R$ {totalGanhoMes.toFixed(2)}</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Separacao Recebido vs A Receber */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Wallet className="h-5 w-5" />
-                    Controle de Pagamentos
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Card className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
-                      <CardContent className="p-4">
-                        <p className="text-xs text-green-700 dark:text-green-400 font-medium mb-1">Ja Recebido (Pago)</p>
-                        <p className="text-2xl font-bold text-green-700 dark:text-green-400">R$ 0.00</p>
-                        <p className="text-xs text-gray-500 mt-1">Registrar pagamentos feitos</p>
-                      </CardContent>
-                    </Card>
-                    <Card className="bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800">
-                      <CardContent className="p-4">
-                        <p className="text-xs text-orange-700 dark:text-orange-400 font-medium mb-1">A Receber (Pendente)</p>
-                        <p className="text-2xl font-bold text-orange-700 dark:text-orange-400">R$ {totalGanhoMes.toFixed(2)}</p>
-                        <p className="text-xs text-gray-500 mt-1">Total do mes a ser pago</p>
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  <Button className="w-full bg-orange-500 hover:bg-orange-600" onClick={() => router.push('/entregador/relatorio')}>
-                    <Download className="h-4 w-4 mr-2" />
-                    Ver Relatorio Detalhado
-                  </Button>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+          </div>
         </>
       )}
     </div>
