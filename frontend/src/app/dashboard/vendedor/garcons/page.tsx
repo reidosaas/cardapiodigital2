@@ -39,18 +39,28 @@ export default function GarconsPage() {
     if (!form.nome) { toast.error('Preencha o nome'); return; }
     const vendedorId = user?.vendedor?.id;
     if (!vendedorId) return;
+    const editando = editingId;
+    const payload = { vendedorId, nome: form.nome, telefone: form.telefone || undefined, diaria: Number(form.diaria) || 0 };
+    setShowForm(false); resetForm();
     try {
-      const payload = { vendedorId, nome: form.nome, telefone: form.telefone || undefined, diaria: Number(form.diaria) || 0 };
-      if (editingId) { await api.patch(`/api/garcons/${editingId}`, payload); toast.success('Garcom atualizado'); }
-      else { await api.post('/api/garcons', payload); toast.success('Garcom criado'); }
-      setShowForm(false); resetForm(); fetchData();
-    } catch { toast.error('Erro ao salvar'); }
+      if (editando) {
+        const res = await api.patch(`/api/garcons/${editando}`, payload);
+        setGarcons((prev) => prev.map((g) => (g.id === editando ? res.data : g)));
+        toast.success('Garcom atualizado');
+      } else {
+        const res = await api.post('/api/garcons', payload);
+        setGarcons((prev) => [...prev, res.data].sort((a, b) => (a.nome || '').localeCompare(b.nome || '')));
+        toast.success('Garcom criado');
+      }
+    } catch { toast.error('Erro ao salvar'); fetchData(); }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Excluir este garcom?')) return;
-    try { await api.delete(`/api/garcons/${id}`); toast.success('Garcom excluido'); fetchData(); }
-    catch { toast.error('Erro ao excluir'); }
+    const anterior = garcons;
+    setGarcons((prev) => prev.filter((g) => g.id !== id));
+    try { await api.delete(`/api/garcons/${id}`); toast.success('Garcom excluido'); }
+    catch { setGarcons(anterior); toast.error('Erro ao excluir'); }
   };
 
   if (loading) return <DashboardLayout><Loading /></DashboardLayout>;
