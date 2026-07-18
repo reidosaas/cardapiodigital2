@@ -6,10 +6,16 @@ export class EntregadorDashboardService {
   constructor(private prisma: PrismaService) {}
 
   async getPedidos(entregadorId: string, vendedorId: string) {
+    const pedidosLoja = await this.prisma.pedido.findMany({
+      where: { vendedorId },
+      select: { id: true },
+    });
+    const pedidoIds = pedidosLoja.map((p: any) => p.id);
+
     const entregas = await this.prisma.entrega.findMany({
       where: {
         entregadorId,
-        pedido: { vendedorId },
+        pedidoId: { in: pedidoIds },
         status: { notIn: ['ENTREGUE', 'CANCELADO'] },
       },
       include: {
@@ -27,7 +33,7 @@ export class EntregadorDashboardService {
     const entregasHistorico = await this.prisma.entrega.findMany({
       where: {
         entregadorId,
-        pedido: { vendedorId },
+        pedidoId: { in: pedidoIds },
         status: { in: ['ENTREGUE', 'CANCELADO'] },
       },
       include: {
@@ -121,10 +127,16 @@ export class EntregadorDashboardService {
         inicio = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
     }
 
+    const pedidosLoja = await this.prisma.pedido.findMany({
+      where: { vendedorId },
+      select: { id: true },
+    });
+    const pedidoIds = pedidosLoja.map((p: any) => p.id);
+
     const entregas = await this.prisma.entrega.findMany({
       where: {
         entregadorId,
-        pedido: { vendedorId },
+        pedidoId: { in: pedidoIds },
         status: 'ENTREGUE',
         entregueEm: { gte: inicio },
       },
@@ -163,10 +175,16 @@ export class EntregadorDashboardService {
     const fim = new Date(dataFim);
     fim.setHours(23, 59, 59, 999);
 
+    const pedidosLoja = await this.prisma.pedido.findMany({
+      where: { vendedorId },
+      select: { id: true },
+    });
+    const pedidoIds = pedidosLoja.map((p: any) => p.id);
+
     const entregas = await this.prisma.entrega.findMany({
       where: {
         entregadorId,
-        pedido: { vendedorId },
+        pedidoId: { in: pedidoIds },
         status: 'ENTREGUE',
         entregueEm: { gte: inicio, lte: fim },
       },
@@ -251,18 +269,24 @@ export class EntregadorDashboardService {
     const hoje = new Date();
     const inicioHoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
 
+    const pedidosLoja = await this.prisma.pedido.findMany({
+      where: { vendedorId },
+      select: { id: true },
+    });
+    const pedidoIds = pedidosLoja.map((p: any) => p.id);
+
     const [totalEntregasHoje, pendentes, emRota, entreguesHoje] = await Promise.all([
       this.prisma.entrega.count({
-        where: { entregadorId, pedido: { vendedorId }, status: 'ENTREGUE', entregueEm: { gte: inicioHoje } },
+        where: { entregadorId, pedidoId: { in: pedidoIds }, status: 'ENTREGUE', entregueEm: { gte: inicioHoje } },
       }),
       this.prisma.entrega.count({
-        where: { entregadorId, pedido: { vendedorId }, status: 'PENDENTE' },
+        where: { entregadorId, pedidoId: { in: pedidoIds }, status: 'PENDENTE' },
       }),
       this.prisma.entrega.count({
-        where: { entregadorId, pedido: { vendedorId }, status: { in: ['ACEITO', 'EM_ROTA'] } },
+        where: { entregadorId, pedidoId: { in: pedidoIds }, status: { in: ['ACEITO', 'EM_ROTA'] } },
       }),
       this.prisma.entrega.count({
-        where: { entregadorId, pedido: { vendedorId }, status: 'ENTREGUE', entregueEm: { gte: inicioHoje } },
+        where: { entregadorId, pedidoId: { in: pedidoIds }, status: 'ENTREGUE', entregueEm: { gte: inicioHoje } },
       }),
     ]);
 
