@@ -142,7 +142,7 @@ export class EntregadorDashboardService {
     }
 
     const pedidosLoja = await this.prisma.pedido.findMany({
-      where: { vendedorId },
+      where: { vendedorId: { in: vendedorIds } },
       select: { id: true },
     });
     const pedidoIds = pedidosLoja.map((p: any) => p.id);
@@ -157,7 +157,7 @@ export class EntregadorDashboardService {
     });
 
     const loja = await this.prisma.entregadorLoja.findFirst({
-      where: { entregadorId, vendedorId, ativo: true },
+      where: { entregadorId, vendedorId: { in: vendedorIds }, ativo: true },
     });
 
     const totalEntregas = entregas.length;
@@ -212,7 +212,7 @@ export class EntregadorDashboardService {
     });
 
     const loja = await this.prisma.entregadorLoja.findFirst({
-      where: { entregadorId, vendedorId, ativo: true },
+      where: { entregadorId, vendedorId: { in: vendedorIds }, ativo: true },
     });
 
     const diaria = loja ? Number(loja.diaria) : 0;
@@ -311,7 +311,7 @@ export class EntregadorDashboardService {
     ]);
 
     const loja = await this.prisma.entregadorLoja.findFirst({
-      where: { entregadorId, vendedorId, ativo: true },
+      where: { entregadorId, vendedorId: { in: vendedorIds }, ativo: true },
     });
 
     return {
