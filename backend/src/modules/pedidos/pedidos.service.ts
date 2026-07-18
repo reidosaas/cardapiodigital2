@@ -173,11 +173,21 @@ export class PedidosService {
       const entrega = await this.prisma.entrega.findFirst({
         where: { pedidoId: id, status: { not: 'ENTREGUE' } },
         orderBy: { createdAt: 'desc' },
+        include: { pedido: { select: { vendedorId: true } } },
       });
       if (entrega) {
+        const updateEntrega: any = { status: 'ENTREGUE', entregueEm: new Date() };
+        if (entrega.entregadorId) {
+          const vinculo = await this.prisma.entregadorLoja.findFirst({
+            where: { entregadorId: entrega.entregadorId, vendedorId: entrega.pedido.vendedorId, ativo: true, status: 'ACEITO' },
+          });
+          if (vinculo) {
+            updateEntrega.valorEntrega = Number(vinculo.valorPorEntrega);
+          }
+        }
         await this.prisma.entrega.update({
           where: { id: entrega.id },
-          data: { status: 'ENTREGUE', entregueEm: new Date() },
+          data: updateEntrega,
         });
       }
     }
