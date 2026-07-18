@@ -61,7 +61,17 @@ export class EntregadorDashboardService {
       take: 20,
     });
 
+    const vinculos = await this.prisma.entregadorLoja.findMany({
+      where: { entregadorId, ativo: true, status: 'ACEITO' },
+      select: { vendedorId: true, valorPorEntrega: true },
+    });
+    const valorPorVendedor = new Map<string, number>(
+      vinculos.map((v: any) => [v.vendedorId, Number(v.valorPorEntrega)]),
+    );
+
     const formatar = (e: any) => {
+      const valorVinculo = valorPorVendedor.get(e.pedido.vendedorId) ?? 0;
+      const valorReceber = e.valorEntrega != null ? Number(e.valorEntrega) : valorVinculo;
       const rua = e.pedido.rua || '';
       const numero = e.pedido.numero || '';
       const bairro = e.pedido.bairro || '';
@@ -73,7 +83,7 @@ export class EntregadorDashboardService {
         codigoPedido: e.pedido.codigo,
         status: e.status,
         endereco: enderecoCompleto,
-        valorEntrega: e.valorEntrega,
+        valorEntrega: valorReceber,
         valorCobrado: e.valorCobrado,
         criadoEm: e.createdAt,
         aceitoEm: e.aceitoEm,
