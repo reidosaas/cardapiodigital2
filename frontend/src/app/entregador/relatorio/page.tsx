@@ -134,7 +134,7 @@ export default function EntregadorRelatorioPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-orange-600 dark:text-orange-400 font-medium">Total a Receber - {periodoLabel}</p>
-              <p className="text-4xl font-bold text-orange-700 dark:text-orange-400 mt-1">R$ {totalGanho.toFixed(2)}</p>
+              <p className="text-4xl font-bold text-orange-700 dark:text-orange-400 mt-1">R$ {aReceber.toFixed(2)}</p>
             </div>
             <div className="w-16 h-16 rounded-2xl bg-orange-200 dark:bg-orange-800/50 flex items-center justify-center">
               <Wallet className="h-8 w-8 text-orange-600 dark:text-orange-400" />
