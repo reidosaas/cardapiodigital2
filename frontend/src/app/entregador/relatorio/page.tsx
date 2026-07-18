@@ -29,7 +29,10 @@ export default function EntregadorRelatorioPage() {
   const token = typeof window !== 'undefined' ? localStorage.getItem('token_entregador') : null;
 
   const fetchRelatorio = useCallback(async () => {
-    if (!token) return;
+    if (!token) {
+      window.location.href = '/entregador/login';
+      return;
+    }
     setLoading(true);
     try {
       let url = `${process.env.NEXT_PUBLIC_API_URL || ''}/api/entregador/ganhos?periodo=${periodo}`;
@@ -43,14 +46,23 @@ export default function EntregadorRelatorioPage() {
         window.location.href = '/entregador/login';
         return;
       }
-      if (res.ok) setRelatorio(await res.json());
-      else {
-        const err = await res.json();
-        toast.error(err.message || 'Erro ao carregar relatorio');
+      if (res.ok) {
+        setRelatorio(await res.json());
+      } else {
+        let msg = 'Erro ao carregar relatorio';
+        try {
+          const err = await res.json();
+          msg = err.message || msg;
+        } catch {
+          // resposta sem corpo JSON
+        }
+        toast.error(msg);
+        setRelatorio({ totalEntregas: 0, valorPorEntrega: 0, diaria: 0, totalDiarias: 0, entregas: [] });
       }
     } catch (err) {
       console.error(err);
       toast.error('Erro ao carregar relatorio');
+      setRelatorio({ totalEntregas: 0, valorPorEntrega: 0, diaria: 0, totalDiarias: 0, entregas: [] });
     } finally {
       setLoading(false);
     }
