@@ -38,6 +38,10 @@ export default function EntregadorLayout({ children }: { children: React.ReactNo
     if (!document.getElementById('dynamic-icon')) {
       document.head.appendChild(iconEl);
     }
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/pwa/sw/entregador', { scope: '/entregador/' }).catch(() => {});
+    }
   }, []);
 
   useEffect(() => {

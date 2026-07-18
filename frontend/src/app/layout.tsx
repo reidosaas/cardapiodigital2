@@ -31,12 +31,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="application-name" content="CardapioAI" />
-        <link rel="apple-touch-icon" href="/icons/icon-192.png" sizes="192x192" />
         <link rel="icon" type="image/png" href="/icons/icon-192.png" sizes="192x192" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
         <script dangerouslySetInnerHTML={{
-          __html: `if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js')})}`
+          __html: `if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){var s=(r.scope||'');if(s.endsWith('/')&&!s.includes('/catalogo/')&&!s.includes('/entregador/')){r.unregister()}})})})}`
         }} />
       </head>
       <body className="min-h-screen bg-white dark:bg-gray-950 antialiased overscroll-none">

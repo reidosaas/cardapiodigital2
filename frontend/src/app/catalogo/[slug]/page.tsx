@@ -46,6 +46,10 @@ export default function CatalogoPublico() {
       document.head.appendChild(iconEl);
     }
 
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/pwa/sw/catalogo', { scope: '/catalogo/' }).catch(() => {});
+    }
+
     const appleIcon = document.getElementById('dynamic-apple-icon') as HTMLLinkElement || document.createElement('link');
     appleIcon.id = 'dynamic-apple-icon';
     appleIcon.rel = 'apple-touch-icon';
