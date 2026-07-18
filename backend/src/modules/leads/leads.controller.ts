@@ -13,6 +13,12 @@ export class LeadsController {
     return this.leadsService.listar(vendedorId);
   }
 
+  @Get('stats')
+  async stats(@Req() req: any) {
+    const vendedorId = req.user.vendedor?.id || req.user.vendedorId;
+    return this.leadsService.stats(vendedorId);
+  }
+
   @Delete(':id')
   async remover(@Param('id') id: string) {
     return this.leadsService.remover(id);
