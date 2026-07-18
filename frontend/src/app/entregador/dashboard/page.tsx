@@ -339,7 +339,7 @@ export default function EntregadorDashboardPage() {
 
               {/* Filtros */}
               <div className="flex gap-2 overflow-x-auto pb-2">
-                {['todos', 'PENDENTE', 'ACEITO', 'EM_ROTA', 'ENTREGUE'].map((f) => (
+                {['todos', 'EM_ROTA', 'ENTREGUE'].map((f) => (
                   <Button
                     key={f}
                     variant={filtro === f ? 'default' : 'outline'}
