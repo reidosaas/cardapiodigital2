@@ -5,9 +5,21 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class EntregadorDashboardService {
   constructor(private prisma: PrismaService) {}
 
+  private async getVendedorIds(entregadorId: string, vendedorId?: string): Promise<string[]> {
+    if (vendedorId) return [vendedorId];
+    const vinculos = await this.prisma.entregadorLoja.findMany({
+      where: { entregadorId, ativo: true, status: 'ACEITO' },
+      select: { vendedorId: true },
+    });
+    return vinculos.map((v: any) => v.vendedorId);
+  }
+
   async getPedidos(entregadorId: string, vendedorId: string) {
+    const vendedorIds = await this.getVendedorIds(entregadorId, vendedorId);
+    if (vendedorIds.length === 0) return { ativas: [], historico: [] };
+
     const pedidosLoja = await this.prisma.pedido.findMany({
-      where: { vendedorId },
+      where: { vendedorId: { in: vendedorIds } },
       select: { id: true },
     });
     const pedidoIds = pedidosLoja.map((p: any) => p.id);
@@ -110,6 +122,8 @@ export class EntregadorDashboardService {
 
   async getGanhos(entregadorId: string, vendedorId: string, periodo?: string) {
     const hoje = new Date();
+    const vendedorIds = await this.getVendedorIds(entregadorId, vendedorId);
+    if (vendedorIds.length === 0) return { periodo, totalEntregas: 0, valorEntregas: 0, diaria: 0, valorPorEntrega: 0, totalGanhos: 0, entregas: [] };
     let inicio: Date;
 
     switch (periodo) {
@@ -175,8 +189,11 @@ export class EntregadorDashboardService {
     const fim = new Date(dataFim);
     fim.setHours(23, 59, 59, 999);
 
+    const vendedorIds = await this.getVendedorIds(entregadorId, vendedorId);
+    if (vendedorIds.length === 0) return { dataInicio, dataFim, totalEntregas: 0, valorEntregas: 0, diaria: 0, valorPorEntrega: 0, totalGanhos: 0, entregas: [] };
+
     const pedidosLoja = await this.prisma.pedido.findMany({
-      where: { vendedorId },
+      where: { vendedorId: { in: vendedorIds } },
       select: { id: true },
     });
     const pedidoIds = pedidosLoja.map((p: any) => p.id);
@@ -269,8 +286,11 @@ export class EntregadorDashboardService {
     const hoje = new Date();
     const inicioHoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
 
+    const vendedorIds = await this.getVendedorIds(entregadorId, vendedorId);
+    if (vendedorIds.length === 0) return { totalEntregasHoje: 0, pendentes: 0, emRota: 0, entreguesHoje: 0, diaria: 0, valorPorEntrega: 0 };
+
     const pedidosLoja = await this.prisma.pedido.findMany({
-      where: { vendedorId },
+      where: { vendedorId: { in: vendedorIds } },
       select: { id: true },
     });
     const pedidoIds = pedidosLoja.map((p: any) => p.id);
