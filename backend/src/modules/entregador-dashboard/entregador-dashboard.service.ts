@@ -166,13 +166,17 @@ export class EntregadorDashboardService {
       0,
     );
     const diaria = loja ? Number(loja.diaria) : 0;
-    const totalGanhos = valorEntregas + diaria;
+    const diasTrabalhados = this.contarDiasTrabalhados(entregas);
+    const totalDiarias = diaria * diasTrabalhados;
+    const totalGanhos = valorEntregas + totalDiarias;
 
     return {
       periodo,
       totalEntregas,
       valorEntregas,
       diaria,
+      diasTrabalhados,
+      totalDiarias,
       valorPorEntrega: loja ? Number(loja.valorPorEntrega) : 0,
       totalGanhos,
       entregas: entregas.map((e) => ({
@@ -182,6 +186,17 @@ export class EntregadorDashboardService {
         entregueEm: e.entregueEm,
       })),
     };
+  }
+
+  private contarDiasTrabalhados(entregas: { entregueEm: Date | null }[]): number {
+    const dias = new Set<string>();
+    for (const e of entregas) {
+      if (e.entregueEm) {
+        const d = new Date(e.entregueEm);
+        dias.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+      }
+    }
+    return dias.size;
   }
 
   async getRelatorio(entregadorId: string, vendedorId: string, dataInicio: string, dataFim: string) {
@@ -218,7 +233,9 @@ export class EntregadorDashboardService {
     const diaria = loja ? Number(loja.diaria) : 0;
     const totalEntregas = entregas.length;
     const valorEntregas = entregas.reduce((acc, e) => acc + (Number(e.valorEntrega) || 0), 0);
-    const totalGanhos = valorEntregas + diaria;
+    const diasTrabalhados = this.contarDiasTrabalhados(entregas);
+    const totalDiarias = diaria * diasTrabalhados;
+    const totalGanhos = valorEntregas + totalDiarias;
 
     return {
       dataInicio,
@@ -226,6 +243,8 @@ export class EntregadorDashboardService {
       totalEntregas,
       valorEntregas,
       diaria,
+      diasTrabalhados,
+      totalDiarias,
       valorPorEntrega: loja ? Number(loja.valorPorEntrega) : 0,
       totalGanhos,
       entregas: entregas.map((e) => ({
