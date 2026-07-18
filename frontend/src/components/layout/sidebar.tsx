@@ -121,7 +121,7 @@ export function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps) {
         <div className="p-2 border-t border-gray-200 dark:border-gray-800">
           <button
             onClick={() => {
-              localStorage.removeItem('accessToken');
+              localStorage.removeItem('token');
               localStorage.removeItem('refreshToken');
               window.location.href = isAdmin ? '/admin/login' : '/auth/login';
             }}
