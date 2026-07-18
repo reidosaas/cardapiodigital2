@@ -818,7 +818,7 @@ model Entregador {
   nome            String
   email           String?    @unique
   senha           String?
-  telefone        String?
+  telefone        String?    @unique
   diaria          Decimal    @default(0) @db.Decimal(10, 2)
   valorPorEntrega Decimal    @default(0) @db.Decimal(10, 2)
   ativo           Boolean    @default(true)
@@ -831,6 +831,7 @@ model Entregador {
 
   @@index([vendedorId])
   @@index([email])
+  @@index([telefone])
   @@map("entregadores")
 }
 

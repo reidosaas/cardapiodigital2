@@ -339,7 +339,7 @@ export default function EntregadorLojasPage() {
             <Building2 className="h-16 w-16 mx-auto mb-4 text-gray-300" />
             <h2 className="text-xl font-bold mb-2">Nenhuma loja vinculada</h2>
             <p className="text-gray-500 max-w-sm mx-auto">
-              Aguarde um lojista te vincular informando seu email. Os convites aparecerão aqui para você aceitar ou recusar.
+              Aguarde um lojista te vincular informando seu telefone. Os convites aparecerão aqui para você aceitar ou recusar.
             </p>
           </CardContent>
         </Card>

@@ -21,15 +21,16 @@ export class EntregadoresService {
 
   async create(data: { vendedorId: string; nome?: string; telefone?: string; diaria?: number; valorPorEntrega?: number; email?: string }) {
     const email = data.email?.trim()?.toLowerCase() || undefined;
+    const telefone = data.telefone?.replace(/\D/g, '') || undefined;
 
-    if (!email && !data.nome) {
-      throw new Error('Informe o email ou o nome do entregador');
+    if (!telefone && !data.nome) {
+      throw new Error('Informe o telefone ou o nome do entregador');
     }
 
     let entregador;
 
-    if (email) {
-      entregador = await this.prisma.entregador.findFirst({ where: { email } });
+    if (telefone) {
+      entregador = await this.prisma.entregador.findFirst({ where: { telefone } });
       if (entregador) {
         const vinculoExistente = await this.prisma.entregadorLoja.findFirst({
           where: { entregadorId: entregador.id, vendedorId: data.vendedorId },
@@ -63,7 +64,7 @@ export class EntregadoresService {
       data: {
         vendedorId: data.vendedorId,
         nome: data.nome || 'Entregador',
-        telefone: data.telefone || undefined,
+        telefone,
         email,
       },
     });

@@ -12,9 +12,15 @@ export class EntregadorAuthService {
 
   async cadastro(data: { nome: string; email: string; senha: string; telefone?: string }) {
     const emailLower = data.email.trim().toLowerCase();
+    const telefone = data.telefone?.replace(/\D/g, '') || undefined;
 
     const existing = await this.prisma.entregador.findFirst({ where: { email: emailLower } });
     if (existing) throw new ConflictException('Email ja cadastrado. Faca login.');
+
+    if (telefone) {
+      const telExiste = await this.prisma.entregador.findFirst({ where: { telefone } });
+      if (telExiste) throw new ConflictException('Telefone ja cadastrado. Faca login.');
+    }
 
     const hashedSenha = await bcrypt.hash(data.senha, 10);
 
@@ -23,7 +29,7 @@ export class EntregadorAuthService {
         nome: data.nome,
         email: emailLower,
         senha: hashedSenha,
-        telefone: data.telefone || undefined,
+        telefone,
       },
     });
 

@@ -297,7 +297,7 @@ export default function EntregadorDashboardPage() {
             <Clock className="h-16 w-16 mx-auto mb-4 text-orange-400" />
             <h2 className="text-xl font-bold mb-2">Aguardando Vinculo</h2>
             <p className="text-gray-500 mb-4">
-              Nenhuma loja te vinculou ainda. Aguarde um lojista informar seu email.
+              Nenhuma loja te vinculou ainda. Aguarde um lojista informar seu telefone.
             </p>
             <p className="text-sm text-gray-400">
               Assim que uma loja te vincular, voce recebera um pedido de vinculo aqui.

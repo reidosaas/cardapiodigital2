@@ -32,7 +32,7 @@ export default function EntregadoresPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({ email: '', diaria: '', valorPorEntrega: '' });
+  const [form, setForm] = useState({ telefone: '', diaria: '', valorPorEntrega: '' });
   const [pagandoId, setPagandoId] = useState<string | null>(null);
 
   const vendedorId = user?.vendedor?.id;
@@ -58,13 +58,13 @@ export default function EntregadoresPage() {
   }, [vendedorId]);
 
   const resetForm = () => {
-    setForm({ email: '', diaria: '', valorPorEntrega: '' });
+    setForm({ telefone: '', diaria: '', valorPorEntrega: '' });
     setEditingId(null);
   };
 
   const openEdit = (e: any) => {
     setForm({
-      email: e.email || '',
+      telefone: e.telefone || '',
       diaria: String(e.diaria ?? ''),
       valorPorEntrega: String(e.valorPorEntrega ?? ''),
     });
@@ -74,8 +74,8 @@ export default function EntregadoresPage() {
 
   const handleSave = async () => {
     if (!vendedorId) return;
-    if (!editingId && !form.email) {
-      toast.error('Informe o email do entregador para vincular');
+    if (!editingId && !form.telefone) {
+      toast.error('Informe o telefone do entregador para vincular');
       return;
     }
     try {
@@ -89,7 +89,7 @@ export default function EntregadoresPage() {
       } else {
         const payload: any = {
           vendedorId,
-          email: form.email,
+          telefone: form.telefone,
           diaria: Number(form.diaria) || 0,
           valorPorEntrega: Number(form.valorPorEntrega) || 0,
         };
@@ -415,14 +415,14 @@ export default function EntregadoresPage() {
                 )}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Email do Entregador *
+                    Telefone do Entregador *
                   </label>
                   <input
-                    type="email"
-                    placeholder="entregador@email.com"
-                    value={form.email}
+                    type="tel"
+                    placeholder="(11) 99999-9999"
+                    value={form.telefone}
                     disabled={!!editingId}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    onChange={(e) => setForm({ ...form, telefone: e.target.value })}
                     className={`w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm ${
                       editingId ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
