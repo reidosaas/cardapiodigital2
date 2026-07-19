@@ -124,6 +124,32 @@ export default function CatalogoPublico() {
   const bannerUrl = vendedor.bannerUrl || (banners.length > 0 ? banners[0].imagemUrl : null);
   const temHorario = vendedor.horarioFuncionamento;
 
+  const parseHorario = (h: any): { abre: string; fecha: string } | null => {
+    if (!h) return null;
+    if (typeof h === 'string') {
+      try { return JSON.parse(h); } catch { return null; }
+    }
+    if (h.abre && h.fecha) return h;
+    return null;
+  };
+
+  const horario = parseHorario(vendedor.horarioFuncionamento);
+
+  const lojaAberta = (() => {
+    if (!horario) return null;
+    const now = new Date();
+    const [ah, am] = horario.abre.split(':').map(Number);
+    const [fh, fm] = horario.fecha.split(':').map(Number);
+    const mins = now.getHours() * 60 + now.getMinutes();
+    const abre = ah * 60 + am;
+    const fecha = fh * 60 + fm;
+    return mins >= abre && mins < fecha;
+  })();
+
+  const formatHorario = (h: { abre: string; fecha: string }) => {
+    return `${h.abre} as ${h.fecha}`;
+  };
+
   return (
     <div className="min-h-screen bg-white pb-20">
       {/* Search bar - sticky top */}
@@ -194,9 +220,15 @@ export default function CatalogoPublico() {
         </div>
 
         {/* Store status */}
-        <div className="mt-3 flex items-center gap-3">
-          <p className="text-sm font-medium text-green-600">Loja Aberta no momento</p>
-        </div>
+        {lojaAberta !== null && (
+          <div className="mt-3 flex items-center gap-3">
+            {lojaAberta ? (
+              <p className="text-sm font-medium text-green-600">Loja Aberta no momento</p>
+            ) : (
+              <p className="text-sm font-medium text-red-600">Loja Fechada no momento{horario ? `, abre as ${horario.abre}` : ''}</p>
+            )}
+          </div>
+        )}
 
         {/* Info dropdown */}
         <AnimatePresence>
@@ -214,8 +246,8 @@ export default function CatalogoPublico() {
                 {vendedor.whatsappNumero && (
                   <div className="flex items-center gap-2"><Phone size={14} className="shrink-0" /><span>{vendedor.whatsappNumero}</span></div>
                 )}
-                {temHorario && (
-                  <div className="flex items-start gap-2"><Clock size={14} className="mt-0.5 shrink-0" /><span>{typeof vendedor.horarioFuncionamento === 'string' ? vendedor.horarioFuncionamento : JSON.stringify(vendedor.horarioFuncionamento)}</span></div>
+                {horario && (
+                  <div className="flex items-start gap-2"><Clock size={14} className="mt-0.5 shrink-0" /><span>Horario: {formatHorario(horario)}</span></div>
                 )}
               </div>
             </motion.div>
