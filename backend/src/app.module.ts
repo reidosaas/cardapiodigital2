@@ -34,6 +34,7 @@ import { EntregadoresModule } from './modules/entregadores/entregadores.module';
 import { EntregadorAuthModule } from './modules/entregador-auth/entregador-auth.module';
 import { EntregadorDashboardModule } from './modules/entregador-dashboard/entregador-dashboard.module';
 import { AdminEntregadoresModule } from './modules/admin-entregadores/admin-entregadores.module';
+import { ClienteGlobalModule } from './modules/cliente-global/cliente-global.module';
 import { CaixaModule } from './modules/caixa/caixa.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
@@ -78,6 +79,7 @@ import { APP_GUARD } from '@nestjs/core';
     EntregadorAuthModule,
     EntregadorDashboardModule,
     AdminEntregadoresModule,
+    ClienteGlobalModule,
     CaixaModule,
   ],
   providers: [

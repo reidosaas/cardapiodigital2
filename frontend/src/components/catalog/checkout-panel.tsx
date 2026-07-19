@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Send, Loader2, CreditCard, MapPin, User, Phone, X } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
@@ -21,6 +21,9 @@ interface CheckoutPanelProps {
 export function CheckoutPanel({ cartItems, total, vendedor, corPrimaria, onSuccess }: CheckoutPanelProps) {
   const [step, setStep] = useState<'form' | 'confirm'>('form');
   const [submitting, setSubmitting] = useState(false);
+  const [clienteLogado, setClienteLogado] = useState<any>(null);
+  const [enderecos, setEnderecos] = useState<any[]>([]);
+  const [enderecoSelecionado, setEnderecoSelecionado] = useState<string>('');
   const [form, setForm] = useState({ 
     nome: '', 
     telefone: '', 
@@ -41,6 +44,48 @@ export function CheckoutPanel({ cartItems, total, vendedor, corPrimaria, onSucce
   const [avisoTel, setAvisoTel] = useState('');
   const [avisoSent, setAvisoSent] = useState(false);
 
+  useEffect(() => {
+    const token = localStorage.getItem('token_cliente');
+    const clienteStr = localStorage.getItem('cliente');
+    if (token && clienteStr) {
+      const c = JSON.parse(clienteStr);
+      setClienteLogado(c);
+      setForm((prev) => ({ ...prev, nome: c.nome || '', telefone: c.telefone || '' }));
+      api.get('/api/cliente-global/enderecos', { headers: { Authorization: `Bearer ${token}` } })
+        .then((res) => {
+          setEnderecos(res.data);
+          const principal = res.data.find((e: any) => e.principal);
+          if (principal) {
+            setEnderecoSelecionado(principal.id);
+            setForm((prev) => ({
+              ...prev,
+              rua: principal.logradouro,
+              numero: principal.numero,
+              bairro: principal.bairro,
+              cep: principal.cep,
+              complemento: principal.complemento || '',
+            }));
+          }
+        })
+        .catch(() => {});
+    }
+  }, []);
+
+  const selecionarEndereco = (enderecoId: string) => {
+    setEnderecoSelecionado(enderecoId);
+    const e = enderecos.find((end: any) => end.id === enderecoId);
+    if (e) {
+      setForm((prev) => ({
+        ...prev,
+        rua: e.logradouro,
+        numero: e.numero,
+        bairro: e.bairro,
+        cep: e.cep,
+        complemento: e.complemento || '',
+      }));
+    }
+  };
+
   const handleSubmit = async () => {
     if (!form.nome || !form.telefone) {
       toast.error('Preencha nome e telefone');
@@ -58,6 +103,7 @@ export function CheckoutPanel({ cartItems, total, vendedor, corPrimaria, onSucce
         : '';
       const pedido = await api.post('/api/pedidos', {
         vendedorId: vendedor.id,
+        clienteGlobalId: clienteLogado?.id || undefined,
         clienteNome: form.nome,
         clienteTelefone: form.telefone,
         items: cartItems.map((i) => ({
@@ -133,6 +179,30 @@ export function CheckoutPanel({ cartItems, total, vendedor, corPrimaria, onSucce
         </div>
         {form.tipoEntrega === 'ENTREGA' && (
           <div className="space-y-3">
+            {clienteLogado && enderecos.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-gray-500">Seus enderecos salvos:</p>
+                {enderecos.map((e: any) => (
+                  <button
+                    key={e.id}
+                    type="button"
+                    onClick={() => selecionarEndereco(e.id)}
+                    className={`w-full text-left p-3 rounded-xl border text-sm transition-colors ${
+                      enderecoSelecionado === e.id
+                        ? 'border-orange-500 bg-orange-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <span className="font-medium text-gray-900">{e.rotulo}</span>
+                    <span className="text-gray-500 ml-2">{e.logradouro}, {e.numero} - {e.bairro}</span>
+                  </button>
+                ))}
+                <div className="relative my-2">
+                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200" /></div>
+                  <div className="relative flex justify-center"><span className="bg-white px-2 text-xs text-gray-400">ou preencha manualmente</span></div>
+                </div>
+              </div>
+            )}
             <div className="relative">
               <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input

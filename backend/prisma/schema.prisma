@@ -425,6 +425,44 @@ model EnderecoCliente {
   @@map("enderecos_cliente")
 }
 
+// ========== CLIENTE GLOBAL ==========
+
+model ClienteGlobal {
+  id        String   @id @default(uuid()) @db.Uuid
+  nome      String
+  email     String   @unique
+  telefone  String?
+  senha     String
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pedidos    Pedido[]
+  enderecos  EnderecoClienteGlobal[]
+
+  @@map("clientes_globais")
+}
+
+model EnderecoClienteGlobal {
+  id               String  @id @default(uuid()) @db.Uuid
+  clienteGlobalId  String  @db.Uuid
+  rotulo           String  @default("Casa")
+  logradouro       String
+  numero           String
+  complemento      String?
+  bairro           String
+  cidade           String
+  estado           String
+  cep              String
+  principal        Boolean @default(false)
+  createdAt        DateTime @default(now())
+
+  clienteGlobal ClienteGlobal @relation(fields: [clienteGlobalId], references: [id], onDelete: Cascade)
+
+  @@index([clienteGlobalId])
+  @@map("enderecos_cliente_global")
+}
+
 // ========== PEDIDO ==========
 
 model Pedido {
@@ -432,6 +470,7 @@ model Pedido {
   codigo          Int?
   vendedorId      String       @db.Uuid
   clienteId       String?      @db.Uuid
+  clienteGlobalId String?      @db.Uuid
   clienteNome     String?
   clienteTelefone String?
   clienteEndereco String?
@@ -453,9 +492,10 @@ model Pedido {
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 
-  vendedor    Vendedor     @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
-  cliente     Cliente?     @relation(fields: [clienteId], references: [id])
-  mesaId      String?      @db.Uuid
+  vendedor        Vendedor        @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
+  cliente         Cliente?        @relation(fields: [clienteId], references: [id])
+  clienteGlobal   ClienteGlobal?  @relation(fields: [clienteGlobalId], references: [id])
+  mesaId          String?         @db.Uuid
   mesa        Mesa?        @relation(fields: [mesaId], references: [id], onDelete: SetNull)
   itens       ItemPedido[]
   pagamento   Pagamento?
@@ -466,6 +506,7 @@ model Pedido {
 
   @@index([vendedorId])
   @@index([clienteId])
+  @@index([clienteGlobalId])
   @@index([mesaId])
   @@index([status])
   @@index([createdAt])

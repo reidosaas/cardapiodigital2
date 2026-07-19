@@ -61,6 +61,7 @@ export class PedidosService {
   async create(data: {
     vendedorId: string;
     clienteId?: string;
+    clienteGlobalId?: string;
     clienteNome?: string;
     clienteTelefone?: string;
     items: any[];
@@ -104,6 +105,7 @@ export class PedidosService {
           codigo: vendedor.ultimoCodigoPedido,
           vendedorId: data.vendedorId,
           clienteId: data.clienteId,
+          clienteGlobalId: data.clienteGlobalId,
           clienteNome: data.clienteNome,
           clienteTelefone: data.clienteTelefone,
           total: data.total,
