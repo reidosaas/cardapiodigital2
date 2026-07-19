@@ -17,12 +17,15 @@ export default function ClienteEnderecos() {
   const [editando, setEditando] = useState<Endereco | null>(null);
   const [form, setForm] = useState({ rotulo: 'Casa', logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '', cep: '', principal: false });
 
-  const token = () => localStorage.getItem('token_cliente') || '';
-  const headers = { Authorization: `Bearer ${token()}` };
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {};
+    const t = localStorage.getItem('token_cliente') || '';
+    return { Authorization: `Bearer ${t}` };
+  };
 
   const loadEnderecos = async () => {
     try {
-      const res = await api.get('/api/cliente-global/enderecos', { headers });
+      const res = await api.get('/api/cliente-global/enderecos', { headers: getAuthHeaders() });
       setEnderecos(res.data);
     } catch { toast.error('Erro ao carregar enderecos'); }
     finally { setLoading(false); }
@@ -45,9 +48,9 @@ export default function ClienteEnderecos() {
   const handleSave = async () => {
     try {
       if (editando) {
-        await api.patch(`/api/cliente-global/enderecos/${editando.id}`, form, { headers });
+        await api.patch(`/api/cliente-global/enderecos/${editando.id}`, form, { headers: getAuthHeaders() });
       } else {
-        await api.post('/api/cliente-global/enderecos', form, { headers });
+        await api.post('/api/cliente-global/enderecos', form, { headers: getAuthHeaders() });
       }
       toast.success(editando ? 'Endereco atualizado!' : 'Endereco criado!');
       setShowForm(false);
@@ -60,7 +63,7 @@ export default function ClienteEnderecos() {
   const handleDelete = async (id: string) => {
     if (!confirm('Remover este endereco?')) return;
     try {
-      await api.delete(`/api/cliente-global/enderecos/${id}`, { headers });
+      await api.delete(`/api/cliente-global/enderecos/${id}`, { headers: getAuthHeaders() });
       toast.success('Endereco removido!');
       loadEnderecos();
     } catch { toast.error('Erro ao remover'); }
