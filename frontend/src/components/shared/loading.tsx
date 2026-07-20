@@ -16,7 +16,7 @@ export function PageLoading() {
     <div className="flex items-center justify-center min-h-screen">
       <div className="text-center space-y-4">
         <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-        <p className="text-lg font-medium text-gray-600">CardapioDigital</p>
+        <p className="text-lg font-medium text-gray-600">My Love Delivery</p>
       </div>
     </div>
   );

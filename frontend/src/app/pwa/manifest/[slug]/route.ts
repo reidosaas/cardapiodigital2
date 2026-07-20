@@ -7,15 +7,15 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
   const baseUrl = `${protocol}://${host}`;
 
   const manifest = {
-    name: `Cardapio - ${slug}`,
+    name: `My Love Delivery - ${slug}`,
     short_name: slug,
-    description: `Cardapio Digital - ${slug}`,
+    description: `My Love Delivery - ${slug}`,
     id: `/catalogo/${slug}`,
     start_url: `/catalogo/${slug}`,
     scope: `/catalogo/${slug}`,
     display: 'standalone',
     background_color: '#ffffff',
-    theme_color: '#f97316',
+    theme_color: '#ef4444',
     orientation: 'portrait-primary',
     categories: ['food', 'business'],
     icons: [

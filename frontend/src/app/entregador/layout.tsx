@@ -75,7 +75,7 @@ export default function EntregadorLayout({ children }: { children: React.ReactNo
       <header className="bg-white dark:bg-gray-900 border-b sticky top-0 z-50 safe-area-top">
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Truck className="h-5 w-5 text-orange-500" />
+            <Truck className="h-5 w-5 text-red-500" />
             <span className="font-bold text-sm">{loja?.nomeLoja || 'Entregador'}</span>
           </div>
 
@@ -88,7 +88,7 @@ export default function EntregadorLayout({ children }: { children: React.ReactNo
                   key={item.href}
                   href={item.href}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                    active ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
+                    active ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
                   }`}
                 >
                   <Icon className="h-3.5 w-3.5" />
@@ -123,7 +123,7 @@ export default function EntregadorLayout({ children }: { children: React.ReactNo
                   href={item.href}
                   onClick={() => setMenuOpen(false)}
                   className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                    active ? 'bg-orange-100 text-orange-700' : 'text-gray-600 hover:bg-gray-100'
+                    active ? 'bg-red-100 text-red-700' : 'text-gray-600 hover:bg-gray-100'
                   }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -158,7 +158,7 @@ export default function EntregadorLayout({ children }: { children: React.ReactNo
                 key={item.href}
                 href={item.href}
                 className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg text-[10px] font-medium transition-colors ${
-                  active ? 'text-orange-500' : 'text-gray-500'
+                  active ? 'text-red-500' : 'text-gray-500'
                 }`}
               >
                 <Icon className="h-5 w-5" />

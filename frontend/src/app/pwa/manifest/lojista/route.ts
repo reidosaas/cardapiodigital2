@@ -2,15 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
   const manifest = {
-    name: 'Lojista CardapioAI',
+    name: 'Lojista - My Love Delivery',
     short_name: 'Lojista',
-    description: 'Painel do Lojista - CardapioAI',
+    description: 'Painel do Lojista - My Love Delivery',
     id: '/dashboard',
     start_url: '/dashboard/vendedor',
     scope: '/dashboard',
     display: 'standalone',
     background_color: '#ffffff',
-    theme_color: '#f97316',
+    theme_color: '#ef4444',
     orientation: 'portrait-primary',
     categories: ['business'],
     icons: [

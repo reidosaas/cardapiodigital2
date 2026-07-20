@@ -75,7 +75,7 @@ export default function ClienteEnderecos() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Meus Enderecos</h1>
-        <button onClick={openNew} className="flex items-center gap-1 px-4 py-2 rounded-xl bg-orange-500 text-white text-sm font-semibold hover:bg-orange-600">
+        <button onClick={openNew} className="flex items-center gap-1 px-4 py-2 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600">
           <Plus size={16} /> Novo
         </button>
       </div>
@@ -135,7 +135,7 @@ export default function ClienteEnderecos() {
             Definir como endereco principal
           </label>
           <div className="flex gap-2">
-            <button onClick={handleSave} className="px-6 py-2 rounded-xl bg-orange-500 text-white text-sm font-semibold hover:bg-orange-600">Salvar</button>
+            <button onClick={handleSave} className="px-6 py-2 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600">Salvar</button>
             <button onClick={() => setShowForm(false)} className="px-6 py-2 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">Cancelar</button>
           </div>
         </div>
@@ -149,7 +149,7 @@ export default function ClienteEnderecos() {
               <div>
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-gray-900">{e.rotulo}</span>
-                  {e.principal && <Star className="h-3.5 w-3.5 text-orange-500 fill-orange-500" />}
+                  {e.principal && <Star className="h-3.5 w-3.5 text-red-500 fill-red-500" />}
                 </div>
                 <p className="text-sm text-gray-600">{e.logradouro}, {e.numero}{e.complemento ? ` - ${e.complemento}` : ''}</p>
                 <p className="text-sm text-gray-500">{e.bairro}, {e.cidade} - {e.estado}</p>

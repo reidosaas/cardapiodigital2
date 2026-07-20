@@ -288,8 +288,8 @@ export default function EntregadoresPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <div className="flex items-center justify-center w-5 h-5 rounded bg-orange-100 dark:bg-orange-900/30">
-                          <Truck size={11} className="text-orange-600 dark:text-orange-400" />
+                        <div className="flex items-center justify-center w-5 h-5 rounded bg-red-100 dark:bg-red-900/30">
+                          <Truck size={11} className="text-red-600 dark:text-red-400" />
                         </div>
                         <div>
                           <p className="text-gray-400 text-[10px]">Em andamento</p>
@@ -326,7 +326,7 @@ export default function EntregadoresPage() {
                     {e.vinculoStatus === 'ACEITO' && (
                       <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
                         <div className="flex items-center gap-1.5 mb-2">
-                          <Wallet size={12} className="text-orange-500" />
+                          <Wallet size={12} className="text-red-500" />
                           <p className="text-[10px] font-medium text-gray-500 uppercase">Pagamento Hoje</p>
                         </div>
 
@@ -345,7 +345,7 @@ export default function EntregadoresPage() {
                           </div>
                           <div className="flex justify-between border-t pt-1.5 mt-1.5">
                             <span className="font-medium text-gray-700 dark:text-gray-300">Total a pagar</span>
-                            <span className="font-bold text-orange-600">{formatCurrency(valorTotalHoje)}</span>
+                            <span className="font-bold text-red-600">{formatCurrency(valorTotalHoje)}</span>
                           </div>
                         </div>
 
@@ -358,7 +358,7 @@ export default function EntregadoresPage() {
                           <button
                             onClick={() => handlePagar(checkinId)}
                             disabled={pagandoId === checkinId || valorTotalHoje === 0}
-                            className="flex items-center justify-center gap-1.5 w-full py-2 rounded-lg bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-medium transition-colors"
+                            className="flex items-center justify-center gap-1.5 w-full py-2 rounded-lg bg-red-500 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-medium transition-colors"
                           >
                             {pagandoId === checkinId ? (
                               <Loader2 size={12} className="animate-spin" />

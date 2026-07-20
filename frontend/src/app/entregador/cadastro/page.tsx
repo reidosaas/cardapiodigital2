@@ -43,12 +43,12 @@ export default function EntregadorCadastroPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-amber-100 dark:from-gray-950 dark:to-gray-900 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-amber-100 dark:from-gray-950 dark:to-gray-900 p-4">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
         <Card className="shadow-xl border-0">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
-              <div className="h-12 w-12 rounded-xl bg-orange-500 flex items-center justify-center">
+              <div className="h-12 w-12 rounded-xl bg-red-500 flex items-center justify-center">
                 <Truck className="h-6 w-6 text-white" />
               </div>
             </div>
@@ -95,14 +95,14 @@ export default function EntregadorCadastroPage() {
                   onChange={(e) => setTelefone(e.target.value)}
                 />
               </div>
-              <Button type="submit" className="w-full bg-orange-500 hover:bg-orange-600" disabled={loading}>
+              <Button type="submit" className="w-full bg-red-500 hover:bg-red-600" disabled={loading}>
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Cadastrar'}
               </Button>
             </form>
 
             <div className="mt-6 text-center text-sm">
               <span className="text-gray-500">Ja tem conta? </span>
-              <Link href="/entregador/login" className="text-orange-600 font-medium hover:underline">
+              <Link href="/entregador/login" className="text-red-600 font-medium hover:underline">
                 Faca login
               </Link>
             </div>

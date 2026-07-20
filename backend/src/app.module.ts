@@ -37,6 +37,7 @@ import { AdminEntregadoresModule } from './modules/admin-entregadores/admin-entr
 import { ClienteGlobalModule } from './modules/cliente-global/cliente-global.module';
 import { CaixaModule } from './modules/caixa/caixa.module';
 import { AdminUsersModule } from './modules/admin-users/admin-users.module';
+import { ConfigSistemaModule } from './modules/config-sistema/config-sistema.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 
@@ -83,6 +84,7 @@ import { APP_GUARD } from '@nestjs/core';
     ClienteGlobalModule,
     CaixaModule,
     AdminUsersModule,
+    ConfigSistemaModule,
   ],
   providers: [
     {

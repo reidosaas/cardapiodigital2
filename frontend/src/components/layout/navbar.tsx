@@ -29,7 +29,7 @@ export function Navbar({ onMenuClick }: NavbarProps) {
         </button>
         <div>
           <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {user?.vendedor?.nomeLoja || 'CardapioDigital'}
+            {user?.vendedor?.nomeLoja || 'My Love Delivery'}
           </h1>
           <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
             {user?.role?.toLowerCase()}

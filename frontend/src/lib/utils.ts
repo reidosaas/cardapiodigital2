@@ -55,7 +55,7 @@ export function getStatusColor(status: string): string {
   const colors: Record<string, string> = {
     PENDENTE: 'bg-yellow-100 text-yellow-800',
     CONFIRMADO: 'bg-blue-100 text-blue-800',
-    PREPARANDO: 'bg-orange-100 text-orange-800',
+    PREPARANDO: 'bg-red-100 text-red-800',
     SAIU_PARA_ENTREGA: 'bg-purple-100 text-purple-800',
     ENTREGUE: 'bg-green-100 text-green-800',
     CANCELADO: 'bg-red-100 text-red-800',

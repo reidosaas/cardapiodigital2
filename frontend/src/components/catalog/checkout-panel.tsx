@@ -189,7 +189,7 @@ export function CheckoutPanel({ cartItems, total, vendedor, corPrimaria, onSucce
                     onClick={() => selecionarEndereco(e.id)}
                     className={`w-full text-left p-3 rounded-xl border text-sm transition-colors ${
                       enderecoSelecionado === e.id
-                        ? 'border-orange-500 bg-orange-50'
+                        ? 'border-red-500 bg-red-50'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
@@ -384,7 +384,7 @@ function formatWhatsAppMessage(pedido: any, form: any): string {
     ? `${form.rua}, ${form.numero} - ${form.bairro}${form.cep ? `, CEP ${form.cep}` : ''}${form.complemento ? `, ${form.complemento}` : ''}`
     : '';
   return [
-    `*Novo Pedido - Cardapio Digital*`,
+    `*Novo Pedido - My Love Delivery*`,
     ``,
     `*Cliente:* ${form.nome}`,
     `*Telefone:* ${form.telefone}`,

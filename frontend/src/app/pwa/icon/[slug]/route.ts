@@ -6,8 +6,8 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
   const initial = (slug[0] || 'L').toUpperCase();
 
   const colors = [
-    '#f97316', '#ef4444', '#22c55e', '#3b82f6', '#8b5cf6',
-    '#ec4899', '#14b8a6', '#f59e0b', '#6366f1', '#06b6d4',
+    '#ef4444', '#ef4444', '#22c55e', '#3b82f6', '#8b5cf6',
+    '#ef4444', '#14b8a6', '#f59e0b', '#6366f1', '#06b6d4',
   ];
   let hash = 0;
   for (let i = 0; i < slug.length; i++) {

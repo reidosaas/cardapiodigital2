@@ -7,7 +7,7 @@ import api from '@/lib/api';
 const statusColors: Record<string, string> = {
   PENDENTE: 'bg-yellow-100 text-yellow-700',
   CONFIRMADO: 'bg-blue-100 text-blue-700',
-  PREPARANDO: 'bg-orange-100 text-orange-700',
+  PREPARANDO: 'bg-red-100 text-red-700',
   SAIU_ENTREGA: 'bg-purple-100 text-purple-700',
   ENTREGUE: 'bg-green-100 text-green-700',
   CANCELADO: 'bg-red-100 text-red-700',

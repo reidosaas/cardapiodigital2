@@ -75,7 +75,7 @@ export default function EntregadorRelatorioPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-red-500" />
       </div>
     );
   }
@@ -111,7 +111,7 @@ export default function EntregadorRelatorioPage() {
                   variant={periodo === p && !dataInicio ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => { setPeriodo(p as any); if (p !== 'personalizado') { setDataInicio(''); setDataFim(''); } }}
-                  className={periodo === p && !dataInicio ? 'bg-orange-500 hover:bg-orange-600' : ''}
+                  className={periodo === p && !dataInicio ? 'bg-red-500 hover:bg-red-600' : ''}
                 >
                   {p === 'hoje' ? 'Hoje' : p === 'semana' ? '7 Dias' : p === 'mes' ? 'Mes' : 'Personalizado'}
                 </Button>
@@ -129,15 +129,15 @@ export default function EntregadorRelatorioPage() {
       </Card>
 
       {/* Dashboard Principal - Valor a Receber */}
-      <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/30 dark:to-orange-900/20 dark:border-orange-800">
+      <Card className="border-red-200 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950/30 dark:to-red-900/20 dark:border-red-800">
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-orange-600 dark:text-orange-400 font-medium">Total a Receber - {periodoLabel}</p>
-              <p className="text-4xl font-bold text-orange-700 dark:text-orange-400 mt-1">R$ {aReceber.toFixed(2)}</p>
+              <p className="text-sm text-red-600 dark:text-red-400 font-medium">Total a Receber - {periodoLabel}</p>
+              <p className="text-4xl font-bold text-red-700 dark:text-red-400 mt-1">R$ {aReceber.toFixed(2)}</p>
             </div>
-            <div className="w-16 h-16 rounded-2xl bg-orange-200 dark:bg-orange-800/50 flex items-center justify-center">
-              <Wallet className="h-8 w-8 text-orange-600 dark:text-orange-400" />
+            <div className="w-16 h-16 rounded-2xl bg-red-200 dark:bg-red-800/50 flex items-center justify-center">
+              <Wallet className="h-8 w-8 text-red-600 dark:text-red-400" />
             </div>
           </div>
         </CardContent>
@@ -234,16 +234,16 @@ export default function EntregadorRelatorioPage() {
             </Card>
 
             {/* A Receber */}
-            <Card className="bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800">
+            <Card className="bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
               <CardContent className="p-5">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <Clock className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-                    <p className="text-sm font-medium text-orange-700 dark:text-orange-400">A Receber (Pendente)</p>
+                    <Clock className="h-5 w-5 text-red-600 dark:text-red-400" />
+                    <p className="text-sm font-medium text-red-700 dark:text-red-400">A Receber (Pendente)</p>
                   </div>
-                  <Badge className="bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-400">Pendente</Badge>
+                  <Badge className="bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400">Pendente</Badge>
                 </div>
-                <p className="text-3xl font-bold text-orange-700 dark:text-orange-400">R$ {aReceber.toFixed(2)}</p>
+                <p className="text-3xl font-bold text-red-700 dark:text-red-400">R$ {aReceber.toFixed(2)}</p>
                 <p className="text-xs text-gray-500 mt-2">Valor total a ser pago pelo lojista</p>
               </CardContent>
             </Card>
@@ -266,7 +266,7 @@ export default function EntregadorRelatorioPage() {
               </div>
               <div className="flex justify-between md:flex-col md:gap-1 border-t md:border-t-0 pt-2 md:pt-0">
                 <span className="text-gray-500 font-medium">Total:</span>
-                <span className="font-bold text-orange-600 text-lg">R$ {totalGanho.toFixed(2)}</span>
+                <span className="font-bold text-red-600 text-lg">R$ {totalGanho.toFixed(2)}</span>
               </div>
             </div>
           </div>

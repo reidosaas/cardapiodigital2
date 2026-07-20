@@ -5,15 +5,15 @@ export async function GET(req: NextRequest) {
   const protocol = host.includes('localhost') ? 'http' : 'https';
 
   const manifest = {
-    name: 'Entregador CardapioAI',
+    name: 'Entregador - My Love Delivery',
     short_name: 'Entregador',
-    description: 'Area do Entregador - CardapioAI',
+    description: 'Area do Entregador - My Love Delivery',
     id: '/entregador',
     start_url: '/entregador/login',
     scope: '/entregador',
     display: 'standalone',
     background_color: '#ffffff',
-    theme_color: '#f97316',
+    theme_color: '#ef4444',
     orientation: 'portrait-primary',
     categories: ['business'],
     icons: [

@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 
 const CATEGORIAS = ['Aluguel', 'Material', 'Salarios', 'Marketing', 'Utilidades', 'Alimentacao', 'Transporte', 'Outros'];
 const CATEGORY_COLORS: Record<string, string> = {
-  Aluguel: '#ef4444', Material: '#f97316', Salarios: '#eab308',
+  Aluguel: '#ef4444', Material: '#ef4444', Salarios: '#eab308',
   Marketing: '#a855f7', Utilidades: '#06b6d4', Alimentacao: '#10b981',
   Transporte: '#3b82f6', Outros: '#6b7280',
 };

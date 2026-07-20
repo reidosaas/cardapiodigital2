@@ -1,10 +1,11 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { removeTokens } from '@/lib/token';
+import api from '@/lib/api';
 import {
   LayoutDashboard,
   Package,
@@ -71,6 +72,11 @@ export function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps) {
   const { user, loading } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
   const links = isAdmin ? adminLinks : vendedorLinks;
+  const [sysConfig, setSysConfig] = useState<any>(null);
+
+  useEffect(() => {
+    api.get('/api/config-sistema').then((res) => setSysConfig(res.data)).catch(() => {});
+  }, []);
 
   return (
     <>
@@ -88,7 +94,12 @@ export function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps) {
       >
         <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-800">
           {isOpen && (
-            <span className="text-lg font-bold text-gradient">CardapioDigital</span>
+            <div className="flex items-center gap-2">
+              {sysConfig?.logoUrl ? (
+                <img src={sysConfig.logoUrl} alt="Logo" className="h-8 w-8 rounded-lg object-contain" />
+              ) : null}
+              <span className="text-lg font-bold text-gradient">{sysConfig?.nomeSistema || 'My Love Delivery'}</span>
+            </div>
           )}
           <button
             onClick={onToggle}

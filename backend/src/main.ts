@@ -37,8 +37,8 @@ async function bootstrap() {
   );
 
   const config = new DocumentBuilder()
-    .setTitle('Cardapio Digital API')
-    .setDescription('API do sistema SaaS de Cardapio Digital e Catalogo Online')
+    .setTitle('My Love Delivery API')
+    .setDescription('API do sistema My Love Delivery - Catalogo Online e Delivery')
     .setVersion('1.0')
     .addBearerAuth()
     .build();

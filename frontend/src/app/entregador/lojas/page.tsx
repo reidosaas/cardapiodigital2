@@ -139,7 +139,7 @@ export default function EntregadorLojasPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-red-500" />
       </div>
     );
   }
@@ -153,10 +153,10 @@ export default function EntregadorLojasPage() {
 
       {/* Vinculos Pendentes */}
       {vinculosPendentes.length > 0 && (
-        <Card className="border-orange-200 bg-orange-50 dark:bg-orange-950/20 dark:border-orange-800">
+        <Card className="border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
-              <Link className="h-5 w-5 text-orange-500" />
+              <Link className="h-5 w-5 text-red-500" />
               Convites Pendentes ({vinculosPendentes.length})
             </CardTitle>
           </CardHeader>
@@ -165,8 +165,8 @@ export default function EntregadorLojasPage() {
               <div key={v.id} className="bg-white dark:bg-gray-900 rounded-xl p-4 border space-y-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
-                      <Store className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                    <div className="w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                      <Store className="h-6 w-6 text-red-600 dark:text-red-400" />
                     </div>
                     <div>
                       <p className="font-bold">{v.loja.nomeLoja}</p>
@@ -240,7 +240,7 @@ export default function EntregadorLojasPage() {
                     <div className="flex-1 p-5 space-y-4">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-xl">
+                          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center text-white font-bold text-xl">
                             {v.loja.nomeLoja.charAt(0).toUpperCase()}
                           </div>
                           <div>

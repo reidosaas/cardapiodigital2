@@ -945,3 +945,19 @@ model Caixa {
   @@index([vendedorId])
   @@map("caixas")
 }
+
+// ========== CONFIG SISTEMA ==========
+
+model ConfigSistema {
+  id            String   @id @default(uuid()) @db.Uuid
+  logoUrl       String?
+  nomeSistema   String   @default("My Love Delivery")
+  corTema       String   @default("#ef4444")
+  telefone      String?
+  emailContato  String?
+  redesSociais  Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("config_sistema")
+}

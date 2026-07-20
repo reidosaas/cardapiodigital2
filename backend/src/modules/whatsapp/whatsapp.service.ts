@@ -279,7 +279,7 @@ export class WhatsAppService {
     });
 
     const mensagensPadrao: Record<string, string> = {
-      boas_vindas: `Ola ${conversa.contatoNome}! Bem-vindo(a) ao ${nomeLoja || 'CardapioDigital'}! 🎉\n\nEnvie "cardapio" para ver nossos produtos, "pedido" para fazer um pedido, ou "agendar" para marcar um horario.`,
+      boas_vindas: `Ola ${conversa.contatoNome}! Bem-vindo(a) ao ${nomeLoja || 'My Love Delivery'}! 🎉\n\nEnvie "cardapio" para ver nossos produtos, "pedido" para fazer um pedido, ou "agendar" para marcar um horario.`,
       cardapio: `Confira nosso cardapio completo em:\nhttps://cardapio.digital/${nomeLoja || 'catalogo'}\n\nOu digite o nome do produto que deseja saber mais.`,
       pedido_recebido: `Pedido recebido com sucesso! ✅\nEm breve entraremos em contato para confirmar.\n\nDigite "status" para acompanhar seu pedido.`,
       agendamento_confirmado: `Agendamento confirmado! ✅\nEntraremos em contato para confirmar o horario.\n\nDigite "agenda" para ver seus agendamentos.`,

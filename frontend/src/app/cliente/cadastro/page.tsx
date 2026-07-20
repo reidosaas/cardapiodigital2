@@ -32,7 +32,7 @@ function CadastroForm() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-orange-500 flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 rounded-2xl bg-red-500 flex items-center justify-center mx-auto mb-4">
             <User className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Criar sua conta</h1>
@@ -47,7 +47,7 @@ function CadastroForm() {
               required
               value={form.nome}
               onChange={(e) => setForm({ ...form, nome: e.target.value })}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500"
               placeholder="Seu nome"
             />
           </div>
@@ -58,7 +58,7 @@ function CadastroForm() {
               required
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500"
               placeholder="seu@email.com"
             />
           </div>
@@ -68,7 +68,7 @@ function CadastroForm() {
               type="tel"
               value={form.telefone}
               onChange={(e) => setForm({ ...form, telefone: e.target.value })}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500"
               placeholder="(11) 99999-9999"
             />
           </div>
@@ -81,7 +81,7 @@ function CadastroForm() {
                 minLength={6}
                 value={form.senha}
                 onChange={(e) => setForm({ ...form, senha: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 pr-12"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500 pr-12"
                 placeholder="Minimo 6 caracteres"
               />
               <button type="button" onClick={() => setShowSenha(!showSenha)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
@@ -92,7 +92,7 @@ function CadastroForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 rounded-xl bg-orange-500 text-white font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50"
+            className="w-full py-3 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600 transition-colors disabled:opacity-50"
           >
             {loading ? 'Cadastrando...' : 'Cadastrar'}
           </button>
@@ -100,7 +100,7 @@ function CadastroForm() {
 
         <p className="text-center text-sm text-gray-500 mt-6">
           Ja tem conta?{' '}
-          <Link href={`/cliente/login${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ''}`} className="text-orange-500 font-medium hover:underline">
+          <Link href={`/cliente/login${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ''}`} className="text-red-500 font-medium hover:underline">
             Fazer login
           </Link>
         </p>

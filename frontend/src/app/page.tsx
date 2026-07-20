@@ -1,16 +1,26 @@
 'use client';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Store, ShoppingCart, MessageSquare, BarChart3, ArrowRight, Check, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import api from '@/lib/api';
 
 export default function LandingPage() {
+  const [sysConfig, setSysConfig] = useState<any>(null);
+
+  useEffect(() => {
+    api.get('/api/config-sistema').then((res) => setSysConfig(res.data)).catch(() => {});
+  }, []);
   return (
     <div className="min-h-screen">
       <header className="fixed top-0 w-full z-50 bg-white/80 dark:bg-gray-950/80 backdrop-blur-lg border-b border-gray-100 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <span className="text-xl font-bold text-gradient">CardapioDigital</span>
+            <div className="flex items-center gap-2">
+              {sysConfig?.logoUrl && <img src={sysConfig.logoUrl} alt="Logo" className="h-8 w-8 rounded-lg object-contain" />}
+              <span className="text-xl font-bold text-gradient">{sysConfig?.nomeSistema || 'My Love Delivery'}</span>
+            </div>
             <nav className="hidden md:flex items-center gap-6">
               <Link href="#recursos" className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary">Recursos</Link>
               <Link href="#planos" className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary">Planos</Link>
@@ -39,7 +49,7 @@ export default function LandingPage() {
             transition={{ delay: 0.1 }}
             className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-8"
           >
-            Crie seu cardapio online em minutos. Receba pedidos, automatize atendimento via WhatsApp com IA e aumente suas vendas.
+            Crie seu cardápio online em minutos. Receba pedidos, automatize atendimento via WhatsApp com IA e aumente suas vendas.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -133,7 +143,7 @@ export default function LandingPage() {
 
       <footer className="py-8 px-4 border-t border-gray-200 dark:border-gray-800">
         <div className="max-w-7xl mx-auto text-center text-sm text-gray-500">
-          <p>2024 CardapioDigital. Todos os direitos reservados.</p>
+          <p>2024 My Love Delivery. Todos os direitos reservados.</p>
         </div>
       </footer>
     </div>

@@ -103,7 +103,7 @@ interface Order {
 const colunas: { key: OrderStatus; label: string; icon: any; color: string }[] = [
   { key: 'PENDENTE', label: 'Pendentes', icon: Clock, color: 'bg-yellow-500' },
   { key: 'CONFIRMADO', label: 'Confirmados', icon: ClipboardList, color: 'bg-blue-500' },
-  { key: 'PREPARANDO', label: 'Preparando', icon: ChefHat, color: 'bg-orange-500' },
+  { key: 'PREPARANDO', label: 'Preparando', icon: ChefHat, color: 'bg-red-500' },
   { key: 'SAIU_PARA_ENTREGA', label: 'Saiu p/ Entrega', icon: Bike, color: 'bg-purple-500' },
   { key: 'ENTREGUE', label: 'Entregues', icon: Check, color: 'bg-green-500' },
   { key: 'CANCELADO', label: 'Cancelados', icon: X, color: 'bg-red-500' },

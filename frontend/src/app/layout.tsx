@@ -2,8 +2,8 @@ import { Providers } from './providers';
 import '@/styles/globals.css';
 
 export const metadata = {
-  title: 'CardapioAI - Catalogo Online',
-  description: 'Cardapio Digital Inteligente - Peca online e receba em casa',
+  title: 'My Love Delivery',
+  description: 'My Love Delivery - Peca online e receba em casa',
   viewport: {
     width: 'device-width',
     initialScale: 1,
@@ -14,23 +14,23 @@ export const metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'CardapioAI',
+    title: 'My Love Delivery',
   },
   formatDetection: {
     telephone: false,
   },
-  themeColor: '#f97316',
+  themeColor: '#ef4444',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
-        <meta name="theme-color" content="#f97316" />
+        <meta name="theme-color" content="#ef4444" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="application-name" content="CardapioAI" />
+        <meta name="application-name" content="My Love Delivery" />
         <link rel="icon" type="image/png" href="/icons/icon-192.png" sizes="192x192" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />

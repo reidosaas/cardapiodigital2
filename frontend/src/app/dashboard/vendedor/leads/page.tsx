@@ -90,8 +90,8 @@ export default function LeadsPage() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-orange-100 dark:bg-orange-900/30">
-                  <TrendingUp className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                <div className="p-2.5 rounded-xl bg-red-100 dark:bg-red-900/30">
+                  <TrendingUp className="h-5 w-5 text-red-600 dark:text-red-400" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{stats?.taxaConversao ?? 0}%</p>

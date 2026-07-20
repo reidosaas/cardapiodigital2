@@ -254,7 +254,7 @@ export default function EntregadorDashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-red-500" />
       </div>
     );
   }
@@ -263,10 +263,10 @@ export default function EntregadorDashboardPage() {
     <div className="space-y-6">
       {/* Vinculos pendentes */}
       {vinculosPendentes.length > 0 && (
-        <Card className="border-orange-200 bg-orange-50 dark:bg-orange-950/20 dark:border-orange-800">
+        <Card className="border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
-              <Link className="h-5 w-5 text-orange-500" />
+              <Link className="h-5 w-5 text-red-500" />
               Pedidos de Vinculo ({vinculosPendentes.length})
             </CardTitle>
           </CardHeader>
@@ -307,7 +307,7 @@ export default function EntregadorDashboardPage() {
       {vinculosAtivos.length === 0 && vinculosPendentes.length === 0 && (
         <Card className="w-full">
           <CardContent className="py-12 text-center">
-            <Clock className="h-16 w-16 mx-auto mb-4 text-orange-400" />
+            <Clock className="h-16 w-16 mx-auto mb-4 text-red-400" />
             <h2 className="text-xl font-bold mb-2">Aguardando Vinculo</h2>
             <p className="text-gray-500 mb-4">
               Nenhuma loja te vinculou ainda. Aguarde um lojista informar seu telefone.
@@ -329,7 +329,7 @@ export default function EntregadorDashboardPage() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <Card>
                     <CardContent className="p-4 text-center">
-                      <Package className="h-6 w-6 mx-auto mb-1 text-orange-500" />
+                      <Package className="h-6 w-6 mx-auto mb-1 text-red-500" />
                       <p className="text-2xl font-bold">{stats.totalEntregasHoje}</p>
                       <p className="text-xs text-gray-500">Entregas Hoje</p>
                     </CardContent>
@@ -366,7 +366,7 @@ export default function EntregadorDashboardPage() {
                     variant={filtro === f ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setFiltro(f)}
-                    className={filtro === f ? 'bg-orange-500 hover:bg-orange-600' : ''}
+                    className={filtro === f ? 'bg-red-500 hover:bg-red-600' : ''}
                   >
                     {f === 'todos' ? 'Todos' : statusLabels[f]}
                   </Button>
@@ -389,7 +389,7 @@ export default function EntregadorDashboardPage() {
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center gap-2">
                             {p.rotaOrdem && (
-                              <span className="flex items-center justify-center w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold shrink-0">
+                              <span className="flex items-center justify-center w-7 h-7 rounded-full bg-red-500 text-white text-xs font-bold shrink-0">
                                 {p.rotaOrdem}
                               </span>
                             )}
@@ -418,7 +418,7 @@ export default function EntregadorDashboardPage() {
                             {p.pedido.itens.map((i: any) => i.quantidade + 'x ' + i.produto?.nome).join(', ')}
                           </p>
                           {p.pedido.observacao && (
-                            <p className="text-xs text-orange-600 italic">Obs: {p.pedido.observacao}</p>
+                            <p className="text-xs text-red-600 italic">Obs: {p.pedido.observacao}</p>
                           )}
                         </div>
 

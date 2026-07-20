@@ -206,7 +206,7 @@ export default function ConfiguracoesPage() {
                 <p className="text-xs text-gray-400 mt-1">A descricao nao pode ser alterada</p>
               </div>
               <div>
-                <label className="text-sm text-gray-500">Link do Cardapio</label>
+                <label className="text-sm text-gray-500">Link do Cardápio</label>
                 <div className="mt-1 flex items-center gap-2 p-3 rounded-lg border bg-gray-50 dark:bg-gray-800">
                   <Globe className="h-4 w-4 text-gray-400 shrink-0" />
                   <span className="text-sm text-gray-600 dark:text-gray-300 break-all">

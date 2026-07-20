@@ -51,7 +51,7 @@ function calcularTempo(createdAt: string): string {
 const STATUS_CONFIG: Record<MesaStatus, { label: string; bg: string; text: string; border: string; dot: string }> = {
   DISPONIVEL:  { label: 'Disponivel',  bg: 'bg-emerald-500', text: 'text-white', border: 'border-emerald-600', dot: 'bg-emerald-300' },
   EM_CONSUMO:  { label: 'Em consumo',  bg: 'bg-sky-500',     text: 'text-white', border: 'border-sky-600',     dot: 'bg-sky-300'     },
-  PEDIU_CONTA: { label: 'Pediu conta', bg: 'bg-orange-500',  text: 'text-white', border: 'border-orange-600',  dot: 'bg-orange-300'  },
+  PEDIU_CONTA: { label: 'Pediu conta', bg: 'bg-red-500',  text: 'text-white', border: 'border-red-600',  dot: 'bg-red-300'  },
 };
 
 const PEDIDO_STATUS_LABEL: Record<PedidoStatus, string> = {
@@ -61,7 +61,7 @@ const PEDIDO_STATUS_LABEL: Record<PedidoStatus, string> = {
 
 const PEDIDO_STATUS_COLOR: Record<PedidoStatus, string> = {
   PENDENTE: 'bg-yellow-100 text-yellow-700', CONFIRMADO: 'bg-blue-100 text-blue-700',
-  PREPARANDO: 'bg-orange-100 text-orange-700', SAIU_PARA_ENTREGA: 'bg-purple-100 text-purple-700',
+  PREPARANDO: 'bg-red-100 text-red-700', SAIU_PARA_ENTREGA: 'bg-purple-100 text-purple-700',
   ENTREGUE: 'bg-green-100 text-green-700', CANCELADO: 'bg-red-100 text-red-700',
 };
 

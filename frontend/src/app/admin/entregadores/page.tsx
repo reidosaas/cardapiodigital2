@@ -74,7 +74,7 @@ export default function AdminEntregadoresPage() {
 
                   <div className="grid grid-cols-3 gap-3 mb-3">
                     <div className="text-center p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                      <Package className="h-4 w-4 mx-auto mb-1 text-orange-500" />
+                      <Package className="h-4 w-4 mx-auto mb-1 text-red-500" />
                       <p className="text-lg font-bold">{e.totalEntregasMes}</p>
                       <p className="text-xs text-gray-400">Entregas Mes</p>
                     </div>

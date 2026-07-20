@@ -109,12 +109,12 @@ export default function EntregadorLoginPage() {
 
   if (showStoreSelect) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-amber-100 dark:from-gray-950 dark:to-gray-900 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-amber-100 dark:from-gray-950 dark:to-gray-900 p-4">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
           <Card className="shadow-xl border-0">
             <CardHeader className="text-center">
               <div className="flex justify-center mb-4">
-                <div className="h-12 w-12 rounded-xl bg-orange-500 flex items-center justify-center">
+                <div className="h-12 w-12 rounded-xl bg-red-500 flex items-center justify-center">
                   <Store className="h-6 w-6 text-white" />
                 </div>
               </div>
@@ -127,7 +127,7 @@ export default function EntregadorLoginPage() {
                   <button
                     key={l.id}
                     onClick={() => handleSelectStore(l.id)}
-                    className="w-full p-4 rounded-xl border-2 border-gray-200 hover:border-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/20 transition-all text-left"
+                    className="w-full p-4 rounded-xl border-2 border-gray-200 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all text-left"
                     disabled={loading}
                   >
                     <p className="font-bold">{l.nomeLoja}</p>
@@ -153,12 +153,12 @@ export default function EntregadorLoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-amber-100 dark:from-gray-950 dark:to-gray-900 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-amber-100 dark:from-gray-950 dark:to-gray-900 p-4">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
         <Card className="shadow-xl border-0">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
-              <div className="h-12 w-12 rounded-xl bg-orange-500 flex items-center justify-center">
+              <div className="h-12 w-12 rounded-xl bg-red-500 flex items-center justify-center">
                 <Truck className="h-6 w-6 text-white" />
               </div>
             </div>
@@ -187,14 +187,14 @@ export default function EntregadorLoginPage() {
                   required
                 />
               </div>
-              <Button type="submit" className="w-full bg-orange-500 hover:bg-orange-600" disabled={loading}>
+              <Button type="submit" className="w-full bg-red-500 hover:bg-red-600" disabled={loading}>
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Entrar'}
               </Button>
             </form>
 
             <div className="mt-6 text-center text-sm">
               <span className="text-gray-500">Nao tem conta? </span>
-              <Link href="/entregador/cadastro" className="text-orange-600 font-medium hover:underline">
+              <Link href="/entregador/cadastro" className="text-red-600 font-medium hover:underline">
                 Cadastre-se
               </Link>
             </div>

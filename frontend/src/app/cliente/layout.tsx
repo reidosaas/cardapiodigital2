@@ -55,7 +55,7 @@ export default function ClienteLayout({ children }: { children: React.ReactNode 
       <header className="bg-white dark:bg-gray-900 border-b sticky top-0 z-50">
         <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link href="/cliente/perfil" className="flex items-center gap-2">
-            <User className="h-5 w-5 text-orange-500" />
+            <User className="h-5 w-5 text-red-500" />
             <span className="font-bold text-sm">{cliente?.nome || 'Minha Conta'}</span>
           </Link>
           <div className="flex items-center gap-2">
@@ -83,7 +83,7 @@ export default function ClienteLayout({ children }: { children: React.ReactNode 
                 key={item.href}
                 href={item.href}
                 className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg text-[10px] font-medium transition-colors ${
-                  active ? 'text-orange-500' : 'text-gray-500'
+                  active ? 'text-red-500' : 'text-gray-500'
                 }`}
               >
                 <Icon className="h-5 w-5" />

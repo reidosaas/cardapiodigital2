@@ -163,7 +163,7 @@ export default function CatalogoPublico() {
               type="text"
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
-              placeholder="Buscar no cardapio"
+              placeholder="Buscar no cardápio"
               className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-gray-100 border-0 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200 text-sm"
             />
             {busca && (
@@ -183,7 +183,7 @@ export default function CatalogoPublico() {
             <img src={bannerUrl} alt="" className="w-full h-full object-cover" />
           </div>
         ) : (
-          <div className="w-full h-48 sm:h-56 md:h-64 bg-gradient-to-br from-orange-400 to-orange-600" />
+          <div className="w-full h-48 sm:h-56 md:h-64 bg-gradient-to-br from-red-400 to-red-600" />
         )}
 
         {/* Logo overlapping banner */}
@@ -290,7 +290,7 @@ export default function CatalogoPublico() {
                   >
                     <button
                       onClick={() => { setCategoriaAtiva(null); setShowCatDropdown(false); }}
-                      className={`w-full text-left px-4 py-2.5 text-sm font-medium hover:bg-gray-50 transition-colors ${!categoriaAtiva ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}
+                      className={`w-full text-left px-4 py-2.5 text-sm font-medium hover:bg-gray-50 transition-colors ${!categoriaAtiva ? 'text-red-600 bg-red-50' : 'text-gray-700'}`}
                     >
                       Todos
                     </button>
@@ -298,7 +298,7 @@ export default function CatalogoPublico() {
                       <button
                         key={cat.id}
                         onClick={() => { setCategoriaAtiva(cat.id); setShowCatDropdown(false); }}
-                        className={`w-full text-left px-4 py-2.5 text-sm font-medium hover:bg-gray-50 transition-colors uppercase ${categoriaAtiva === cat.id ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}
+                        className={`w-full text-left px-4 py-2.5 text-sm font-medium hover:bg-gray-50 transition-colors uppercase ${categoriaAtiva === cat.id ? 'text-red-600 bg-red-50' : 'text-gray-700'}`}
                       >
                         {cat.nome}
                       </button>
@@ -377,15 +377,15 @@ export default function CatalogoPublico() {
       {/* Bottom Navigation Bar */}
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 safe-area-bottom">
         <div className="max-w-3xl mx-auto flex items-center justify-around h-16">
-          <button onClick={() => setActiveTab('home')} className={`flex flex-col items-center gap-0.5 px-4 py-1.5 ${activeTab === 'home' ? 'text-orange-500' : 'text-gray-400'}`}>
+          <button onClick={() => setActiveTab('home')} className={`flex flex-col items-center gap-0.5 px-4 py-1.5 ${activeTab === 'home' ? 'text-red-500' : 'text-gray-400'}`}>
             <Home size={22} />
             <span className="text-[10px] font-medium">Home</span>
           </button>
-          <button onClick={() => setActiveTab('pedidos')} className={`flex flex-col items-center gap-0.5 px-4 py-1.5 ${activeTab === 'pedidos' ? 'text-orange-500' : 'text-gray-400'}`}>
+          <button onClick={() => setActiveTab('pedidos')} className={`flex flex-col items-center gap-0.5 px-4 py-1.5 ${activeTab === 'pedidos' ? 'text-red-500' : 'text-gray-400'}`}>
             <ClipboardList size={22} />
             <span className="text-[10px] font-medium">Pedidos</span>
           </button>
-          <button onClick={() => setActiveTab('perfil')} className={`flex flex-col items-center gap-0.5 px-4 py-1.5 ${activeTab === 'perfil' ? 'text-orange-500' : 'text-gray-400'}`}>
+          <button onClick={() => setActiveTab('perfil')} className={`flex flex-col items-center gap-0.5 px-4 py-1.5 ${activeTab === 'perfil' ? 'text-red-500' : 'text-gray-400'}`}>
             <User size={22} />
             <span className="text-[10px] font-medium">Perfil</span>
           </button>
@@ -398,7 +398,7 @@ export default function CatalogoPublico() {
           initial={{ scale: 0 }} animate={{ scale: 1 }}
           onClick={() => setShowCart(true)}
           className="fixed bottom-20 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 px-6 py-3 rounded-full text-white shadow-lg shadow-black/20"
-          style={{ backgroundColor: vendedor.corPrimaria || '#f97316' }}
+          style={{ backgroundColor: vendedor.corPrimaria || '#ef4444' }}
         >
           <ShoppingCart size={20} />
           <span className="font-medium">Ver Carrinho</span>
@@ -434,7 +434,7 @@ export default function CatalogoPublico() {
                   cartItems={cart}
                   total={totalCart}
                   vendedor={vendedor}
-                  corPrimaria={vendedor.corPrimaria || '#f97316'}
+                  corPrimaria={vendedor.corPrimaria || '#ef4444'}
                   onSuccess={() => { setCart([]); setShowCart(false); setShowCheckout(false); }}
                 />
               ) : (
@@ -469,7 +469,7 @@ export default function CatalogoPublico() {
                     setShowCheckout(true);
                   }}
                   className="w-full py-3 rounded-xl text-white font-semibold"
-                  style={{ backgroundColor: vendedor.corPrimaria || '#f97316' }}
+                  style={{ backgroundColor: vendedor.corPrimaria || '#ef4444' }}
                 >
                   Continuar
                 </button>
@@ -533,7 +533,7 @@ function ProductRow({ produto, slug, onAddToCart, index }: { produto: any; slug:
           onClick={(e) => { e.preventDefault(); if (!semEstoque) onAddToCart(produto); }}
           disabled={semEstoque}
           className="w-24 sm:w-28 py-2 rounded-xl text-white text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{ backgroundColor: '#f97316' }}
+          style={{ backgroundColor: '#ef4444' }}
         >
           Adicionar
         </button>

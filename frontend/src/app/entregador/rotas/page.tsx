@@ -102,7 +102,7 @@ export default function EntregadorRotasPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-red-500" />
       </div>
     );
   }
@@ -143,7 +143,7 @@ export default function EntregadorRotasPage() {
         <div className="space-y-3">
           {ordem.map((p, index) => (
             <Card key={p.id} className="relative overflow-hidden">
-              <div className="absolute left-0 top-0 bottom-0 w-10 bg-orange-500 flex items-center justify-center text-white font-bold text-lg">
+              <div className="absolute left-0 top-0 bottom-0 w-10 bg-red-500 flex items-center justify-center text-white font-bold text-lg">
                 {index + 1}
               </div>
               <CardContent className="pl-14 p-4">

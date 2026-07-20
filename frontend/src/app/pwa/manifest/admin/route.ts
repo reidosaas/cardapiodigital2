@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
   const manifest = {
-    name: 'Admin CardapioAI',
+    name: 'Admin - My Love Delivery',
     short_name: 'Admin',
-    description: 'Painel Administrativo - CardapioAI',
+    description: 'Painel Administrativo - My Love Delivery',
     id: '/admin',
     start_url: '/admin/login',
     scope: '/admin',
