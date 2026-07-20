@@ -17,6 +17,7 @@ export class ConfigSistemaService {
 
   async updateConfig(data: {
     logoUrl?: string;
+    faviconUrl?: string;
     nomeSistema?: string;
     corTema?: string;
     telefone?: string;

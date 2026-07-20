@@ -38,6 +38,7 @@ import { ClienteGlobalModule } from './modules/cliente-global/cliente-global.mod
 import { CaixaModule } from './modules/caixa/caixa.module';
 import { AdminUsersModule } from './modules/admin-users/admin-users.module';
 import { ConfigSistemaModule } from './modules/config-sistema/config-sistema.module';
+import { ServerStatusModule } from './modules/server-status/server-status.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 
@@ -85,6 +86,7 @@ import { APP_GUARD } from '@nestjs/core';
     CaixaModule,
     AdminUsersModule,
     ConfigSistemaModule,
+    ServerStatusModule,
   ],
   providers: [
     {

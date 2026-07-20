@@ -951,6 +951,7 @@ model Caixa {
 model ConfigSistema {
   id            String   @id @default(uuid()) @db.Uuid
   logoUrl       String?
+  faviconUrl    String?
   nomeSistema   String   @default("My Love Delivery")
   corTema       String   @default("#ef4444")
   telefone      String?

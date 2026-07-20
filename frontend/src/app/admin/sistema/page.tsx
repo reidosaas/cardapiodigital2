@@ -27,6 +27,7 @@ export default function AdminSistema() {
         nomeSistema: 'My Love Delivery',
         corTema: '#ef4444',
         logoUrl: '',
+        faviconUrl: '',
         telefone: '',
         emailContato: '',
       });
@@ -47,6 +48,18 @@ export default function AdminSistema() {
     }
   };
 
+  const uploadFavicon = async (file: File) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+      const res = await api.post('/api/upload/logo', fd);
+      setConfig((prev: any) => ({ ...prev, faviconUrl: res.data.url }));
+      toast.success('Favicon atualizado!');
+    } catch {
+      toast.error('Erro ao fazer upload do favicon');
+    }
+  };
+
   const salvar = async () => {
     setSaving(true);
     try {
@@ -54,6 +67,7 @@ export default function AdminSistema() {
         nomeSistema: config.nomeSistema,
         corTema: config.corTema,
         logoUrl: config.logoUrl,
+        faviconUrl: config.faviconUrl,
         telefone: config.telefone,
         emailContato: config.emailContato,
       });
@@ -123,6 +137,32 @@ export default function AdminSistema() {
                 </div>
               </div>
 
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden bg-gray-50">
+                  {config.faviconUrl ? (
+                    <img src={config.faviconUrl} alt="Favicon" className="w-full h-full object-contain" />
+                  ) : (
+                    <Upload className="h-6 w-6 text-gray-400" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-700">Favicon</p>
+                  <p className="text-xs text-gray-400 mb-2">ICO ou PNG, recomendado 64x64px ou 128x128px</p>
+                  <label className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-50 text-red-600 text-sm font-medium hover:bg-red-100 transition-colors cursor-pointer">
+                    <Upload size={14} /> Escolher arquivo
+                    <input
+                      type="file"
+                      accept="image/*,.ico"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) uploadFavicon(f);
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
+
               <div>
                 <label className="text-sm text-gray-500">Nome do Sistema</label>
                 <Input
@@ -146,12 +186,17 @@ export default function AdminSistema() {
                 </div>
               </div>
 
-              {config.logoUrl && (
+              {(config.logoUrl || config.faviconUrl) && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-4 bg-gray-50 rounded-xl">
                   <p className="text-xs text-gray-400 mb-2">Preview</p>
                   <div className="flex items-center gap-3">
-                    <img src={config.logoUrl} alt="Preview" className="h-10 w-10 rounded-lg object-contain" />
+                    {config.logoUrl && (
+                      <img src={config.logoUrl} alt="Preview Logo" className="h-10 w-10 rounded-lg object-contain" />
+                    )}
                     <span className="text-lg font-bold" style={{ color: config.corTema }}>{config.nomeSistema}</span>
+                    {config.faviconUrl && (
+                      <img src={config.faviconUrl} alt="Preview Favicon" className="h-6 w-6 rounded object-contain" />
+                    )}
                   </div>
                 </motion.div>
               )}

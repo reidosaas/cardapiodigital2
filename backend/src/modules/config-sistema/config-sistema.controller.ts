@@ -18,6 +18,7 @@ export class ConfigSistemaController {
   @Patch()
   updateConfig(@Body() data: {
     logoUrl?: string;
+    faviconUrl?: string;
     nomeSistema?: string;
     corTema?: string;
     telefone?: string;

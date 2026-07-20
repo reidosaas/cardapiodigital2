@@ -29,6 +29,7 @@ import {
   Tags,
   Table2,
   Key,
+  Activity,
 } from 'lucide-react';
 
 const vendedorLinks = [
@@ -59,6 +60,7 @@ const adminLinks = [
   { href: '/admin/financeiro', icon: DollarSign, label: 'Financeiro' },
   { href: '/admin/logs', icon: BarChart3, label: 'Logs' },
   { href: '/admin/sistema', icon: Settings, label: 'Sistema' },
+  { href: '/admin/server-status', icon: Activity, label: 'Servidor' },
 ];
 
 interface SidebarProps {
