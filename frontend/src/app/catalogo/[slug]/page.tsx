@@ -1,16 +1,16 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, X, Package, Store, Phone, MapPin, Clock, ChevronRight, Search, Home, ClipboardList, User, MapPinned, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
 import { Loading } from '@/components/shared/loading';
 import { CheckoutPanel } from '@/components/catalog/checkout-panel';
+import { AuthModal } from '@/components/catalog/auth-modal';
 
 export default function CatalogoPublico() {
   const { slug } = useParams();
-  const router = useRouter();
   const [vendedor, setVendedor] = useState<any>(null);
   const [produtos, setProdutos] = useState<any[]>([]);
   const [banners, setBanners] = useState<any[]>([]);
@@ -22,6 +22,7 @@ export default function CatalogoPublico() {
   const [showCheckout, setShowCheckout] = useState(false);
   const [showCatDropdown, setShowCatDropdown] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const catScrollRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<'home' | 'pedidos' | 'perfil'>('home');
@@ -462,7 +463,7 @@ export default function CatalogoPublico() {
                 <button
                   onClick={() => {
                     if (typeof window !== 'undefined' && !localStorage.getItem('token_cliente')) {
-                      router.push(`/cliente/cadastro?redirect=/catalogo/${slug}`);
+                      setShowAuthModal(true);
                       return;
                     }
                     setShowCheckout(true);
@@ -477,6 +478,15 @@ export default function CatalogoPublico() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onAuthSuccess={() => {
+          setShowAuthModal(false);
+          setShowCheckout(true);
+        }}
+      />
     </div>
   );
 }
