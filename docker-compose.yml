@@ -9,7 +9,7 @@ services:
       - '5432:5432'
     environment:
       POSTGRES_USER: cardapio
-      POSTGRES_PASSWORD: cardapio123
+      POSTGRES_PASSWORD: Cardapio2024
       POSTGRES_DB: cardapio
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -41,7 +41,7 @@ services:
       - redis
     environment:
       - NODE_ENV=development
-      - DATABASE_URL=postgresql://cardapio:cardapio123@postgres:5432/cardapio?schema=public
+      - DATABASE_URL=postgresql://cardapio:Cardapio2024@postgres:5432/cardapio?schema=public
       - REDIS_URL=redis://redis:6379
     volumes:
       - ./backend:/app
