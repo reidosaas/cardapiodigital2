@@ -1,12 +1,12 @@
 'use client';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { User, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
 
-export default function ClienteLogin() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect');
@@ -86,5 +86,13 @@ export default function ClienteLogin() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function ClienteLogin() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }
