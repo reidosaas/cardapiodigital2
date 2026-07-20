@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { User, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
@@ -8,6 +8,8 @@ import api from '@/lib/api';
 
 export default function ClienteLogin() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get('redirect');
   const [form, setForm] = useState({ email: '', senha: '' });
   const [showSenha, setShowSenha] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -20,7 +22,7 @@ export default function ClienteLogin() {
       localStorage.setItem('token_cliente', res.data.accessToken);
       localStorage.setItem('cliente', JSON.stringify(res.data.cliente));
       toast.success('Login realizado com sucesso!');
-      router.push('/cliente/perfil');
+      router.push(redirect || '/cliente/perfil');
     } catch (err: any) {
       toast.error(err?.response?.data?.message || 'Email ou senha incorretos');
     } finally {
@@ -78,7 +80,7 @@ export default function ClienteLogin() {
 
         <p className="text-center text-sm text-gray-500 mt-6">
           Nao tem conta?{' '}
-          <Link href="/cliente/cadastro" className="text-orange-500 font-medium hover:underline">
+          <Link href={`/cliente/cadastro${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ''}`} className="text-orange-500 font-medium hover:underline">
             Cadastre-se
           </Link>
         </p>

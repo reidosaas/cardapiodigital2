@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { User, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
@@ -8,6 +8,8 @@ import api from '@/lib/api';
 
 export default function ClienteCadastro() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get('redirect');
   const [form, setForm] = useState({ nome: '', email: '', telefone: '', senha: '' });
   const [showSenha, setShowSenha] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -18,7 +20,7 @@ export default function ClienteCadastro() {
     try {
       await api.post('/api/cliente-global/cadastro', form);
       toast.success('Cadastro realizado! Faca login.');
-      router.push('/cliente/login');
+      router.push(`/cliente/login${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ''}`);
     } catch (err: any) {
       toast.error(err?.response?.data?.message || 'Erro ao cadastrar');
     } finally {
@@ -98,7 +100,7 @@ export default function ClienteCadastro() {
 
         <p className="text-center text-sm text-gray-500 mt-6">
           Ja tem conta?{' '}
-          <Link href="/cliente/login" className="text-orange-500 font-medium hover:underline">
+          <Link href={`/cliente/login${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ''}`} className="text-orange-500 font-medium hover:underline">
             Fazer login
           </Link>
         </p>

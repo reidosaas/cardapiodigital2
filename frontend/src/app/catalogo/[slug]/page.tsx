@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, X, Package, Store, Phone, MapPin, Clock, ChevronRight, Search, Home, ClipboardList, User, MapPinned, Info } from 'lucide-react';
 import { toast } from 'sonner';
@@ -10,6 +10,7 @@ import { CheckoutPanel } from '@/components/catalog/checkout-panel';
 
 export default function CatalogoPublico() {
   const { slug } = useParams();
+  const router = useRouter();
   const [vendedor, setVendedor] = useState<any>(null);
   const [produtos, setProdutos] = useState<any[]>([]);
   const [banners, setBanners] = useState<any[]>([]);
@@ -459,7 +460,13 @@ export default function CatalogoPublico() {
                   <span>R$ {totalCart.toFixed(2)}</span>
                 </div>
                 <button
-                  onClick={() => setShowCheckout(true)}
+                  onClick={() => {
+                    if (typeof window !== 'undefined' && !localStorage.getItem('token_cliente')) {
+                      router.push(`/cliente/cadastro?redirect=/catalogo/${slug}`);
+                      return;
+                    }
+                    setShowCheckout(true);
+                  }}
                   className="w-full py-3 rounded-xl text-white font-semibold"
                   style={{ backgroundColor: vendedor.corPrimaria || '#f97316' }}
                 >
