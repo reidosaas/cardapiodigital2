@@ -26,8 +26,8 @@ export default function AdminLoginPage() {
         return;
       }
 
-      localStorage.setItem('token', data.accessToken);
-      localStorage.setItem('refreshToken', data.refreshToken);
+      localStorage.setItem('token_admin', data.accessToken);
+      localStorage.setItem('refreshToken_admin', data.refreshToken);
       toast.success('Login admin realizado!');
       window.location.href = '/admin';
     } catch (err: any) {

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { login } from '@/lib/auth';
+import { removeTokens } from '@/lib/token';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -24,8 +25,7 @@ export default function LoginPage() {
       const data = await login(email, senha);
 
       if (data.user.role === 'ADMIN') {
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
+        removeTokens();
         toast.error('Use o login administrativo em /admin/login');
         return;
       }

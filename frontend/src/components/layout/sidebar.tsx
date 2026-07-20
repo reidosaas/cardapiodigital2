@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
+import { removeTokens } from '@/lib/token';
 import {
   LayoutDashboard,
   Package,
@@ -120,8 +121,7 @@ export function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps) {
         <div className="p-2 border-t border-gray-200 dark:border-gray-800">
           <button
             onClick={() => {
-              localStorage.removeItem('token');
-              localStorage.removeItem('refreshToken');
+              removeTokens();
               window.location.href = isAdmin ? '/admin/login' : '/auth/login';
             }}
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-red-50 hover:text-red-600 w-full transition-colors"

@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, createContext, useContext, useMemo, useCallback } from 'react';
 import { User, getMe } from '@/lib/auth';
+import { hasAccessToken } from '@/lib/token';
 
 interface AuthContextType {
   user: User | null;
@@ -24,8 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refresh = useCallback(async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      if (token) {
+      if (hasAccessToken()) {
         const userData = await getMe();
         setUser(userData);
         setError(null);

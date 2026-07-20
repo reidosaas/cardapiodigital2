@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getAccessToken, getRefreshToken, setAccessToken, removeTokens } from './token';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -9,7 +10,7 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('token');
+    const token = getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -26,18 +27,18 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refreshToken = localStorage.getItem('refreshToken');
+        const refreshToken = getRefreshToken();
         if (refreshToken) {
           const { data } = await axios.post(`${API_URL}/api/auth/refresh`, { refreshToken });
-          localStorage.setItem('token', data.accessToken);
+          setAccessToken(data.accessToken);
           originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
           return api(originalRequest);
         }
       } catch {
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
+        removeTokens();
         if (typeof window !== 'undefined') {
-          window.location.href = '/auth/login';
+          const isAdmin = window.location.pathname.startsWith('/admin');
+          window.location.href = isAdmin ? '/admin/login' : '/auth/login';
         }
       }
     }

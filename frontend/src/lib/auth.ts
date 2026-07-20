@@ -1,4 +1,5 @@
 import api from './api';
+import { getAccessToken, getRefreshToken, setTokens, removeTokens, hasAccessToken } from './token';
 
 export interface User {
   id: string;
@@ -36,8 +37,7 @@ export interface User {
 
 export async function login(email: string, senha: string) {
   const { data } = await api.post('/api/auth/login', { email, senha });
-  localStorage.setItem('token', data.accessToken);
-  localStorage.setItem('refreshToken', data.refreshToken);
+  setTokens(data.accessToken, data.refreshToken);
   return data;
 }
 
@@ -50,8 +50,7 @@ export async function register(data: {
   slug?: string;
 }) {
   const response = await api.post('/api/auth/register', data);
-  localStorage.setItem('token', response.data.accessToken);
-  localStorage.setItem('refreshToken', response.data.refreshToken);
+  setTokens(response.data.accessToken, response.data.refreshToken);
   return response.data;
 }
 
@@ -61,21 +60,14 @@ export async function getMe(): Promise<User> {
 }
 
 export function logout() {
-  localStorage.removeItem('token');
-  localStorage.removeItem('refreshToken');
+  removeTokens();
   window.location.href = '/auth/login';
 }
 
 export function getToken() {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('token');
-  }
-  return null;
+  return getAccessToken();
 }
 
 export function isAuthenticated(): boolean {
-  if (typeof window !== 'undefined') {
-    return !!localStorage.getItem('token');
-  }
-  return false;
+  return hasAccessToken();
 }
