@@ -36,6 +36,7 @@ import { EntregadorDashboardModule } from './modules/entregador-dashboard/entreg
 import { AdminEntregadoresModule } from './modules/admin-entregadores/admin-entregadores.module';
 import { ClienteGlobalModule } from './modules/cliente-global/cliente-global.module';
 import { CaixaModule } from './modules/caixa/caixa.module';
+import { AdminUsersModule } from './modules/admin-users/admin-users.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 
@@ -81,6 +82,7 @@ import { APP_GUARD } from '@nestjs/core';
     AdminEntregadoresModule,
     ClienteGlobalModule,
     CaixaModule,
+    AdminUsersModule,
   ],
   providers: [
     {
