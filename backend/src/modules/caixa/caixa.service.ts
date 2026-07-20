@@ -59,17 +59,21 @@ export class CaixaService {
       .filter((e) => e.status === 'ENTREGUE')
       .reduce((acc, e) => acc + Number(e.entregador?.valorPorEntrega || 0), 0);
 
-    const entregadoresMap = new Map<string, { nome: string; diaria: number; entregueCount: number }>();
+    const entregadoresMap = new Map<string, { nome: string; diaria: number; entregueCount: number; totalTaxasEntrega: number }>();
     for (const e of entregas) {
       if (!e.entregadorId || !e.entregador) continue;
       const existing = entregadoresMap.get(e.entregadorId);
       if (existing) {
-        if (e.status === 'ENTREGUE') existing.entregueCount++;
+        if (e.status === 'ENTREGUE') {
+          existing.entregueCount++;
+          existing.totalTaxasEntrega += Number(e.entregador?.valorPorEntrega || 0);
+        }
       } else {
         entregadoresMap.set(e.entregadorId, {
           nome: e.entregador.nome,
           diaria: Number(e.entregador.diaria || 0),
           entregueCount: e.status === 'ENTREGUE' ? 1 : 0,
+          totalTaxasEntrega: e.status === 'ENTREGUE' ? Number(e.entregador?.valorPorEntrega || 0) : 0,
         });
       }
     }
@@ -82,6 +86,14 @@ export class CaixaService {
           id: `diaria-${idx++}`,
           descricao: `Diaria - ${info.nome}`,
           valor: info.diaria,
+          categoria: 'Entrega',
+        });
+      }
+      if (info.totalTaxasEntrega > 0) {
+        despesasEntrega.push({
+          id: `entrega-${idx++}`,
+          descricao: `Entregas (${info.entregueCount}x) - ${info.nome}`,
+          valor: info.totalTaxasEntrega,
           categoria: 'Entrega',
         });
       }

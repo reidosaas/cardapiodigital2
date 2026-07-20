@@ -175,7 +175,7 @@ export default function VendedorDashboard() {
                   <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-4 text-center">
                     <p className="text-sm text-purple-600 dark:text-purple-400">Lucro Liquido</p>
                     <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">
-                      {formatCurrency(Number(caixaModal.caixa.totalVendas) - Number(caixaModal.caixa.totalDespesas) - Number(caixaModal.caixa.totalGanhos))}
+                      {formatCurrency(Number(caixaModal.caixa.totalVendas) - Number(caixaModal.caixa.totalDespesas))}
                     </p>
                   </div>
                 </div>
