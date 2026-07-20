@@ -39,6 +39,9 @@ import { CaixaModule } from './modules/caixa/caixa.module';
 import { AdminUsersModule } from './modules/admin-users/admin-users.module';
 import { ConfigSistemaModule } from './modules/config-sistema/config-sistema.module';
 import { ServerStatusModule } from './modules/server-status/server-status.module';
+import { AdminNotifyModule } from './modules/admin-notify/admin-notify.module';
+import { ServerMonitorModule } from './modules/server-monitor/server-monitor.module';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 
@@ -87,6 +90,9 @@ import { APP_GUARD } from '@nestjs/core';
     AdminUsersModule,
     ConfigSistemaModule,
     ServerStatusModule,
+    AdminNotifyModule,
+    ServerMonitorModule,
+    ScheduleModule.forRoot(),
   ],
   providers: [
     {

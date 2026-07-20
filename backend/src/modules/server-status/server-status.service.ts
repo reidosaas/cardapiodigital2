@@ -102,6 +102,29 @@ export class ServerStatusService {
     return `${mb.toFixed(0)} MB`;
   }
 
+  cleanup() {
+    const results: string[] = [];
+
+    try {
+      const prune = execSync('docker system prune -f 2>&1', { encoding: 'utf-8' }).trim();
+      results.push(`Docker prune: ${prune}`);
+    } catch (e: any) {
+      results.push(`Docker prune erro: ${e.message}`);
+    }
+
+    try {
+      execSync('find /tmp -type f -mtime +7 -delete 2>/dev/null', { encoding: 'utf-8' });
+      results.push('Logs temporarios (>7 dias) removidos');
+    } catch {}
+
+    try {
+      execSync('journalctl --vacuum-time=7d 2>/dev/null', { encoding: 'utf-8' });
+      results.push('Journal logs limpos');
+    } catch {}
+
+    return { mensagem: 'Limpeza concluida', detalhes: results };
+  }
+
   private getCpuUsage(): number {
     const loadAvg = os.loadavg();
     const cores = os.cpus().length;

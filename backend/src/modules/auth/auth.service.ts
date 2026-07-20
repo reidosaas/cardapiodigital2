@@ -1,10 +1,11 @@
-import { Injectable, UnauthorizedException, ConflictException, Logger } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, Logger, Inject, forwardRef } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '../../config/config.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { AdminNotifyService } from '../admin-notify/admin-notify.service';
 
 @Injectable()
 export class AuthService {
@@ -14,6 +15,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    @Inject(forwardRef(() => AdminNotifyService)) private adminNotify: AdminNotifyService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -59,6 +61,12 @@ export class AuthService {
         },
       });
     }
+
+    this.adminNotify.notificarCadastro('vendedor', {
+      nome: user.nome,
+      email: user.email,
+      telefone: user.telefone || undefined,
+    }).catch(e => this.logger.warn(`Erro ao notificar admin: ${e.message}`));
 
     return this.generateTokens(user);
   }

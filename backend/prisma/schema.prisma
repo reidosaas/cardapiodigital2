@@ -949,16 +949,20 @@ model Caixa {
 // ========== CONFIG SISTEMA ==========
 
 model ConfigSistema {
-  id            String   @id @default(uuid()) @db.Uuid
-  logoUrl       String?
-  faviconUrl    String?
-  nomeSistema   String   @default("My Love Delivery")
-  corTema       String   @default("#ef4444")
-  telefone      String?
-  emailContato  String?
-  redesSociais  Json?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id                      String   @id @default(uuid()) @db.Uuid
+  logoUrl                 String?
+  faviconUrl              String?
+  nomeSistema             String   @default("My Love Delivery")
+  corTema                 String   @default("#ef4444")
+  telefone                String?
+  emailContato            String?
+  redesSociais            Json?
+  whatsappAdminNumero     String?
+  whatsappAdminToken      String?
+  whatsappAdminInstancia  String?
+  whatsappAdminConectado  Boolean  @default(false)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
 
   @@map("config_sistema")
 }

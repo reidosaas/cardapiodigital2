@@ -23,6 +23,7 @@ export class ConfigSistemaService {
     telefone?: string;
     emailContato?: string;
     redesSociais?: any;
+    whatsappAdminNumero?: string;
   }) {
     const config = await this.getConfig();
     return this.prisma.configSistema.update({

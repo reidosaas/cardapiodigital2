@@ -4,6 +4,7 @@ import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import api from '@/lib/api';
+import { toast } from 'sonner';
 import {
   Activity,
   HardDrive,
@@ -15,6 +16,7 @@ import {
   Database,
   Globe,
   Container,
+  Trash2,
 } from 'lucide-react';
 
 export default function ServerStatusPage() {
@@ -22,6 +24,7 @@ export default function ServerStatusPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [cleaning, setCleaning] = useState(false);
 
   const loadStatus = async () => {
     try {
@@ -45,6 +48,23 @@ export default function ServerStatusPage() {
   const handleRefresh = () => {
     setRefreshing(true);
     loadStatus();
+  };
+
+  const handleCleanup = async () => {
+    if (!confirm('Executar limpeza de disco? Isso ira remover imagens Docker nao utilizadas e logs antigos.')) return;
+    setCleaning(true);
+    try {
+      const res = await api.post('/api/admin/server-status/cleanup');
+      toast.success('Limpeza concluida!');
+      if (res.data.detalhes) {
+        res.data.detalhes.forEach((d: string) => toast.info(d));
+      }
+      loadStatus();
+    } catch {
+      toast.error('Erro ao executar limpeza');
+    } finally {
+      setCleaning(false);
+    }
   };
 
   if (loading) {
@@ -88,6 +108,10 @@ export default function ServerStatusPage() {
             <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing}>
               <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
               Atualizar
+            </Button>
+            <Button variant="destructive" size="sm" onClick={handleCleanup} disabled={cleaning}>
+              <Trash2 className={`mr-2 h-4 w-4 ${cleaning ? 'animate-pulse' : ''}`} />
+              {cleaning ? 'Limpando...' : 'Limpar Disco'}
             </Button>
           </div>
         </div>

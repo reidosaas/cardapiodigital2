@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { ServerStatusService } from './server-status.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -13,5 +13,10 @@ export class ServerStatusController {
   @Get()
   getStatus() {
     return this.service.getInfo();
+  }
+
+  @Post('cleanup')
+  cleanup() {
+    return this.service.cleanup();
   }
 }

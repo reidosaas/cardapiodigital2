@@ -24,6 +24,7 @@ export class ConfigSistemaController {
     telefone?: string;
     emailContato?: string;
     redesSociais?: any;
+    whatsappAdminNumero?: string;
   }) {
     return this.service.updateConfig(data);
   }

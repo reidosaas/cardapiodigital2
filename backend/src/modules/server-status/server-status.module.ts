@@ -5,5 +5,6 @@ import { ServerStatusService } from './server-status.service';
 @Module({
   controllers: [ServerStatusController],
   providers: [ServerStatusService],
+  exports: [ServerStatusService],
 })
 export class ServerStatusModule {}

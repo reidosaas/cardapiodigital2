@@ -1,13 +1,15 @@
-import { Injectable, NotFoundException, ConflictException, UnauthorizedException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, UnauthorizedException, ForbiddenException, Inject, forwardRef } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../prisma/prisma.service';
 import * as bcrypt from 'bcryptjs';
+import { AdminNotifyService } from '../admin-notify/admin-notify.service';
 
 @Injectable()
 export class ClienteGlobalService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    @Inject(forwardRef(() => AdminNotifyService)) private adminNotify: AdminNotifyService,
   ) {}
 
   async cadastro(data: { nome: string; email: string; senha: string; telefone?: string }) {
@@ -26,6 +28,12 @@ export class ClienteGlobalService {
         telefone: data.telefone?.replace(/\D/g, '') || null,
       },
     });
+
+    this.adminNotify.notificarCadastro('cliente', {
+      nome: data.nome.trim(),
+      email: emailLower,
+      telefone: data.telefone,
+    }).catch(() => {});
 
     return { mensagem: 'Cadastro realizado com sucesso! Faca login.', id: cliente.id };
   }
