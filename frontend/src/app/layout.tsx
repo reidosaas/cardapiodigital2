@@ -35,7 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
         <script dangerouslySetInnerHTML={{
-          __html: `if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){var s=(r.scope||'');if(s.endsWith('/')&&!s.includes('/catalogo/')&&!s.includes('/entregador/')){r.unregister()}})})})}`
+          __html: `if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){var s=(r.scope||'');if(s.endsWith('/')&&!s.includes('/catalogo/')&&!s.includes('/entregador/')&&!s.includes('/admin/')&&!s.includes('/dashboard/')&&!s.includes('/cliente/')){r.unregister()}})})})}`
         }} />
       </head>
       <body className="min-h-screen bg-white dark:bg-gray-950 antialiased overscroll-none">

@@ -11,6 +11,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const isLoginPage = pathname === '/admin/login';
 
   useEffect(() => {
+    document.querySelectorAll('link[rel="manifest"]').forEach((el) => el.parentElement?.removeChild(el));
+    const linkEl = document.createElement('link');
+    linkEl.id = 'dynamic-manifest';
+    linkEl.rel = 'manifest';
+    linkEl.href = '/pwa/manifest/admin';
+    document.head.appendChild(linkEl);
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/pwa/sw/admin', { scope: '/admin/' }).catch(() => {});
+    }
+  }, []);
+
+  useEffect(() => {
     if (loading) return;
     if (isLoginPage) return;
     if (!user) {
