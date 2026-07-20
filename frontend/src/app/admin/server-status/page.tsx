@@ -235,6 +235,15 @@ export default function ServerStatusPage() {
                 <p className="font-medium">{s.disk?.percent}</p>
               </div>
             </div>
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+              <div
+                className="h-3 rounded-full transition-all duration-500"
+                style={{
+                  width: s.disk?.percent || '0%',
+                  backgroundColor: parseInt(s.disk?.percent || '0') > 80 ? '#ef4444' : parseInt(s.disk?.percent || '0') > 60 ? '#f59e0b' : '#22c55e',
+                }}
+              />
+            </div>
           </CardContent>
         </Card>
 

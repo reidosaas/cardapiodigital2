@@ -300,7 +300,7 @@ export default function CatalogoPublico() {
                         onClick={() => { setCategoriaAtiva(cat.id); setShowCatDropdown(false); }}
                         className={`w-full text-left px-4 py-2.5 text-sm font-medium hover:bg-gray-50 transition-colors uppercase ${categoriaAtiva === cat.id ? 'text-red-600 bg-red-50' : 'text-gray-700'}`}
                       >
-                        {cat.nome}
+                        {cat.icone ? `${cat.icone} ` : ''}{cat.nome}
                       </button>
                     ))}
                   </motion.div>
@@ -330,7 +330,7 @@ export default function CatalogoPublico() {
                       : 'border-transparent text-gray-400 hover:text-gray-600'
                   }`}
                 >
-                  {cat.nome}
+                  {cat.icone ? `${cat.icone} ` : ''}{cat.nome}
                 </button>
               ))}
             </div>
@@ -350,7 +350,7 @@ export default function CatalogoPublico() {
             {/* Products by category */}
             {produtosPorCategoria.map((cat) => (
               <div key={cat.id}>
-                <h2 className="text-lg font-bold text-gray-900 uppercase mb-3">{cat.nome}</h2>
+                <h2 className="text-lg font-bold text-gray-900 uppercase mb-3">{cat.icone ? `${cat.icone} ` : ''}{cat.nome}</h2>
                 <div className="space-y-3">
                   {cat.produtos.map((produto: any, i: number) => (
                     <ProductRow key={produto.id} produto={produto} slug={slug as string} onAddToCart={addToCart} index={i} />

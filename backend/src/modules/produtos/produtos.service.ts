@@ -24,7 +24,8 @@ export class ProdutosService {
     return this.prisma.produto.findMany({
       where,
       include: {
-        categoria: { select: { id: true, nome: true } },
+        categoria: { select: { id: true, nome: true, icone: true } },
+        categoriaGlobal: { select: { id: true, nome: true, icone: true } },
         _count: { select: { avaliacoes: true } },
       },
       orderBy: { createdAt: 'desc' },

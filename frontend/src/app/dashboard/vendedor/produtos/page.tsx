@@ -192,7 +192,7 @@ export default function ProdutosPage() {
                     <div className="flex items-start justify-between">
                       <div>
                         <h3 className="font-medium text-sm">{produto.nome}</h3>
-                        <p className="text-xs text-gray-500 mt-0.5">{produto.categoria?.nome}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{produto.categoriaGlobal?.icone || produto.categoria?.icone || ''} {produto.categoriaGlobal?.nome || produto.categoria?.nome || ''}</p>
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-sm">{formatCurrency(produto.preco)}</p>
@@ -236,18 +236,35 @@ export default function ProdutosPage() {
               </div>
               <div>
                 <label className="text-sm font-medium">Categoria</label>
-                <Select value={form.categoriaGlobalId} onValueChange={v => setForm({ ...form, categoriaGlobalId: v })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione uma categoria" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categoriasGlobais.map((cat: any) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {cat.icone} {cat.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mt-2 max-h-48 overflow-y-auto p-2 border rounded-lg">
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, categoriaGlobalId: '' })}
+                    className={`flex flex-col items-center gap-1 p-2 rounded-lg text-xs transition-all border ${
+                      !form.categoriaGlobalId
+                        ? 'bg-red-50 border-red-300 text-red-700 dark:bg-red-900/20 dark:border-red-700'
+                        : 'border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800'
+                    }`}
+                  >
+                    <span className="text-lg">📁</span>
+                    <span className="font-medium text-center leading-tight">Sem categoria</span>
+                  </button>
+                  {categoriasGlobais.map((cat: any) => (
+                    <button
+                      type="button"
+                      key={cat.id}
+                      onClick={() => setForm({ ...form, categoriaGlobalId: cat.id })}
+                      className={`flex flex-col items-center gap-1 p-2 rounded-lg text-xs transition-all border ${
+                        form.categoriaGlobalId === cat.id
+                          ? 'bg-red-50 border-red-300 text-red-700 dark:bg-red-900/20 dark:border-red-700'
+                          : 'border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800'
+                      }`}
+                    >
+                      <span className="text-lg">{cat.icone || '📁'}</span>
+                      <span className="font-medium text-center leading-tight">{cat.nome}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
