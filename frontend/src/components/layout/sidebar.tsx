@@ -27,6 +27,7 @@ import {
   UserPlus,
   Tags,
   Table2,
+  Key,
 } from 'lucide-react';
 
 const vendedorLinks = [
@@ -51,6 +52,7 @@ const adminLinks = [
   { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/admin/vendedores', icon: Store, label: 'Vendedores' },
   { href: '/admin/entregadores', icon: Truck, label: 'Entregadores' },
+  { href: '/admin/usuarios', icon: Key, label: 'Senhas' },
   { href: '/admin/categorias', icon: Tags, label: 'Categorias' },
   { href: '/admin/planos', icon: BadgePercent, label: 'Planos' },
   { href: '/admin/financeiro', icon: DollarSign, label: 'Financeiro' },

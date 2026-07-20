@@ -62,7 +62,7 @@ export default function AdminUsuarios() {
     }
     setSaving(true);
     try {
-      await api.patch(`/api/admin/users/${resetModal.user.tipo}/${resetModal.user.id}`, { senha: novaSenha });
+      await api.patch(`/api/admin/users/${resetModal.user.tipo}/${resetModal.user.id}/password`, { senha: novaSenha });
       toast.success(`Senha de ${resetModal.user.nome} atualizada!`);
       setResetModal(null);
       setNovaSenha('');
