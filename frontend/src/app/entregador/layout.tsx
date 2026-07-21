@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Truck, Package, BarChart3, Map, LogOut, Menu, X, Store, Sun, Moon, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { InstallButton } from '@/components/shared/install-button';
 
 const navItems = [
   { href: '/entregador/dashboard', label: 'Pedidos', icon: Package },
@@ -99,6 +100,7 @@ export default function EntregadorLayout({ children }: { children: React.ReactNo
           </nav>
 
           <div className="flex items-center gap-2">
+            <InstallButton variant="outline" />
             <Button variant="ghost" size="sm" onClick={toggleTheme} className="text-gray-500">
               {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>

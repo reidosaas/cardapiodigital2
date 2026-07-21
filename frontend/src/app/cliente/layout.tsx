@@ -4,6 +4,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { User, MapPin, ClipboardList, LogOut, Sun, Moon, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { InstallButton } from '@/components/shared/install-button';
 
 const navItems = [
   { href: '/cliente/perfil', label: 'Perfil', icon: User },
@@ -59,6 +60,7 @@ export default function ClienteLayout({ children }: { children: React.ReactNode 
             <span className="font-bold text-sm">{cliente?.nome || 'Minha Conta'}</span>
           </Link>
           <div className="flex items-center gap-2">
+            <InstallButton variant="outline" />
             <Button variant="ghost" size="sm" onClick={() => setDark(!dark)} className="text-gray-500">
               {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>

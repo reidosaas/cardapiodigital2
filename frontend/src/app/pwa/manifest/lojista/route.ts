@@ -14,9 +14,9 @@ export async function GET(req: NextRequest) {
     orientation: 'portrait-primary',
     categories: ['business'],
     icons: [
-      { src: '/pwa/icon/lojista?size=192', sizes: '192x192', type: 'image/png' },
-      { src: '/pwa/icon/lojista?size=512', sizes: '512x512', type: 'image/png' },
-      { src: '/pwa/icon/lojista?size=512', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+      { src: '/pwa/icon/lojista?size=192', sizes: '192x192', type: 'image/svg+xml' },
+      { src: '/pwa/icon/lojista?size=512', sizes: '512x512', type: 'image/svg+xml' },
+      { src: '/pwa/icon/lojista?size=512', sizes: '512x512', type: 'image/svg+xml', purpose: 'maskable' },
     ],
   };
 

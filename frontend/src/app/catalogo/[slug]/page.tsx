@@ -2,12 +2,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart, X, Package, Store, Phone, MapPin, Clock, ChevronRight, Search, Home, ClipboardList, User, MapPinned, Info } from 'lucide-react';
+import { ShoppingCart, X, Package, Store, Phone, MapPin, Clock, ChevronRight, Search, Home, ClipboardList, User, MapPinned, Info, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
 import { Loading } from '@/components/shared/loading';
 import { CheckoutPanel } from '@/components/catalog/checkout-panel';
 import { AuthModal } from '@/components/catalog/auth-modal';
+import { usePWAInstall } from '@/hooks/usePWAInstall';
 
 export default function CatalogoPublico() {
   const { slug } = useParams();
@@ -26,6 +27,7 @@ export default function CatalogoPublico() {
   const [loading, setLoading] = useState(true);
   const catScrollRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<'home' | 'pedidos' | 'perfil'>('home');
+  const { canInstall, isInstalled, install } = usePWAInstall();
 
   useEffect(() => {
     document.querySelectorAll('link[rel="manifest"]').forEach((el) => el.parentElement?.removeChild(el));
@@ -386,6 +388,21 @@ export default function CatalogoPublico() {
           </div>
         )}
       </div>
+
+      {/* Install PWA Banner */}
+      {canInstall && !isInstalled && (
+        <div className="fixed bottom-16 left-0 right-0 z-40 px-4">
+          <div className="max-w-3xl mx-auto bg-gray-900 dark:bg-gray-800 text-white rounded-xl p-3 flex items-center justify-between shadow-lg">
+            <div className="flex items-center gap-2">
+              <Download size={18} />
+              <span className="text-sm font-medium">Instalar app</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={install} className="px-3 py-1.5 bg-white text-gray-900 rounded-lg text-xs font-semibold">Instalar</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bottom Navigation Bar */}
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 safe-area-bottom">

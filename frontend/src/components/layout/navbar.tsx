@@ -4,6 +4,7 @@ import { useAppTheme } from '@/hooks/useAppTheme';
 import { Bell, Menu, Sun, Moon } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { InstallButton } from '@/components/shared/install-button';
 
 interface NavbarProps {
   onMenuClick: () => void;
@@ -33,6 +34,8 @@ export function Navbar({ onMenuClick }: NavbarProps) {
       </div>
 
       <div className="flex items-center gap-2">
+        <InstallButton variant="outline" />
+
         <Button
           variant="ghost"
           size="icon"
