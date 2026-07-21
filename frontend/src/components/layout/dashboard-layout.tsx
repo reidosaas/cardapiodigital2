@@ -53,11 +53,13 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} onLinkClick={handleLinkClick} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Navbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6 pb-20 lg:pb-6">
+        <main className={`flex-1 overflow-y-auto p-4 lg:p-6 ${pathname.startsWith('/admin') ? '' : 'pb-20 lg:pb-6'}`}>
           {children}
         </main>
       </div>
 
+      {/* Mobile nav - lojista only */}
+      {!pathname.startsWith('/admin') && (
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t z-50 safe-area-bottom">
         <div className="flex items-center justify-around h-14">
           {mobileNavItems.map((item) => {
@@ -78,6 +80,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           })}
         </div>
       </nav>
+      )}
     </div>
   );
 }
