@@ -6,14 +6,17 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
   const protocol = host.includes('localhost') ? 'http' : 'https';
   const baseUrl = `${protocol}://${host}`;
 
-  let logoUrl = `${baseUrl}/pwa/icon/${slug}?size=512`;
+  const fallbackIcon = `${baseUrl}/pwa/icons/mld-512.png`;
+  let icon192 = fallbackIcon;
+  let icon512 = fallbackIcon;
 
   try {
     const apiRes = await fetch(`${baseUrl}/api/vendedores/slug/${slug}`);
     if (apiRes.ok) {
       const vendedor = await apiRes.json();
       if (vendedor.logoUrl) {
-        logoUrl = vendedor.logoUrl;
+        icon192 = vendedor.logoUrl;
+        icon512 = vendedor.logoUrl;
       }
     }
   } catch {}
@@ -24,16 +27,16 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
     description: `My Love Delivery - ${slug}`,
     id: `/catalogo/${slug}`,
     start_url: `/catalogo/${slug}`,
-    scope: `/catalogo/${slug}`,
+    scope: `/catalogo/`,
     display: 'standalone',
     background_color: '#ffffff',
     theme_color: '#ef4444',
     orientation: 'portrait-primary',
     categories: ['food', 'business'],
     icons: [
-      { src: logoUrl, sizes: '192x192', type: 'image/png' },
-      { src: logoUrl, sizes: '512x512', type: 'image/png' },
-      { src: logoUrl, sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+      { src: icon192, sizes: '192x192', type: 'image/png' },
+      { src: icon512, sizes: '512x512', type: 'image/png' },
+      { src: icon512, sizes: '512x512', type: 'image/png', purpose: 'maskable' },
     ],
   };
 
