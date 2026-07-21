@@ -10,6 +10,9 @@ const nextConfig = {
       { protocol: 'https', hostname: 'images.unsplash.com' },
     ],
   },
+  experimental: {
+    missingSuspenseWithCSRBailout: false,
+  },
   async rewrites() {
     return [
       {
