@@ -40,10 +40,16 @@ export default function CatalogoPublico() {
   }, [slug]);
 
   useEffect(() => {
+    const savedTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
     const loadData = async () => {
       try {
         const vRes = await api.get(`/api/vendedores/slug/${slug}`);
         setVendedor(vRes.data);
+        if (vRes.data.modoEscuro) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
         const [prodRes, catRes, banRes] = await Promise.all([
           api.get(`/api/produtos/vendedor/${vRes.data.id}`),
           api.get(`/api/categorias/vendedor/${vRes.data.id}`),
@@ -59,6 +65,13 @@ export default function CatalogoPublico() {
       }
     };
     loadData();
+    return () => {
+      if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    };
   }, [slug]);
 
   const addToCart = (produto: any) => {
@@ -153,9 +166,9 @@ export default function CatalogoPublico() {
   };
 
   return (
-    <div className="min-h-screen bg-white pb-20">
+    <div className="min-h-screen bg-white dark:bg-gray-950 pb-20">
       {/* Search bar - sticky top */}
-      <div className="sticky top-0 z-40 bg-white border-b border-gray-100">
+      <div className="sticky top-0 z-40 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
         <div className="max-w-3xl mx-auto px-4 py-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -164,7 +177,7 @@ export default function CatalogoPublico() {
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
               placeholder="Buscar no cardápio"
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-gray-100 border-0 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200 text-sm"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 border-0 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700 text-sm"
             />
             {busca && (
               <button onClick={() => setBusca('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
@@ -259,15 +272,15 @@ export default function CatalogoPublico() {
         {/* Calcular taxa de entrega */}
         <button className="w-full mt-4 flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
           <div className="flex items-center gap-3">
-            <MapPinned size={20} className="text-gray-600" />
-            <span className="text-sm font-medium text-gray-700">Calcular taxa de entrega</span>
+            <MapPinned size={20} className="text-gray-600 dark:text-gray-400" />
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Calcular taxa de entrega</span>
           </div>
           <ChevronRight size={18} className="text-gray-400" />
         </button>
       </div>
 
       {/* Category tabs */}
-      <div className="sticky top-[60px] z-30 bg-white border-b border-gray-100">
+      <div className="sticky top-[60px] z-30 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
         <div className="max-w-3xl mx-auto px-4">
           <div className="flex items-center gap-1">
             {/* Hamburger for all categories */}
@@ -286,11 +299,11 @@ export default function CatalogoPublico() {
                     initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
-                    className="absolute top-full left-0 mt-1 w-56 bg-white border border-gray-200 rounded-xl shadow-xl z-50 py-2 max-h-72 overflow-y-auto"
+                    className="absolute top-full left-0 mt-1 w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-50 py-2 max-h-72 overflow-y-auto"
                   >
                     <button
                       onClick={() => { setCategoriaAtiva(null); setShowCatDropdown(false); }}
-                      className={`w-full text-left px-4 py-2.5 text-sm font-medium hover:bg-gray-50 transition-colors ${!categoriaAtiva ? 'text-red-600 bg-red-50' : 'text-gray-700'}`}
+                      className={`w-full text-left px-4 py-2.5 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${!categoriaAtiva ? 'text-red-600 bg-red-50 dark:bg-red-900/20' : 'text-gray-700 dark:text-gray-300'}`}
                     >
                       Todos
                     </button>
@@ -298,7 +311,7 @@ export default function CatalogoPublico() {
                       <button
                         key={cat.id}
                         onClick={() => { setCategoriaAtiva(cat.id); setShowCatDropdown(false); }}
-                        className={`w-full text-left px-4 py-2.5 text-sm font-medium hover:bg-gray-50 transition-colors uppercase ${categoriaAtiva === cat.id ? 'text-red-600 bg-red-50' : 'text-gray-700'}`}
+                        className={`w-full text-left px-4 py-2.5 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors uppercase ${categoriaAtiva === cat.id ? 'text-red-600 bg-red-50 dark:bg-red-900/20' : 'text-gray-700 dark:text-gray-300'}`}
                       >
                         {cat.icone ? `${cat.icone} ` : ''}{cat.nome}
                       </button>
@@ -375,7 +388,7 @@ export default function CatalogoPublico() {
       </div>
 
       {/* Bottom Navigation Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 safe-area-bottom">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 safe-area-bottom">
         <div className="max-w-3xl mx-auto flex items-center justify-around h-16">
           <button onClick={() => setActiveTab('home')} className={`flex flex-col items-center gap-0.5 px-4 py-1.5 ${activeTab === 'home' ? 'text-red-500' : 'text-gray-400'}`}>
             <Home size={22} />
@@ -413,7 +426,7 @@ export default function CatalogoPublico() {
         {showCart && (
           <motion.div
             initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
-            className="fixed inset-y-0 right-0 w-full max-w-md z-50 bg-white shadow-xl flex flex-col"
+            className="fixed inset-y-0 right-0 w-full max-w-md z-50 bg-white dark:bg-gray-900 shadow-xl flex flex-col"
           >
             <div className="flex items-center justify-between p-4 border-b">
               <h2 className="font-bold text-lg">
@@ -439,16 +452,16 @@ export default function CatalogoPublico() {
                 />
               ) : (
                 cart.map((item) => (
-                  <div key={item.produtoId} className="flex items-center gap-3 py-3 border-b border-gray-100 last:border-0">
+                    <div key={item.produtoId} className="flex items-center gap-3 py-3 border-b border-gray-100 dark:border-gray-800 last:border-0">
                     {item.imagem && <img src={item.imagem} alt="" className="w-14 h-14 rounded-lg object-cover shrink-0" />}
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm text-gray-900 truncate">{item.nome}</p>
-                      <p className="text-sm font-bold text-gray-900 mt-1">R$ {(item.preco * item.quantidade).toFixed(2)}</p>
+                      <p className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">{item.nome}</p>
+                      <p className="text-sm font-bold text-gray-900 dark:text-gray-100 mt-1">R$ {(item.preco * item.quantidade).toFixed(2)}</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <button onClick={() => updateQuantity(item.produtoId, item.quantidade - 1)} className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-bold text-sm">-</button>
-                      <span className="text-sm font-medium w-5 text-center">{item.quantidade}</span>
-                      <button onClick={() => updateQuantity(item.produtoId, item.quantidade + 1)} className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-bold text-sm">+</button>
+                      <button onClick={() => updateQuantity(item.produtoId, item.quantidade - 1)} className="w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 font-bold text-sm">-</button>
+                      <span className="text-sm font-medium w-5 text-center text-gray-900 dark:text-gray-100">{item.quantidade}</span>
+                      <button onClick={() => updateQuantity(item.produtoId, item.quantidade + 1)} className="w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 font-bold text-sm">+</button>
                     </div>
                   </div>
                 ))
@@ -502,12 +515,12 @@ function ProductRow({ produto, slug, onAddToCart, index }: { produto: any; slug:
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.03 }}
-      className="flex gap-4 p-4 bg-white rounded-2xl border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
+      className="flex gap-4 p-4 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 hover:shadow-md transition-shadow cursor-pointer"
     >
       <a href={`/catalogo/${slug}/produto/${produto.id}`} className="flex-1 min-w-0">
-        <h3 className="font-bold text-gray-900 uppercase text-sm leading-tight">{produto.nome}</h3>
+        <h3 className="font-bold text-gray-900 dark:text-gray-100 uppercase text-sm leading-tight">{produto.nome}</h3>
         {produto.descricao && (
-          <p className="text-sm text-gray-500 mt-1 line-clamp-2">{produto.descricao}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{produto.descricao}</p>
         )}
         <div className="flex items-center gap-2 mt-3">
           <span className="text-base font-bold text-green-600">R$ {precoFinal.toFixed(2)}</span>
@@ -520,7 +533,7 @@ function ProductRow({ produto, slug, onAddToCart, index }: { produto: any; slug:
         )}
       </a>
       <div className="flex flex-col items-end gap-2 shrink-0">
-        <a href={`/catalogo/${slug}/produto/${produto.id}`} className="block w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden bg-gray-100">
+        <a href={`/catalogo/${slug}/produto/${produto.id}`} className="block w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
           {imagens[0] ? (
             <img src={imagens[0]} alt={produto.nome} className="w-full h-full object-cover" />
           ) : (

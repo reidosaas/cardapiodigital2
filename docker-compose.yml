@@ -55,13 +55,14 @@ services:
       dockerfile: ../docker/node/Dockerfile
     container_name: cardapio-frontend
     restart: unless-stopped
+    command: npm run dev
     ports:
       - '3000:3000'
     depends_on:
       - backend
     environment:
       - NODE_ENV=development
-      - NEXT_PUBLIC_API_URL=http://localhost:3001
+      - NEXT_PUBLIC_API_URL=
     volumes:
       - ./frontend:/app
       - /app/node_modules

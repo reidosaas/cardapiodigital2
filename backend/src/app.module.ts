@@ -41,6 +41,7 @@ import { ConfigSistemaModule } from './modules/config-sistema/config-sistema.mod
 import { ServerStatusModule } from './modules/server-status/server-status.module';
 import { AdminNotifyModule } from './modules/admin-notify/admin-notify.module';
 import { ServerMonitorModule } from './modules/server-monitor/server-monitor.module';
+import { BackupModule } from './modules/backup/backup.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
@@ -92,6 +93,7 @@ import { APP_GUARD } from '@nestjs/core';
     ServerStatusModule,
     AdminNotifyModule,
     ServerMonitorModule,
+    BackupModule,
     ScheduleModule.forRoot(),
   ],
   providers: [

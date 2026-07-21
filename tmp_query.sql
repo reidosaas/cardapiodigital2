@@ -1,0 +1,1 @@
+SELECT id, "nomeLoja", slug, "modoEscuro", ativo FROM vendedores WHERE slug = 'lojaofc';

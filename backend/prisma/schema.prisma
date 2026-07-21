@@ -961,6 +961,8 @@ model ConfigSistema {
   whatsappAdminToken      String?
   whatsappAdminInstancia  String?
   whatsappAdminConectado  Boolean  @default(false)
+  googleDriveFolderId     String?
+  googleServiceAccountEmail String?
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 

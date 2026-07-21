@@ -6,21 +6,28 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import api from '@/lib/api';
 import { toast } from 'sonner';
-import { Upload, Save, Database, Shield, Wifi, Settings, Palette, Globe, Phone, Mail, MessageCircle, QrCode, Unplug, Plug } from 'lucide-react';
+import { Upload, Save, Database, Shield, Wifi, Settings, Palette, Globe, Phone, Mail, MessageCircle, QrCode, Unplug, Plug, HardDrive, Check, ExternalLink, FolderOpen, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function AdminSistema() {
   const [config, setConfig] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'geral' | 'whatsapp'>('geral');
+  const [activeTab, setActiveTab] = useState<'geral' | 'whatsapp' | 'backup'>('geral');
   const [waStatus, setWaStatus] = useState<any>(null);
   const [waConnecting, setWaConnecting] = useState(false);
   const [waQrCode, setWaQrCode] = useState<string | null>(null);
+  const [backupHistory, setBackupHistory] = useState<any[]>([]);
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [gDriveStatus, setGDriveStatus] = useState<any>(null);
+  const [gDriveConnecting, setGDriveConnecting] = useState(false);
+  const [gDriveFolderId, setGDriveFolderId] = useState('');
+  const [uploadingCredentials, setUploadingCredentials] = useState(false);
 
   useEffect(() => {
     loadConfig();
     loadWhatsAppStatus();
+    loadBackupHistory();
   }, []);
 
   const loadConfig = async () => {
@@ -123,6 +130,82 @@ export default function AdminSistema() {
     }
   };
 
+  const loadBackupHistory = async () => {
+    try {
+      const res = await api.get('/api/admin/backup/history');
+      setBackupHistory(res.data.backups || []);
+      setGDriveStatus(res.data.googleDrive || {});
+      setGDriveFolderId(res.data.googleDrive?.folderId || '');
+    } catch {
+      setBackupHistory([]);
+      setGDriveStatus({ configured: false });
+    }
+  };
+
+  const fazerBackupLocal = async () => {
+    setBackupLoading(true);
+    try {
+      const res = await api.post('/api/admin/backup/create');
+      toast.success(`Backup criado: ${res.data.fileName} (${(res.data.size / 1024).toFixed(1)}KB)`);
+      loadBackupHistory();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Erro ao criar backup');
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
+  const fazerBackupEEnviar = async () => {
+    setBackupLoading(true);
+    try {
+      const res = await api.post('/api/admin/backup/create-and-upload');
+      toast.success('Backup criado e enviado ao Google Drive!');
+      loadBackupHistory();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Erro ao enviar backup');
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
+  const uploadServiceAccount = async (file: File) => {
+    setUploadingCredentials(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await api.post('/api/admin/backup/google-drive/upload-credentials', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      if (res.data.serviceAccountEmail) {
+        toast.success(`Service Account conectada: ${res.data.serviceAccountEmail}`);
+        loadBackupHistory();
+      } else {
+        toast.error(res.data.message || 'Erro ao enviar credenciais');
+      }
+    } catch {
+      toast.error('Erro ao enviar arquivo de credenciais');
+    } finally {
+      setUploadingCredentials(false);
+    }
+  };
+
+  const conectarGoogleDrive = async () => {
+    setGDriveConnecting(true);
+    try {
+      const res = await api.post('/api/admin/backup/google-drive/connect', { folderId: gDriveFolderId });
+      if (res.data.connected) {
+        toast.success('Google Drive conectado!');
+        loadBackupHistory();
+      } else {
+        toast.error(res.data.message || 'Erro ao conectar');
+      }
+    } catch {
+      toast.error('Erro ao conectar Google Drive');
+    } finally {
+      setGDriveConnecting(false);
+    }
+  };
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -154,6 +237,7 @@ export default function AdminSistema() {
           {[
             { id: 'geral', label: 'Geral', icon: Settings },
             { id: 'whatsapp', label: 'WhatsApp Admin', icon: MessageCircle },
+            { id: 'backup', label: 'Backup', icon: Upload },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -349,6 +433,127 @@ export default function AdminSistema() {
                 </div>
               </CardContent>
             </Card>
+          </div>
+        )}
+
+        {/* Tab: Backup */}
+        {activeTab === 'backup' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardContent className="p-6 space-y-4">
+                <h3 className="font-semibold flex items-center gap-2"><HardDrive size={18} /> Backup do Banco de Dados</h3>
+                <p className="text-sm text-gray-500">
+                  Crie backups do banco de dados PostgreSQL. Voce pode salvar localmente ou enviar direto para o Google Drive.
+                </p>
+
+                <div className="flex gap-3">
+                  <Button onClick={fazerBackupLocal} disabled={backupLoading} className="bg-blue-600 hover:bg-blue-700">
+                    <HardDrive className="mr-2 h-4 w-4" />
+                    {backupLoading ? 'Criando...' : 'Fazer Backup Local'}
+                  </Button>
+                  <Button onClick={fazerBackupEEnviar} disabled={backupLoading || !gDriveStatus?.configured || !gDriveStatus?.folderId} className="bg-green-600 hover:bg-green-700">
+                    <Upload className="mr-2 h-4 w-4" />
+                    {backupLoading ? 'Enviando...' : 'Backup e Enviar ao Drive'}
+                  </Button>
+                </div>
+
+                {!gDriveStatus?.configured && (
+                  <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded-lg">
+                    Configure as credenciais do Google Drive abaixo para habilitar o envio automatico.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6 space-y-4">
+                <h3 className="font-semibold flex items-center gap-2"><Upload size={18} /> Google Drive</h3>
+                <p className="text-sm text-gray-500">
+                  Envie backups automaticamente para o seu Google Drive.
+                </p>
+
+                {gDriveStatus?.configured ? (
+                  <div className="flex items-center gap-3 p-4 rounded-xl bg-green-50 dark:bg-green-900/20">
+                    <div className="h-3 w-3 rounded-full bg-green-500" />
+                    <div>
+                      <p className="text-sm font-medium text-green-700 dark:text-green-400">Service Account Conectada</p>
+                      <p className="text-xs text-green-600 dark:text-green-500">{gDriveStatus.serviceAccountEmail}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium text-gray-700">1. Envie o arquivo JSON da Service Account:</p>
+                    <label className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200 transition-colors cursor-pointer">
+                      <Upload size={14} /> {uploadingCredentials ? 'Enviando...' : 'Escolher arquivo JSON'}
+                      <input
+                        type="file"
+                        accept=".json"
+                        className="hidden"
+                        disabled={uploadingCredentials}
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadServiceAccount(f); }}
+                      />
+                    </label>
+                    <p className="text-xs text-gray-400">
+                      Crie uma Service Account no Google Cloud Console com acesso ao Drive API.
+                    </p>
+                  </div>
+                )}
+
+                <div>
+                  <label className="text-sm text-gray-500">ID da Pasta no Google Drive</label>
+                  <div className="flex gap-2 mt-1">
+                    <Input
+                      value={gDriveFolderId}
+                      onChange={(e) => setGDriveFolderId(e.target.value)}
+                      placeholder="Cole o ID da pasta aqui"
+                      disabled={!gDriveStatus?.configured}
+                    />
+                    <Button onClick={conectarGoogleDrive} disabled={gDriveConnecting || !gDriveStatus?.configured || !gDriveFolderId} variant="outline">
+                      {gDriveConnecting ? 'Conectando...' : 'Conectar'}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Abra a pasta no Drive, copie o ID da URL (depois de /folders/) e cole aqui.
+                  </p>
+                  {gDriveStatus?.folderId && (
+                    <div className="flex items-center gap-2 mt-2 p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                      <Check size={14} className="text-green-600" />
+                      <span className="text-xs text-green-700 dark:text-green-400">Pasta conectada: {gDriveStatus.folderId}</span>
+                      <a href={`https://drive.google.com/drive/folders/${gDriveStatus.folderId}`} target="_blank" rel="noopener noreferrer" className="ml-auto">
+                        <ExternalLink size={12} className="text-green-600 hover:text-green-800" />
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* History */}
+            {backupHistory.length > 0 && (
+              <Card className="lg:col-span-2">
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold flex items-center gap-2"><FolderOpen size={18} /> Historico de Backups</h3>
+                    <Button variant="outline" size="sm" onClick={loadBackupHistory}>
+                      <RefreshCw size={14} className="mr-1" /> Atualizar
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {backupHistory.map((b, i) => (
+                      <div key={i} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <HardDrive size={16} className="text-gray-400" />
+                          <div>
+                            <p className="text-sm font-medium">{b.fileName}</p>
+                            <p className="text-xs text-gray-500">{(b.size / 1024).toFixed(1)}KB - {new Date(b.createdAt).toLocaleString('pt-BR')}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         )}
 
