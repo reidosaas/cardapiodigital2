@@ -17,6 +17,7 @@ import {
   X,
   Navigation,
   Wallet,
+  RefreshCw,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -97,6 +98,7 @@ export default function EntregadorDashboardPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [filtro, setFiltro] = useState<string>('todos');
   const [processandoVinculo, setProcessandoVinculo] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('token_entregador') : null;
 
@@ -151,10 +153,22 @@ export default function EntregadorDashboardPage() {
     }
   }, [token]);
 
+  const handleRefresh = async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    await fetchData();
+    setTimeout(() => setRefreshing(false), 1000);
+  };
+
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 15000);
-    return () => clearInterval(interval);
+    const interval = setInterval(fetchData, 10000);
+    const onRefresh = () => fetchData();
+    window.addEventListener('entregador-refresh', onRefresh);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('entregador-refresh', onRefresh);
+    };
   }, [fetchData]);
 
   const updateStatus = async (entregaId: string, newStatus: string) => {
@@ -357,6 +371,20 @@ export default function EntregadorDashboardPage() {
                   </Card>
                 </div>
               )}
+
+              {/* Botao atualizar */}
+              <div className="flex justify-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRefresh}
+                  disabled={refreshing}
+                  className="gap-2 border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/30"
+                >
+                  <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                  {refreshing ? 'Atualizando...' : 'Atualizar Pedidos'}
+                </Button>
+              </div>
 
               {/* Filtros */}
               <div className="flex gap-2 overflow-x-auto pb-2">

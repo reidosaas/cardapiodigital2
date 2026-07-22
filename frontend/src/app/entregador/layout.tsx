@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Truck, Package, BarChart3, Map, LogOut, Menu, X, Store, Sun, Moon, User } from 'lucide-react';
+import { Truck, Package, BarChart3, Map, LogOut, Menu, X, Store, Sun, Moon, User, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { InstallButton } from '@/components/shared/install-button';
@@ -23,6 +23,7 @@ export default function EntregadorLayout({ children }: { children: React.ReactNo
   const [entregador, setEntregador] = useState<any>(null);
   const [loja, setLoja] = useState<any>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [headerRefreshing, setHeaderRefreshing] = useState(false);
 
   useEffect(() => {
     document.querySelectorAll('link[rel="manifest"]').forEach((el) => el.parentElement?.removeChild(el));
@@ -101,6 +102,19 @@ export default function EntregadorLayout({ children }: { children: React.ReactNo
 
           <div className="flex items-center gap-2">
             <InstallButton variant="outline" />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setHeaderRefreshing(true);
+                window.dispatchEvent(new Event('entregador-refresh'));
+                setTimeout(() => setHeaderRefreshing(false), 1000);
+              }}
+              className="text-red-500 hover:text-red-600"
+              title="Atualizar pedidos"
+            >
+              <RefreshCw className={`h-4 w-4 ${headerRefreshing ? 'animate-spin' : ''}`} />
+            </Button>
             <Button variant="ghost" size="sm" onClick={toggleTheme} className="text-gray-500">
               {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
@@ -136,6 +150,16 @@ export default function EntregadorLayout({ children }: { children: React.ReactNo
             <button onClick={toggleTheme} className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 w-full">
               {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               {theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
+            </button>
+            <button
+              onClick={() => {
+                setMenuOpen(false);
+                window.dispatchEvent(new Event('entregador-refresh'));
+              }}
+              className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 w-full"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Atualizar Pedidos
             </button>
             <button onClick={handleLogout} className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 w-full">
               <LogOut className="h-4 w-4" />
