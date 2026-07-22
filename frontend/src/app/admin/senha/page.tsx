@@ -144,7 +144,7 @@ export default function AdminSenhaPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => { setResetModal(user); setNovaSenha(''); setShowSenha(false); }}
+                        onClick={() => { setResetModal({ user }); setNovaSenha(''); setShowSenha(false); }}
                         className="gap-1"
                       >
                         <Key className="h-3 w-3" />
