@@ -24,6 +24,9 @@ export function CheckoutPanel({ cartItems, total, vendedor, corPrimaria, onSucce
   const [clienteLogado, setClienteLogado] = useState<any>(null);
   const [enderecos, setEnderecos] = useState<any[]>([]);
   const [enderecoSelecionado, setEnderecoSelecionado] = useState<string>('');
+  const [taxaCalculada, setTaxaCalculada] = useState<number | null>(null);
+  const [distanciaKm, setDistanciaKm] = useState<number | null>(null);
+  const [calculandoTaxa, setCalculandoTaxa] = useState(false);
   const [form, setForm] = useState({ 
     nome: '', 
     telefone: '', 
@@ -83,8 +86,56 @@ export function CheckoutPanel({ cartItems, total, vendedor, corPrimaria, onSucce
         cep: e.cep,
         complemento: e.complemento || '',
       }));
+      if (e.latitude && e.longitude) {
+        calcularTaxaDistancia(e.latitude, e.longitude);
+      } else {
+        geocodarECalcular(`${e.logradouro}, ${e.numero} - ${e.bairro}, ${e.cep || ''}`);
+      }
     }
   };
+
+  const geocodarECalcular = async (endereco: string) => {
+    if (!endereco || endereco.length < 10) return;
+    setCalculandoTaxa(true);
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(endereco)}&limit=1`);
+      const data = await res.json();
+      if (data && data.length > 0) {
+        const lat = parseFloat(data[0].lat);
+        const lng = parseFloat(data[0].lon);
+        await calcularTaxaDistancia(lat, lng);
+      }
+    } catch {
+    } finally {
+      setCalculandoTaxa(false);
+    }
+  };
+
+  const calcularTaxaDistancia = async (lat: number, lng: number) => {
+    setCalculandoTaxa(true);
+    try {
+      const res = await api.post('/api/public/taxas-entrega/calcular', {
+        vendedorId: vendedor.id,
+        latitude: lat,
+        longitude: lng,
+      });
+      setDistanciaKm(res.data.distancia);
+      setTaxaCalculada(res.data.taxa);
+    } catch {
+      setTaxaCalculada(Number(vendedor.taxaEntrega || 0));
+    } finally {
+      setCalculandoTaxa(false);
+    }
+  };
+
+  useEffect(() => {
+    if (form.tipoEntrega === 'ENTREGA' && form.rua && form.numero && form.bairro) {
+      const timeout = setTimeout(() => {
+        geocodarECalcular(`${form.rua}, ${form.numero} - ${form.bairro}, ${form.cep || ''}`);
+      }, 1000);
+      return () => clearTimeout(timeout);
+    }
+  }, [form.rua, form.numero, form.bairro, form.cep, form.tipoEntrega]);
 
   const handleSubmit = async () => {
     if (!form.nome || !form.telefone) {
@@ -115,7 +166,7 @@ export function CheckoutPanel({ cartItems, total, vendedor, corPrimaria, onSucce
           observacao: i.observacao,
         })),
         total: total - desconto,
-        taxaEntrega: form.tipoEntrega === 'ENTREGA' ? (vendedor.taxaEntrega || 0) : 0,
+        taxaEntrega: form.tipoEntrega === 'ENTREGA' ? (taxaCalculada ?? Number(vendedor.taxaEntrega || 0)) : 0,
         observacao: form.observacao,
         tipoEntrega: form.tipoEntrega,
         enderecoEntrega: enderecoCompleto,
@@ -301,16 +352,25 @@ export function CheckoutPanel({ cartItems, total, vendedor, corPrimaria, onSucce
             <span>-R$ {(total * cupomAtivo.valor / 100).toFixed(2)}</span>
           </div>
         )}
-        {form.tipoEntrega === 'ENTREGA' && vendedor.taxaEntrega && (
+        {form.tipoEntrega === 'ENTREGA' && (
           <div className="flex justify-between text-sm">
-            <span className="text-gray-500">Taxa de entrega</span>
-            <span className="font-medium">R$ {Number(vendedor.taxaEntrega).toFixed(2)}</span>
+            <span className="text-gray-500">
+              Taxa de entrega
+              {distanciaKm !== null && <span className="text-xs text-gray-400 ml-1">({distanciaKm} km)</span>}
+            </span>
+            <span className="font-medium">
+              {calculandoTaxa ? (
+                <Loader2 size={14} className="animate-spin inline" />
+              ) : (
+                `R$ ${(taxaCalculada ?? Number(vendedor.taxaEntrega || 0)).toFixed(2)}`
+              )}
+            </span>
           </div>
         )}
         <div className="flex justify-between text-base font-bold pt-2 border-t border-gray-200 dark:border-gray-700">
           <span>Total</span>
           <span className={cupomAtivo ? 'text-green-600' : ''}>
-            R$ {(total - (cupomAtivo ? total * cupomAtivo.valor / 100 : 0) + (form.tipoEntrega === 'ENTREGA' ? Number(vendedor.taxaEntrega || 0) : 0)).toFixed(2)}
+            R$ {(total - (cupomAtivo ? total * cupomAtivo.valor / 100 : 0) + (form.tipoEntrega === 'ENTREGA' ? (taxaCalculada ?? Number(vendedor.taxaEntrega || 0)) : 0)).toFixed(2)}
           </span>
         </div>
       </div>

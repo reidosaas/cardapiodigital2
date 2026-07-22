@@ -168,8 +168,25 @@ model Vendedor {
   entregadores         Entregador[]
   entregadorLojas      EntregadorLoja[]
   caixas               Caixa[]
+  taxasDistancia        TaxaEntregaDistancia[]
 
   @@map("vendedores")
+}
+
+model TaxaEntregaDistancia {
+  id              String   @id @default(uuid()) @db.Uuid
+  vendedorId      String   @db.Uuid
+  distanciaMinKm  Decimal  @db.Decimal(5, 2)
+  distanciaMaxKm  Decimal  @db.Decimal(5, 2)
+  valor           Decimal  @db.Decimal(10, 2)
+  ativo           Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  vendedor Vendedor @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
+
+  @@index([vendedorId])
+  @@map("taxas_entrega_distancia")
 }
 
 // ========== ASSINATURA ==========

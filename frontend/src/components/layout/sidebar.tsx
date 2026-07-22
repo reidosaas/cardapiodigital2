@@ -30,6 +30,7 @@ import {
   Table2,
   Key,
   Activity,
+  MapPin,
 } from 'lucide-react';
 
 const vendedorLinks = [
@@ -44,6 +45,7 @@ const vendedorLinks = [
   { href: '/dashboard/vendedor/cupons', icon: BadgePercent, label: 'Cupons' },
   { href: '/dashboard/vendedor/garcons', icon: Users, label: 'Garcons' },
   { href: '/dashboard/vendedor/entregadores', icon: Truck, label: 'Entregadores' },
+  { href: '/dashboard/vendedor/taxas-entrega', icon: MapPin, label: 'Taxas de Entrega' },
   { href: '/dashboard/vendedor/despesas', icon: DollarSign, label: 'Despesas' },
   { href: '/dashboard/vendedor/financeiro', icon: BarChart3, label: 'Financeiro' },
   { href: '/dashboard/vendedor/relatorios', icon: BarChart3, label: 'Relatorios' },
