@@ -162,7 +162,7 @@ export default function EntregadorDashboardPage() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 10000);
+    const interval = setInterval(fetchData, 5000);
     const onRefresh = () => fetchData();
     window.addEventListener('entregador-refresh', onRefresh);
     return () => {
