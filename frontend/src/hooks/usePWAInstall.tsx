@@ -6,18 +6,34 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
+function detectIOS(): boolean {
+  if (typeof window === 'undefined') return false;
+  const ua = navigator.userAgent.toLowerCase();
+  const isIOS = /iphone|ipad|ipod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  return isIOS;
+}
+
 export function usePWAInstall() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [canInstall, setCanInstall] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+
+    const ios = detectIOS();
+    setIsIOS(ios);
 
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
     const hasNavigator = (window.navigator as any).standalone === true;
     if (isStandalone || hasNavigator) {
       setIsInstalled(true);
+      return;
+    }
+
+    if (ios) {
+      setCanInstall(true);
       return;
     }
 
@@ -44,5 +60,5 @@ export function usePWAInstall() {
     return false;
   }, [deferredPrompt]);
 
-  return { canInstall, isInstalled, install };
+  return { canInstall, isInstalled, isIOS, install };
 }
