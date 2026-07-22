@@ -11,7 +11,7 @@ import { ProductCard } from '@/components/catalog/product-card';
 import { CatalogLayout } from '@/components/catalog/catalog-layout';
 
 export default function ProdutoDetalhe() {
-  const { slug, id } = useParams();
+  const { slug, id } = useParams() as { slug: string; id: string };
   const router = useRouter();
   const [produto, setProduto] = useState<any>(null);
   const [vendedor, setVendedor] = useState<any>(null);

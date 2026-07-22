@@ -11,7 +11,7 @@ import { AuthModal } from '@/components/catalog/auth-modal';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 
 export default function CatalogoPublico() {
-  const { slug } = useParams();
+  const { slug } = useParams() as { slug: string };
   const [vendedor, setVendedor] = useState<any>(null);
   const [produtos, setProdutos] = useState<any[]>([]);
   const [banners, setBanners] = useState<any[]>([]);
