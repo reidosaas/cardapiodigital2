@@ -361,29 +361,53 @@ export class EntregadoresService {
       where: { entregadorId: checkin.entregadorId, vendedorId, ativo: true },
     });
 
-    const inicioDia = new Date(checkin.data);
-    inicioDia.setHours(0, 0, 0, 0);
-    const fimDia = new Date(checkin.data);
-    fimDia.setHours(23, 59, 59, 999);
-
     const pedidosLoja = await this.prisma.pedido.findMany({
       where: { vendedorId },
       select: { id: true },
     });
     const pedidoIds = pedidosLoja.map((p: any) => p.id);
 
+    const valorPorEntrega = vinculo ? Number(vinculo.valorPorEntrega) : 0;
+    const valorDiaria = vinculo ? Number(vinculo.diaria) : Number(checkin.valorDiaria);
+
     const entregasDia = await this.prisma.entrega.findMany({
       where: {
         entregadorId: checkin.entregadorId,
         pedidoId: { in: pedidoIds },
         status: 'ENTREGUE',
-        entregueEm: { gte: inicioDia, lte: fimDia },
+        entregueEm: { gte: checkin.data, lte: new Date(checkin.data.getTime() + 86400000 - 1) },
       },
     });
 
-    const valorPorEntrega = vinculo ? Number(vinculo.valorPorEntrega) : 0;
-    const valorDiaria = vinculo ? Number(vinculo.diaria) : Number(checkin.valorDiaria);
-    const totalEntregas = entregasDia.length;
+    const checkinsPagos = await this.prisma.entregadorCheckin.findMany({
+      where: {
+        entregadorId: checkin.entregadorId,
+        vendedorId,
+        pago: true,
+      },
+      select: { data: true },
+    });
+    const diasPagos = new Set(checkinsPagos.map((c) => {
+      const d = new Date(c.data);
+      return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    }));
+
+    const todasEntregas = await this.prisma.entrega.findMany({
+      where: {
+        entregadorId: checkin.entregadorId,
+        pedidoId: { in: pedidoIds },
+        status: 'ENTREGUE',
+      },
+    });
+
+    const entregasNaoPagas = todasEntregas.filter((e) => {
+      if (!e.entregueEm) return false;
+      const d = new Date(e.entregueEm);
+      const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      return !diasPagos.has(key);
+    });
+
+    const totalEntregas = entregasDia.length + entregasNaoPagas.length;
     const valorEntregas = totalEntregas * valorPorEntrega;
     const valorTotal = valorDiaria + valorEntregas;
 
