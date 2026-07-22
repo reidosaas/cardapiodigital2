@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { MapPin, Plus, Trash2, Save, Loader2, Info, Truck } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
+import { DashboardLayout } from '@/components/layout/dashboard-layout';
 
 interface TaxaDistancia {
   id: string;
@@ -86,13 +87,16 @@ export default function TaxasEntregaPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="animate-spin text-gray-400" size={32} />
-      </div>
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="animate-spin text-gray-400" size={32} />
+        </div>
+      </DashboardLayout>
     );
   }
 
   return (
+    <DashboardLayout>
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <div className="p-2 bg-red-100 rounded-lg">
@@ -232,5 +236,6 @@ export default function TaxasEntregaPage() {
         </div>
       </div>
     </div>
+    </DashboardLayout>
   );
 }
