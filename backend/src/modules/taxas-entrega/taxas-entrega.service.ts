@@ -46,9 +46,9 @@ export class TaxasEntregaService {
     const existing = await this.prisma.taxaEntregaDistancia.findFirst({ where: { id, vendedorId } });
     if (!existing) throw new NotFoundException('Taxa de entrega nao encontrada');
 
-    const min = data.distanciaMinKm ?? existing.distanciaMinKm;
-    const max = data.distanciaMaxKm ?? existing.distanciaMaxKm;
-    const valor = data.valor ?? existing.valor;
+    const min = Number(data.distanciaMinKm ?? existing.distanciaMinKm);
+    const max = Number(data.distanciaMaxKm ?? existing.distanciaMaxKm);
+    const valor = Number(data.valor ?? existing.valor);
 
     if (min >= max) throw new BadRequestException('Distancia minima deve ser menor que a maxima');
     if (valor < 0) throw new BadRequestException('Valor nao pode ser negativo');
