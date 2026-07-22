@@ -189,7 +189,7 @@ export default function AdminSenhaPage() {
                 </Button>
               </div>
               <p className="text-sm text-gray-500 mb-4">
-                Alterando senha de <strong>{resetModal.nome}</strong>
+                Alterando senha de <strong>{resetModal.user.nome}</strong>
               </p>
               <div className="space-y-3">
                 <div>
