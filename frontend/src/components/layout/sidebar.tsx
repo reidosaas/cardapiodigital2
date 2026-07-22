@@ -113,7 +113,7 @@ export function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps) {
 
         <nav className="flex-1 overflow-y-auto p-2 space-y-1">
           {links.map((link) => {
-            const isActive = pathname === link.href || pathname.startsWith(link.href + '/');
+            const isActive = pathname === link.href || pathname?.startsWith(link.href + '/');
             return (
               <Link
                 key={link.href}
