@@ -82,11 +82,9 @@ interface RelatorioStats {
   entreguesHoje: number;
   diaria: number;
   valorPorEntrega: number;
-  ganhoHoje: number;
-  totalGanhoMes: number;
-  totalDiariasMes: number;
-  totalEntregasMes: number;
-  valorEntregasMes: number;
+  ganhoBrutoHoje: number;
+  pagoHoje: boolean;
+  valorPagoHoje: number;
 }
 
 export default function EntregadorDashboardPage() {
@@ -263,7 +261,10 @@ export default function EntregadorDashboardPage() {
   };
 
   // Calculos para o relatorio
-  const ganhoDiario = stats ? Number(stats.diaria) + (Number(stats.totalEntregasHoje) * Number(stats.valorPorEntrega)) : 0;
+  const ganhoBrutoHoje = stats ? stats.ganhoBrutoHoje || (Number(stats.diaria) + (Number(stats.totalEntregasHoje) * Number(stats.valorPorEntrega))) : 0;
+  const pagoHoje = stats?.pagoHoje || false;
+  const valorPagoHoje = stats?.valorPagoHoje || 0;
+  const ganhoRestanteHoje = Math.max(ganhoBrutoHoje - valorPagoHoje, 0);
 
   if (loading) {
     return (
@@ -362,11 +363,21 @@ export default function EntregadorDashboardPage() {
                       <p className="text-xs text-gray-500">Em Rota</p>
                     </CardContent>
                   </Card>
-                  <Card>
+                  <Card className={pagoHoje ? 'border-green-200 dark:border-green-800' : ''}>
                     <CardContent className="p-4 text-center">
-                      <Wallet className="h-6 w-6 mx-auto mb-1 text-green-500" />
-                      <p className="text-2xl font-bold">R$ {ganhoDiario.toFixed(2)}</p>
-                      <p className="text-xs text-gray-500">Ganhos Hoje (Diaria + Entregas)</p>
+                      <Wallet className={`h-6 w-6 mx-auto mb-1 ${pagoHoje ? 'text-green-500' : 'text-green-500'}`} />
+                      {pagoHoje ? (
+                        <>
+                          <p className="text-2xl font-bold text-green-600">R$ {ganhoRestanteHoje.toFixed(2)}</p>
+                          <p className="text-xs text-green-600 font-medium">A Receber Hoje</p>
+                          <p className="text-[10px] text-gray-400 mt-0.5">Pago: R$ {valorPagoHoje.toFixed(2)}</p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-2xl font-bold">R$ {ganhoBrutoHoje.toFixed(2)}</p>
+                          <p className="text-xs text-gray-500">Ganhos Hoje</p>
+                        </>
+                      )}
                     </CardContent>
                   </Card>
                 </div>

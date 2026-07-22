@@ -397,13 +397,26 @@ export class EntregadorDashboardService {
       where: { entregadorId, vendedorId: { in: vendedorIds }, ativo: true },
     });
 
+    const checkinHoje = await this.prisma.entregadorCheckin.findFirst({
+      where: { entregadorId, vendedorId: { in: vendedorIds }, data: inicioHoje },
+    });
+
+    const diaria = loja ? Number(loja.diaria) : 0;
+    const valorPorEntrega = loja ? Number(loja.valorPorEntrega) : 0;
+    const ganhoBrutoHoje = diaria + (entreguesHoje * valorPorEntrega);
+    const pagoHoje = checkinHoje?.pago === true;
+    const valorPagoHoje = pagoHoje ? Number(checkinHoje?.valorTotal || ganhoBrutoHoje) : 0;
+
     return {
       totalEntregasHoje,
       pendentes,
       emRota,
       entreguesHoje,
-      diaria: loja ? Number(loja.diaria) : 0,
-      valorPorEntrega: loja ? Number(loja.valorPorEntrega) : 0,
+      diaria,
+      valorPorEntrega,
+      ganhoBrutoHoje,
+      pagoHoje,
+      valorPagoHoje,
     };
   }
 
