@@ -179,7 +179,7 @@ export class EntregadorDashboardService {
     const totalGanhos = valorEntregas + totalDiarias;
 
     const diasPagos = await this.diasPagos(entregadorId, vendedorIds, inicio);
-    const jaRecebido = this.calcularRecebido(entregas, diasPagos, valorPorEntrega, diaria);
+    const jaRecebido = await this.calcularRecebidoTotal(entregadorId, vendedorIds, inicio);
     const aReceber = Math.max(totalGanhos - jaRecebido, 0);
 
     return {
@@ -256,6 +256,23 @@ export class EntregadorDashboardService {
     return recebido;
   }
 
+  private async calcularRecebidoTotal(
+    entregadorId: string,
+    vendedorIds: string[],
+    inicio: Date,
+  ): Promise<number> {
+    const checkins = await this.prisma.entregadorCheckin.findMany({
+      where: {
+        entregadorId,
+        vendedorId: { in: vendedorIds },
+        pago: true,
+        data: { gte: inicio },
+      },
+      select: { valorTotal: true },
+    });
+    return checkins.reduce((sum: number, c: any) => sum + Number(c.valorTotal || 0), 0);
+  }
+
   async getRelatorio(entregadorId: string, vendedorId: string, dataInicio: string, dataFim: string) {
     const inicio = new Date(dataInicio);
     const fim = new Date(dataFim);
@@ -296,7 +313,7 @@ export class EntregadorDashboardService {
     const totalGanhos = valorEntregas + totalDiarias;
 
     const diasPagos = await this.diasPagos(entregadorId, vendedorIds, inicio, fim);
-    const jaRecebido = this.calcularRecebido(entregas, diasPagos, valorPorEntrega, diaria);
+    const jaRecebido = await this.calcularRecebidoTotal(entregadorId, vendedorIds, inicio);
     const aReceber = Math.max(totalGanhos - jaRecebido, 0);
 
     return {
