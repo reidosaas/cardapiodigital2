@@ -18,6 +18,7 @@ import {
   Navigation,
   Wallet,
   RefreshCw,
+  Store,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -75,6 +76,19 @@ interface Vinculo {
   loja: { id: string; nomeLoja: string; slug: string; endereco?: string; cidade?: string; estado?: string; cep?: string; latitude?: number; longitude?: number };
 }
 
+interface LojaStats {
+  vendedorId: string;
+  nomeLoja: string;
+  diaria: number;
+  valorPorEntrega: number;
+  entreguesHoje: number;
+  ganhoBruto: number;
+  pago: boolean;
+  valorPago: number;
+  aReceber: number;
+  checkinId: string | null;
+}
+
 interface RelatorioStats {
   totalEntregasHoje: number;
   pendentes: number;
@@ -85,6 +99,7 @@ interface RelatorioStats {
   ganhoBrutoHoje: number;
   pagoHoje: boolean;
   valorPagoHoje: number;
+  lojas: LojaStats[];
 }
 
 export default function EntregadorDashboardPage() {
@@ -381,6 +396,63 @@ export default function EntregadorDashboardPage() {
                     </CardContent>
                   </Card>
                 </div>
+              )}
+
+              {/* Ganhos por Loja */}
+              {stats && stats.lojas && stats.lojas.length > 0 && (
+                <Card>
+                  <CardContent className="p-4">
+                    <h3 className="text-sm font-bold mb-3 flex items-center gap-2">
+                      <Store className="h-4 w-4 text-red-500" />
+                      Ganhos por Loja - Hoje
+                    </h3>
+                    <div className="space-y-2">
+                      {stats.lojas.map((loja: LojaStats) => (
+                        <div
+                          key={loja.vendedorId}
+                          className={`flex items-center justify-between p-3 rounded-xl border ${
+                            loja.pago
+                              ? 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800'
+                              : loja.aReceber > 0
+                                ? 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800'
+                                : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                              loja.pago ? 'bg-green-100 dark:bg-green-900/30' : 'bg-yellow-100 dark:bg-yellow-900/30'
+                            }`}>
+                              {loja.pago ? (
+                                <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                              ) : (
+                                <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                              )}
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold">{loja.nomeLoja}</p>
+                              <p className="text-[10px] text-gray-500">
+                                {loja.entreguesHoje} entrega(s) x R$ {loja.valorPorEntrega.toFixed(2)} + Diaria R$ {loja.diaria.toFixed(2)}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            {loja.pago ? (
+                              <>
+                                <p className="text-sm font-bold text-green-600">R$ {loja.valorPago.toFixed(2)}</p>
+                                <p className="text-[10px] text-green-600 font-medium">Pago</p>
+                              </>
+                            ) : (
+                              <>
+                                <p className="text-sm font-bold text-yellow-600">R$ {loja.aReceber.toFixed(2)}</p>
+                                <p className="text-[10px] text-yellow-600 font-medium">A Receber</p>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
               )}
 
               {/* Botao atualizar */}

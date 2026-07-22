@@ -370,11 +370,11 @@ export class EntregadorDashboardService {
     const inicioHoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
 
     const vendedorIds = await this.getVendedorIds(entregadorId, vendedorId);
-    if (vendedorIds.length === 0) return { totalEntregasHoje: 0, pendentes: 0, emRota: 0, entreguesHoje: 0, diaria: 0, valorPorEntrega: 0 };
+    if (vendedorIds.length === 0) return { totalEntregasHoje: 0, pendentes: 0, emRota: 0, entreguesHoje: 0, diaria: 0, valorPorEntrega: 0, ganhoBrutoHoje: 0, pagoHoje: false, valorPagoHoje: 0, lojas: [] };
 
     const pedidosLoja = await this.prisma.pedido.findMany({
       where: { vendedorId: { in: vendedorIds } },
-      select: { id: true },
+      select: { id: true, vendedorId: true },
     });
     const pedidoIds = pedidosLoja.map((p: any) => p.id);
 
@@ -393,30 +393,70 @@ export class EntregadorDashboardService {
       }),
     ]);
 
-    const loja = await this.prisma.entregadorLoja.findFirst({
+    const vinculos = await this.prisma.entregadorLoja.findMany({
       where: { entregadorId, vendedorId: { in: vendedorIds }, ativo: true },
+      include: { vendedor: { select: { id: true, nomeLoja: true } } },
     });
 
-    const checkinHoje = await this.prisma.entregadorCheckin.findFirst({
+    const checkinsHoje = await this.prisma.entregadorCheckin.findMany({
       where: { entregadorId, vendedorId: { in: vendedorIds }, data: inicioHoje },
     });
+    const checkinMap = new Map(checkinsHoje.map((c: any) => [c.vendedorId, c]));
 
-    const diaria = loja ? Number(loja.diaria) : 0;
-    const valorPorEntrega = loja ? Number(loja.valorPorEntrega) : 0;
-    const ganhoBrutoHoje = diaria + (entreguesHoje * valorPorEntrega);
-    const pagoHoje = checkinHoje?.pago === true;
-    const valorPagoHoje = pagoHoje ? Number(checkinHoje?.valorTotal || ganhoBrutoHoje) : 0;
+    const pedidoIdsSet = new Set(pedidoIds);
+
+    const lojas = await Promise.all(vinculos.map(async (v: any) => {
+      const vendedorPedidos = pedidosLoja.filter((p: any) => p.vendedorId === v.vendedorId).map((p: any) => p.id);
+
+      const entregasLojaHoje = await this.prisma.entrega.count({
+        where: {
+          entregadorId,
+          pedidoId: { in: vendedorPedidos },
+          status: 'ENTREGUE',
+          entregueEm: { gte: inicioHoje },
+        },
+      });
+
+      const diaria = Number(v.diaria);
+      const valorPorEntrega = Number(v.valorPorEntrega);
+      const ganhoBruto = diaria + (entregasLojaHoje * valorPorEntrega);
+
+      const checkin = checkinMap.get(v.vendedorId);
+      const pago = checkin?.pago === true;
+      const valorPago = pago ? Number(checkin?.valorTotal || ganhoBruto) : 0;
+      const aReceber = Math.max(ganhoBruto - valorPago, 0);
+
+      return {
+        vendedorId: v.vendedorId,
+        nomeLoja: v.vendedor?.nomeLoja || 'Loja',
+        diaria,
+        valorPorEntrega,
+        entreguesHoje: entregasLojaHoje,
+        ganhoBruto,
+        pago,
+        valorPago,
+        aReceber,
+        checkinId: checkin?.id || null,
+      };
+    }));
+
+    const ganhoBrutoHoje = lojas.reduce((sum: number, l: any) => sum + l.ganhoBruto, 0);
+    const valorPagoHoje = lojas.reduce((sum: number, l: any) => sum + l.valorPago, 0);
+    const pagoHoje = lojas.every((l: any) => l.pago);
+
+    const loja = vinculos[0];
 
     return {
       totalEntregasHoje,
       pendentes,
       emRota,
       entreguesHoje,
-      diaria,
-      valorPorEntrega,
+      diaria: loja ? Number(loja.diaria) : 0,
+      valorPorEntrega: loja ? Number(loja.valorPorEntrega) : 0,
       ganhoBrutoHoje,
       pagoHoje,
       valorPagoHoje,
+      lojas,
     };
   }
 
