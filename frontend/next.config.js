@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
   images: {
     unoptimized: true,
     remotePatterns: [
@@ -9,9 +10,6 @@ const nextConfig = {
       { protocol: 'https', hostname: 'res.cloudinary.com' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
     ],
-  },
-  experimental: {
-    missingSuspenseWithCSRBailout: false,
   },
   async rewrites() {
     return [

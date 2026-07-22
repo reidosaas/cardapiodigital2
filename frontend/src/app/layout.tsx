@@ -1,6 +1,8 @@
 import { Providers } from './providers';
 import '@/styles/globals.css';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'My Love Delivery',
   description: 'My Love Delivery - Peca online e receba em casa',
