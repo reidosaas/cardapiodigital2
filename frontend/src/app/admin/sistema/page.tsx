@@ -28,6 +28,8 @@ export default function AdminSistema() {
     loadConfig();
     loadWhatsAppStatus();
     loadBackupHistory();
+    const interval = setInterval(loadWhatsAppStatus, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const loadConfig = async () => {
@@ -53,6 +55,7 @@ export default function AdminSistema() {
     try {
       const res = await api.get('/api/admin/whatsapp-admin/status');
       setWaStatus(res.data);
+      if (res.data.conectado) setWaQrCode(null);
     } catch {
       setWaStatus({ conectado: false });
     }
@@ -385,7 +388,7 @@ export default function AdminSistema() {
                   <div className="mt-4 p-4 bg-white rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center gap-3">
                     <QrCode size={24} className="text-gray-400" />
                     <p className="text-sm text-gray-500">Escaneie com seu WhatsApp</p>
-                    <img src={waQrCode} alt="QR Code" className="w-64 h-64 object-contain" />
+                    <img src={waQrCode.startsWith('data:') ? waQrCode : `data:image/png;base64,${waQrCode}`} alt="QR Code" className="w-64 h-64 object-contain" />
                   </div>
                 )}
               </CardContent>
