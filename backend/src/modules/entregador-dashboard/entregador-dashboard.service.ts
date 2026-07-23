@@ -441,9 +441,10 @@ export class EntregadorDashboardService {
 
       const diaria = Number(v.diaria);
       const valorPorEntrega = Number(v.valorPorEntrega);
-      const ganhoBruto = diaria + (entregasLojaHoje * valorPorEntrega);
-
       const checkins = checkinMap.get(v.vendedorId) || [];
+      const temCheckinHoje = checkins.length > 0;
+      const ganhoBruto = (temCheckinHoje ? diaria : 0) + (entregasLojaHoje * valorPorEntrega);
+
       const checkinsNaoPagos = checkins.filter((c: any) => !c.pago);
       const checkinsPagos = checkins.filter((c: any) => c.pago);
       const pago = checkinsPagos.length > 0;
