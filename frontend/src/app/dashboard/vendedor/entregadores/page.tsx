@@ -134,10 +134,10 @@ export default function EntregadoresPage() {
     }
   };
 
-  const handlePagar = async (checkinId: string) => {
-    setPagandoId(checkinId);
+  const handlePagar = async (entregadorId: string) => {
+    setPagandoId(entregadorId);
     try {
-      await api.post(`/api/entregadores/${checkinId}/pagar`);
+      await api.post(`/api/entregadores/${entregadorId}/pagar`);
       toast.success('Pagamento registrado com sucesso!');
       fetchData();
     } catch (err: any) {
@@ -356,11 +356,11 @@ export default function EntregadoresPage() {
                           </div>
                         ) : checkinId ? (
                           <button
-                            onClick={() => handlePagar(checkinId)}
-                            disabled={pagandoId === checkinId || valorTotalHoje === 0}
+                            onClick={() => handlePagar(e.id)}
+                            disabled={pagandoId === e.id || valorTotalHoje === 0}
                             className="flex items-center justify-center gap-1.5 w-full py-2 rounded-lg bg-red-500 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-medium transition-colors"
                           >
-                            {pagandoId === checkinId ? (
+                            {pagandoId === e.id ? (
                               <Loader2 size={12} className="animate-spin" />
                             ) : (
                               <CreditCard size={12} />

@@ -291,6 +291,15 @@ export class EntregadoresService {
       throw new Error('Vinculo nao encontrado ou nao aceito');
     }
 
+    // Verificar se já fez check-in hoje
+    const checkinExistente = await this.prisma.entregadorCheckin.findFirst({
+      where: { entregadorId, vendedorId, data: hoje },
+    });
+
+    if (checkinExistente) {
+      return { checkin: checkinExistente, message: 'Check-in ja realizado hoje', jaCheckin: true };
+    }
+
     const inicioHoje = new Date();
     inicioHoje.setHours(0, 0, 0, 0);
 
@@ -328,25 +337,31 @@ export class EntregadoresService {
       },
     });
 
-    return { checkin, message: 'Check-in realizado com sucesso' };
+    return { checkin, message: 'Check-in realizado com sucesso', jaCheckin: false };
   }
 
-  async pagarEntregador(checkinId: string, vendedorId: string) {
-    const checkin = await this.prisma.entregadorCheckin.findFirst({
-      where: { id: checkinId, vendedorId },
+  async pagarEntregador(entregadorId: string, vendedorId: string) {
+    // Buscar TODOS os check-ins não pagos deste entregador para este vendedor
+    const checkinsNaoPagos = await this.prisma.entregadorCheckin.findMany({
+      where: {
+        entregadorId,
+        vendedorId,
+        pago: false,
+      },
+      orderBy: { data: 'asc' },
     });
 
-    if (!checkin) {
-      throw new Error('Check-in nao encontrado');
-    }
-
-    if (checkin.pago) {
-      throw new Error('Pagamento ja foi realizado');
+    if (checkinsNaoPagos.length === 0) {
+      throw new Error('Nenhum check-in pendente de pagamento');
     }
 
     const vinculo = await this.prisma.entregadorLoja.findFirst({
-      where: { entregadorId: checkin.entregadorId, vendedorId, ativo: true },
+      where: { entregadorId, vendedorId, ativo: true },
     });
+
+    if (!vinculo) {
+      throw new Error('Vinculo nao encontrado');
+    }
 
     const pedidosLoja = await this.prisma.pedido.findMany({
       where: { vendedorId },
@@ -354,21 +369,13 @@ export class EntregadoresService {
     });
     const pedidoIds = pedidosLoja.map((p: any) => p.id);
 
-    const valorPorEntrega = vinculo ? Number(vinculo.valorPorEntrega) : 0;
-    const valorDiaria = vinculo ? Number(vinculo.diaria) : Number(checkin.valorDiaria);
+    const valorPorEntrega = Number(vinculo.valorPorEntrega);
+    const valorDiaria = Number(vinculo.diaria);
 
-    const entregasDia = await this.prisma.entrega.findMany({
-      where: {
-        entregadorId: checkin.entregadorId,
-        pedidoId: { in: pedidoIds },
-        status: 'ENTREGUE',
-        entregueEm: { gte: checkin.data, lte: new Date(checkin.data.getTime() + 86400000 - 1) },
-      },
-    });
-
+    // Buscar dias já pagos (checkins com pago=true)
     const checkinsPagos = await this.prisma.entregadorCheckin.findMany({
       where: {
-        entregadorId: checkin.entregadorId,
+        entregadorId,
         vendedorId,
         pago: true,
       },
@@ -379,14 +386,16 @@ export class EntregadoresService {
       return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
     }));
 
+    // Buscar TODAS as entregas do entregador para este vendedor
     const todasEntregas = await this.prisma.entrega.findMany({
       where: {
-        entregadorId: checkin.entregadorId,
+        entregadorId,
         pedidoId: { in: pedidoIds },
         status: 'ENTREGUE',
       },
     });
 
+    // Calcular entregas não pagas (entregas em dias que não têm check-in pago)
     const entregasNaoPagas = todasEntregas.filter((e) => {
       if (!e.entregueEm) return false;
       const d = new Date(e.entregueEm);
@@ -394,23 +403,40 @@ export class EntregadoresService {
       return !diasPagos.has(key);
     });
 
-    const totalEntregas = entregasDia.length + entregasNaoPagas.length;
-    const valorEntregas = totalEntregas * valorPorEntrega;
-    const valorTotal = valorDiaria + valorEntregas;
+    const totalEntregasNaoPagas = entregasNaoPagas.length;
+    const valorEntregasNaoPagas = totalEntregasNaoPagas * valorPorEntrega;
 
-    const atualizado = await this.prisma.entregadorCheckin.update({
-      where: { id: checkinId },
+    // Valor total a pagar = diaria dos checkins não pagos + entregas não pagas
+    let valorTotalDiarias = 0;
+    for (const c of checkinsNaoPagos) {
+      valorTotalDiarias += Number(c.valorDiaria || 0);
+    }
+    const valorTotal = valorTotalDiarias + valorEntregasNaoPagas;
+
+    // Marcar todos os check-ins não pagos como pagos
+    const checkinIds = checkinsNaoPagos.map((c) => c.id);
+    await this.prisma.entregadorCheckin.updateMany({
+      where: { id: { in: checkinIds } },
       data: {
         pago: true,
         pagoEm: new Date(),
-        valorDiaria,
-        valorEntregas,
-        valorTotal,
-        totalEntregas,
+        // Atualizar valores no último check-in (ou podemos distribuir)
+        ...(checkinIds.length > 0 && {
+          valorDiaria: valorDiaria,
+          valorEntregas: valorEntregasNaoPagas,
+          valorTotal,
+          totalEntregas: totalEntregasNaoPagas,
+        }),
       },
     });
 
-    return { checkin: atualizado, message: 'Pagamento registrado com sucesso' };
+    return {
+      checkinIds,
+      message: `${checkinIds.length} check-in(s) pago(s) com sucesso. Total: R$ ${valorTotal.toFixed(2)}`,
+      valorTotal,
+      valorDiarias: valorTotalDiarias,
+      valorEntregas: valorEntregasNaoPagas,
+    };
   }
 
   async getCheckins(vendedorId: string, data?: string) {
@@ -443,18 +469,25 @@ export class EntregadoresService {
 
     const entregadorIds = vinculos.map((v) => v.entregadorId);
 
+    // Buscar check-ins NÃO pagos de todos os dias
+    const checkinsNaoPagos = await this.prisma.entregadorCheckin.findMany({
+      where: {
+        vendedorId,
+        entregadorId: { in: entregadorIds },
+        pago: false,
+      },
+      orderBy: { data: 'asc' },
+    });
+
+    // Buscar estatísticas de hoje (entregas)
     const statsRaw: any[] = await this.prisma.$queryRaw`
       SELECT
         e."id" AS "entregadorId",
-        COUNT(DISTINCT en.id) FILTER (WHERE en.status = 'ENTREGUE' AND en."entregueEm" >= ${hoje}) AS "totalEntregasHoje",
-        BOOL_OR(COALESCE(ec."pago", false)) AS "pago",
-        MAX(ec."pagoEm") AS "pagoEm",
-        MAX(ec."id"::text) AS "checkinId"
+        COUNT(DISTINCT en.id) FILTER (WHERE en.status = 'ENTREGUE' AND en."entregueEm" >= ${hoje}) AS "totalEntregasHoje"
       FROM entregadores e
       LEFT JOIN entregas en ON en."entregadorId" = e.id AND en."pedidoId" IN (
         SELECT p.id FROM pedidos p WHERE p."vendedorId" = ${vendedorId}::uuid
       )
-      LEFT JOIN entregador_checkins ec ON ec."entregadorId" = e.id AND ec."vendedorId" = ${vendedorId}::uuid AND ec.data = ${hoje}
       WHERE e.id::text = ANY(${entregadorIds})
       GROUP BY e.id
     `;
@@ -463,29 +496,58 @@ export class EntregadoresService {
     for (const row of statsRaw) {
       statsMap.set(row.entregadorId, {
         totalEntregasHoje: Number(row.totalEntregasHoje),
-        checkinId: row.checkinId || null,
-        pago: row.pago || false,
-        pagoEm: row.pagoEm || null,
       });
+    }
+
+    // Agrupar check-ins não pagos por entregador
+    const checkinsPorEntregador = new Map<string, any[]>();
+    for (const c of checkinsNaoPagos) {
+      const arr = checkinsPorEntregador.get(c.entregadorId) || [];
+      arr.push(c);
+      checkinsPorEntregador.set(c.entregadorId, arr);
     }
 
     return vinculos.map((v) => {
       const e = v.entregador;
-      const s = statsMap.get(e.id) || { totalEntregasHoje: 0, checkinId: null, pago: false, pagoEm: null };
-      const valorEntregasHoje = s.totalEntregasHoje * Number(v.valorPorEntrega);
+      const s = statsMap.get(e.id) || { totalEntregasHoje: 0 };
+      const checkinsEntregador = checkinsPorEntregador.get(e.id) || [];
+      
+      // Valor total a receber = soma de todos os checkins não pagos
+      const valorDevido = checkinsEntregador.reduce((sum: number, c: any) => sum + Number(c.valorTotal || 0), 0);
+      
+      // Valor de hoje (para mostrar no botão "Pagar hoje")
+      const checkinHoje = checkinsEntregador.find((c: any) => {
+        const d = new Date(c.data);
+        return d.getFullYear() === hoje.getFullYear() && d.getMonth() === hoje.getMonth() && d.getDate() === hoje.getDate();
+      });
+      
+      const totalEntregasHoje = s.totalEntregasHoje;
+      const valorEntregasHoje = totalEntregasHoje * Number(v.valorPorEntrega);
       const valorDiaria = Number(v.diaria);
+      
+      // valorTotalHoje só inclui diaria se TEVE check-in hoje
+      const valorTotalHoje = checkinHoje ? (valorDiaria + valorEntregasHoje) : valorEntregasHoje;
+
       return {
         entregadorId: e.id,
         nome: e.nome,
         diaria: v.diaria,
         valorPorEntrega: v.valorPorEntrega,
-        totalEntregasHoje: s.totalEntregasHoje,
+        totalEntregasHoje,
         valorEntregasHoje,
         valorDiaria,
-        valorTotalHoje: valorDiaria + valorEntregasHoje,
-        checkin: s.checkinId ? { id: s.checkinId } : null,
-        pago: s.pago,
-        pagoEm: s.pagoEm,
+        valorTotalHoje,
+        checkin: checkinHoje ? { id: checkinHoje.id, data: checkinHoje.data } : null,
+        // NOVOS CAMPOS para controle de pagamento
+        aReceber: valorDevido,  // Total a receber (todos os checkins não pagos)
+        checkinsNaoPagos: checkinsEntregador.map((c: any) => ({
+          id: c.id,
+          data: c.data,
+          valorTotal: c.valorTotal,
+          totalEntregas: c.totalEntregas,
+          valorDiaria: c.valorDiaria,
+          valorEntregas: c.valorEntregas,
+        })),
       };
     });
   }
