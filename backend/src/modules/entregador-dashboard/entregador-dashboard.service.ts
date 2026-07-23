@@ -418,11 +418,25 @@ export class EntregadorDashboardService {
     const checkinsHoje = await this.prisma.entregadorCheckin.findMany({
       where: { entregadorId, vendedorId: { in: vendedorIds }, data: inicioHoje },
     });
+
+    // Buscar TODOS os check-ins não pagos (não apenas hoje)
+    const checkinsNaoPagos = await this.prisma.entregadorCheckin.findMany({
+      where: { entregadorId, vendedorId: { in: vendedorIds }, pago: false },
+    });
+
     const checkinMap = new Map<string, any[]>();
     for (const c of checkinsHoje) {
       const existing = checkinMap.get(c.vendedorId) || [];
       existing.push(c);
       checkinMap.set(c.vendedorId, existing);
+    }
+
+    // Map de check-ins não pagos por vendedor
+    const checkinsNaoPagosMap = new Map<string, any[]>();
+    for (const c of checkinsNaoPagos) {
+      const existing = checkinsNaoPagosMap.get(c.vendedorId) || [];
+      existing.push(c);
+      checkinsNaoPagosMap.set(c.vendedorId, existing);
     }
 
     const pedidoIdsSet = new Set(pedidoIds);
@@ -441,12 +455,13 @@ export class EntregadorDashboardService {
 
       const diaria = Number(v.diaria);
       const valorPorEntrega = Number(v.valorPorEntrega);
-      const checkins = checkinMap.get(v.vendedorId) || [];
-      const temCheckinHoje = checkins.length > 0;
+      const checkinsHoje = checkinMap.get(v.vendedorId) || [];
+      const temCheckinHoje = checkinsHoje.length > 0;
       const ganhoBruto = (temCheckinHoje ? diaria : 0) + (entregasLojaHoje * valorPorEntrega);
 
-      const checkinsNaoPagos = checkins.filter((c: any) => !c.pago);
-      const checkinsPagos = checkins.filter((c: any) => c.pago);
+      // Usar TODOS os check-ins não pagos para aReceber (não apenas de hoje)
+      const checkinsNaoPagos = checkinsNaoPagosMap.get(v.vendedorId) || [];
+      const checkinsPagos = checkinsHoje.filter((c: any) => c.pago); // pagos de hoje
       const pago = checkinsPagos.length > 0;
       const valorPago = checkinsPagos.reduce((sum: number, c: any) => sum + Number(c.valorTotal || 0), 0);
       const valorDevido = checkinsNaoPagos.reduce((sum: number, c: any) => sum + Number(c.valorTotal || 0), 0);
@@ -462,7 +477,7 @@ export class EntregadorDashboardService {
         pago,
         valorPago,
         aReceber,
-        checkinId: checkins[0]?.id || null,
+        checkinId: checkinsHoje[0]?.id || null,
       };
     }));
 
