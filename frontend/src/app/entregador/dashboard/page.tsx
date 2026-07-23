@@ -275,12 +275,6 @@ export default function EntregadorDashboardPage() {
     window.open(`https://www.google.com/maps/dir/?api=1&destination=${addr}`, '_blank');
   };
 
-  // Calculos para o relatorio
-  const ganhoBrutoHoje = stats ? stats.ganhoBrutoHoje || (Number(stats.diaria) + (Number(stats.totalEntregasHoje) * Number(stats.valorPorEntrega))) : 0;
-  const pagoHoje = stats?.pagoHoje || false;
-  const valorPagoHoje = stats?.valorPagoHoje || 0;
-  const ganhoRestanteHoje = Math.max(ganhoBrutoHoje - valorPagoHoje, 0);
-
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -356,7 +350,7 @@ export default function EntregadorDashboardPage() {
             <div className="space-y-4">
               {/* Stats cards */}
               {stats && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <Card>
                     <CardContent className="p-4 text-center">
                       <Package className="h-6 w-6 mx-auto mb-1 text-red-500" />
@@ -376,23 +370,6 @@ export default function EntregadorDashboardPage() {
                       <Truck className="h-6 w-6 mx-auto mb-1 text-purple-500" />
                       <p className="text-2xl font-bold">{stats.emRota}</p>
                       <p className="text-xs text-gray-500">Em Rota</p>
-                    </CardContent>
-                  </Card>
-                  <Card className={pagoHoje ? 'border-green-200 dark:border-green-800' : ''}>
-                    <CardContent className="p-4 text-center">
-                      <Wallet className={`h-6 w-6 mx-auto mb-1 ${pagoHoje ? 'text-green-500' : 'text-green-500'}`} />
-                      {pagoHoje ? (
-                        <>
-                          <p className="text-2xl font-bold text-green-600">R$ {ganhoRestanteHoje.toFixed(2)}</p>
-                          <p className="text-xs text-green-600 font-medium">A Receber Hoje</p>
-                          <p className="text-[10px] text-gray-400 mt-0.5">Pago: R$ {valorPagoHoje.toFixed(2)}</p>
-                        </>
-                      ) : (
-                        <>
-                          <p className="text-2xl font-bold">R$ {ganhoBrutoHoje.toFixed(2)}</p>
-                          <p className="text-xs text-gray-500">Ganhos Hoje</p>
-                        </>
-                      )}
                     </CardContent>
                   </Card>
                 </div>
