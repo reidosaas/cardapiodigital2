@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import api from '@/lib/api';
-import { Users, Search, ShoppingBag, Phone, Mail, Calendar, Eye, X } from 'lucide-react';
+import { Users, Search, ShoppingBag, Phone, Mail, Calendar, Eye, X, Pencil, Trash2, Ban, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -25,6 +25,10 @@ export default function AdminClientesPage() {
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState('');
   const [selected, setSelected] = useState<Cliente | null>(null);
+  const [editing, setEditing] = useState<Cliente | null>(null);
+  const [editForm, setEditForm] = useState({ nome: '', email: '', telefone: '' });
+  const [deleting, setDeleting] = useState<Cliente | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
   const fetchClientes = async () => {
     try {
@@ -47,6 +51,53 @@ export default function AdminClientesPage() {
 
   const totalAtivos = clientes.filter((c) => c.ativo).length;
   const totalInativos = clientes.filter((c) => !c.ativo).length;
+
+  const handleToggleActive = async (cliente: Cliente) => {
+    try {
+      const res = await api.patch(`/api/admin/users/cliente/${cliente.id}/toggle-active`);
+      toast.success(res.data.mensagem);
+      setClientes((prev) => prev.map((c) => c.id === cliente.id ? { ...c, ativo: res.data.ativo } : c));
+      if (selected?.id === cliente.id) setSelected((prev) => prev ? { ...prev, ativo: res.data.ativo } : null);
+    } catch {
+      toast.error('Erro ao alterar status');
+    }
+  };
+
+  const handleEdit = (cliente: Cliente) => {
+    setEditForm({ nome: cliente.nome, email: cliente.email, telefone: cliente.telefone });
+    setEditing(cliente);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editing) return;
+    setActionLoading(true);
+    try {
+      await api.patch(`/api/admin/users/cliente/${editing.id}`, editForm);
+      toast.success('Cliente atualizado');
+      setEditing(null);
+      await fetchClientes();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Erro ao atualizar');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleting) return;
+    setActionLoading(true);
+    try {
+      await api.delete(`/api/admin/users/cliente/${deleting.id}`);
+      toast.success('Cliente excluido');
+      setDeleting(null);
+      setSelected(null);
+      await fetchClientes();
+    } catch {
+      toast.error('Erro ao excluir');
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   if (loading) return <DashboardLayout><Loading /></DashboardLayout>;
 
@@ -93,7 +144,7 @@ export default function AdminClientesPage() {
         </div>
 
         <div className="bg-white dark:bg-gray-900 rounded-xl border overflow-x-auto">
-          <table className="w-full min-w-[700px]">
+          <table className="w-full min-w-[800px]">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
                 <th className="text-left p-4 text-sm font-medium text-gray-500">Nome</th>
@@ -119,9 +170,22 @@ export default function AdminClientesPage() {
                     {new Date(cliente.createdAt).toLocaleDateString('pt-BR')}
                   </td>
                   <td className="p-4 text-center">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelected(cliente)}>
-                      <Eye className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center justify-center gap-1">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelected(cliente)}>
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(cliente)}>
+                        <Pencil className="h-4 w-4 text-blue-500" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleToggleActive(cliente)}>
+                        {cliente.ativo
+                          ? <Ban className="h-4 w-4 text-orange-500" />
+                          : <CheckCircle className="h-4 w-4 text-green-500" />}
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDeleting(cliente)}>
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -137,6 +201,7 @@ export default function AdminClientesPage() {
         </div>
       </div>
 
+      {/* Modal Detalhes */}
       <AnimatePresence>
         {selected && (
           <motion.div
@@ -192,6 +257,103 @@ export default function AdminClientesPage() {
                   <Badge className={selected.ativo ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
                     {selected.ativo ? 'Ativo' : 'Inativo'}
                   </Badge>
+                </div>
+              </div>
+              <div className="flex gap-2 mt-4">
+                <Button size="sm" variant="outline" onClick={() => { setSelected(null); handleEdit(selected); }}>
+                  <Pencil className="h-3.5 w-3.5 mr-1" /> Editar
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => { setSelected(null); handleToggleActive(selected); }}>
+                  {selected.ativo ? <Ban className="h-3.5 w-3.5 mr-1" /> : <CheckCircle className="h-3.5 w-3.5 mr-1" />}
+                  {selected.ativo ? 'Bloquear' : 'Desbloquear'}
+                </Button>
+                <Button size="sm" variant="outline" className="text-red-600 border-red-300" onClick={() => { setSelected(null); setDeleting(selected); }}>
+                  <Trash2 className="h-3.5 w-3.5 mr-1" /> Excluir
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal Editar */}
+      <AnimatePresence>
+        {editing && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            onClick={() => setEditing(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.95 }}
+              className="bg-white dark:bg-gray-900 rounded-xl p-6 w-full max-w-md shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold">Editar Cliente</h3>
+                <Button variant="ghost" size="icon" onClick={() => setEditing(null)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Nome</label>
+                  <Input value={editForm.nome} onChange={(e) => setEditForm({ ...editForm, nome: e.target.value })} />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Email</label>
+                  <Input value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Telefone</label>
+                  <Input value={editForm.telefone} onChange={(e) => setEditForm({ ...editForm, telefone: e.target.value })} />
+                </div>
+              </div>
+              <div className="flex gap-2 mt-6">
+                <Button variant="outline" onClick={() => setEditing(null)} className="flex-1">Cancelar</Button>
+                <Button onClick={handleSaveEdit} disabled={actionLoading} className="flex-1">
+                  {actionLoading ? 'Salvando...' : 'Salvar'}
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal Confirmar Exclusao */}
+      <AnimatePresence>
+        {deleting && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            onClick={() => setDeleting(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.95 }}
+              className="bg-white dark:bg-gray-900 rounded-xl p-6 w-full max-w-sm shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="text-center">
+                <Trash2 className="h-12 w-12 mx-auto mb-3 text-red-500" />
+                <h3 className="text-lg font-bold mb-2">Excluir Cliente?</h3>
+                <p className="text-sm text-gray-500 mb-4">
+                  Tem certeza que deseja excluir <strong>{deleting.nome}</strong>? Esta acao nao pode ser desfeita.
+                </p>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => setDeleting(null)} className="flex-1" disabled={actionLoading}>
+                    Cancelar
+                  </Button>
+                  <Button variant="destructive" onClick={handleDelete} disabled={actionLoading} className="flex-1">
+                    {actionLoading ? 'Excluindo...' : 'Excluir'}
+                  </Button>
                 </div>
               </div>
             </motion.div>
