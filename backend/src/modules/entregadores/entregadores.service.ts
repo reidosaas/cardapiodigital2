@@ -301,7 +301,7 @@ export class EntregadoresService {
     });
 
     if (checkinExistente) {
-      throw new Error('Ja fez check-in hoje');
+      return { jaCheckin: true, checkin: checkinExistente, message: 'Ja fez check-in hoje' };
     }
 
     const inicioHoje = new Date();
