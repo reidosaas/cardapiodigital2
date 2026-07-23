@@ -446,17 +446,17 @@ export class EntregadoresService {
     const statsRaw: any[] = await this.prisma.$queryRaw`
       SELECT
         e."id" AS "entregadorId",
-        COUNT(en.id) FILTER (WHERE en.status = 'ENTREGUE' AND en."entregueEm" >= ${hoje}) AS "totalEntregasHoje",
-        ec."pago" AS "pago",
-        ec."pagoEm" AS "pagoEm",
-        ec."id" AS "checkinId"
+        COUNT(DISTINCT en.id) FILTER (WHERE en.status = 'ENTREGUE' AND en."entregueEm" >= ${hoje}) AS "totalEntregasHoje",
+        BOOL_OR(COALESCE(ec."pago", false)) AS "pago",
+        MAX(ec."pagoEm") AS "pagoEm",
+        MAX(ec."id") AS "checkinId"
       FROM entregadores e
       LEFT JOIN entregas en ON en."entregadorId" = e.id AND en."pedidoId" IN (
         SELECT p.id FROM pedidos p WHERE p."vendedorId" = ${vendedorId}::uuid
       )
       LEFT JOIN entregador_checkins ec ON ec."entregadorId" = e.id AND ec."vendedorId" = ${vendedorId}::uuid AND ec.data = ${hoje}
       WHERE e.id::text = ANY(${entregadorIds})
-      GROUP BY e.id, ec."pago", ec."pagoEm", ec."id"
+      GROUP BY e.id
     `;
 
     const statsMap = new Map<string, any>();
