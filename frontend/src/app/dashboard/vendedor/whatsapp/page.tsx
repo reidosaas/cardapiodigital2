@@ -45,11 +45,13 @@ export default function WhatsAppPage() {
     setQrcode('');
     try {
       const res = await api.post('/api/whatsapp/conectar');
-      if (res.data.qrcode) {
+      if (res.data.connected) {
+        toast.success('WhatsApp ja esta conectado!');
+      } else if (res.data.qrcode) {
         setQrcode(res.data.qrcode);
         toast.success('QR Code gerado! Escaneie com o WhatsApp');
       } else {
-        toast.error('Erro ao gerar QR Code');
+        toast.info(res.data.message || 'QR Code indisponivel. Tente novamente.');
       }
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Erro ao conectar');
@@ -123,7 +125,7 @@ export default function WhatsAppPage() {
               </CardContent>
             </Card>
 
-            {qrcode && (
+            {qrcode && typeof qrcode === 'string' && qrcode.length > 10 && (
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
                 <Card className="mt-4 border-2 border-green-200 dark:border-green-800">
                   <CardContent className="p-6 text-center">

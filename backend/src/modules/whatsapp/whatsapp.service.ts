@@ -72,7 +72,16 @@ export class WhatsAppService {
 
       const connection = await client.instance.connect(instanceToken);
       const conn: any = connection;
-      const qrcode = conn?.instance?.qrcode || conn?.qrcode?.base64 || conn?.qrcode || conn?.base64 || conn?.qr || conn;
+
+      if (conn?.connected || conn?.loggedIn) {
+        return { connected: true, message: 'WhatsApp ja esta conectado', instanceName, instanceToken };
+      }
+
+      const qrcode = conn?.instance?.qrcode || conn?.qrcode?.base64 || conn?.qrcode || conn?.base64 || conn?.qr || null;
+
+      if (!qrcode || typeof qrcode !== 'string' || qrcode.length < 10) {
+        return { connected: false, qrcode: null, message: 'QR Code indisponivel. Tente novamente.', instanceName, instanceToken };
+      }
 
       const backendUrl = this.configService.get('BACKEND_URL', 'http://localhost:3001');
       const webhookUrl = `${backendUrl.replace(/\/$/, '')}/api/whatsapp/webhook`;

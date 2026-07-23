@@ -72,7 +72,20 @@ export class AdminNotifyService {
 
       const connection = await this.uazapi.instance.connect(instanceToken);
       const conn: any = connection;
-      const qrcode = conn?.instance?.qrcode || conn?.qrcode?.base64 || conn?.qrcode || conn?.base64 || conn?.qr || conn;
+
+      if (conn?.connected || conn?.loggedIn) {
+        await this.prisma.configSistema.update({
+          where: { id: config.id },
+          data: { whatsappAdminConectado: true },
+        });
+        return { connected: true, message: 'WhatsApp ja esta conectado', instanceName };
+      }
+
+      const qrcode = conn?.instance?.qrcode || conn?.qrcode?.base64 || conn?.qrcode || conn?.base64 || conn?.qr || null;
+
+      if (!qrcode || typeof qrcode !== 'string' || qrcode.length < 10) {
+        return { connected: false, qrcode: null, message: 'QR Code indisponivel. Tente novamente.', instanceName };
+      }
 
       return { qrcode, instanceName };
     } catch (error) {

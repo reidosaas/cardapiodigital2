@@ -110,9 +110,14 @@ export default function AdminSistema() {
     setWaQrCode(null);
     try {
       const res = await api.post('/api/admin/whatsapp-admin/conectar');
-      if (res.data.qrcode) {
+      if (res.data.connected) {
+        toast.success('WhatsApp ja esta conectado!');
+        loadWhatsAppStatus();
+      } else if (res.data.qrcode) {
         setWaQrCode(res.data.qrcode);
         toast.success('Escaneie o QR Code com seu WhatsApp');
+      } else {
+        toast.info(res.data.message || 'QR Code indisponivel. Tente novamente.');
       }
       loadWhatsAppStatus();
     } catch {
@@ -384,7 +389,7 @@ export default function AdminSistema() {
                   )}
                 </div>
 
-                {waQrCode && (
+                {waQrCode && typeof waQrCode === 'string' && waQrCode.length > 10 && (
                   <div className="mt-4 p-4 bg-white rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center gap-3">
                     <QrCode size={24} className="text-gray-400" />
                     <p className="text-sm text-gray-500">Escaneie com seu WhatsApp</p>
