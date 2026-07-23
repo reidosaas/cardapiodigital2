@@ -386,7 +386,8 @@ export class EntregadorDashboardService {
     const hoje = new Date();
     const inicioHoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
 
-    const vendedorIds = await this.getVendedorIds(entregadorId, vendedorId);
+    // Buscar TODOS os vendedores vinculados (não apenas o do token)
+    const vendedorIds = await this.getVendedorIds(entregadorId);
     if (vendedorIds.length === 0) return { totalEntregasHoje: 0, pendentes: 0, emRota: 0, entreguesHoje: 0, diaria: 0, valorPorEntrega: 0, ganhoBrutoHoje: 0, pagoHoje: false, valorPagoHoje: 0, lojas: [] };
 
     const pedidosLoja = await this.prisma.pedido.findMany({
