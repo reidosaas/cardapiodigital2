@@ -418,7 +418,12 @@ export class EntregadorDashboardService {
     const checkinsHoje = await this.prisma.entregadorCheckin.findMany({
       where: { entregadorId, vendedorId: { in: vendedorIds }, data: inicioHoje },
     });
-    const checkinMap = new Map(checkinsHoje.map((c: any) => [c.vendedorId, c]));
+    const checkinMap = new Map<string, any[]>();
+    for (const c of checkinsHoje) {
+      const existing = checkinMap.get(c.vendedorId) || [];
+      existing.push(c);
+      checkinMap.set(c.vendedorId, existing);
+    }
 
     const pedidoIdsSet = new Set(pedidoIds);
 
@@ -438,10 +443,13 @@ export class EntregadorDashboardService {
       const valorPorEntrega = Number(v.valorPorEntrega);
       const ganhoBruto = diaria + (entregasLojaHoje * valorPorEntrega);
 
-      const checkin = checkinMap.get(v.vendedorId);
-      const pago = checkin?.pago === true;
-      const valorPago = pago ? Number(checkin?.valorTotal || ganhoBruto) : 0;
-      const aReceber = Math.max(ganhoBruto - valorPago, 0);
+      const checkins = checkinMap.get(v.vendedorId) || [];
+      const checkinsNaoPagos = checkins.filter((c: any) => !c.pago);
+      const checkinsPagos = checkins.filter((c: any) => c.pago);
+      const pago = checkinsPagos.length > 0;
+      const valorPago = checkinsPagos.reduce((sum: number, c: any) => sum + Number(c.valorTotal || 0), 0);
+      const valorDevido = checkinsNaoPagos.reduce((sum: number, c: any) => sum + Number(c.valorTotal || 0), 0);
+      const aReceber = pago ? Math.max(valorDevido, 0) : Math.max(ganhoBruto - valorDevido, 0);
 
       return {
         vendedorId: v.vendedorId,
@@ -453,7 +461,7 @@ export class EntregadorDashboardService {
         pago,
         valorPago,
         aReceber,
-        checkinId: checkin?.id || null,
+        checkinId: checkins[0]?.id || null,
       };
     }));
 
