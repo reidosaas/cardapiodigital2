@@ -144,14 +144,15 @@ export class AdminUsersService {
       if (!user) throw new NotFoundException('Vendedor nao encontrado');
 
       if (user.vendedor) {
+        await this.prisma.entrega.deleteMany({ where: { pedido: { vendedorId: user.vendedor.id } } });
         await this.prisma.pedido.deleteMany({ where: { vendedorId: user.vendedor.id } });
-        await this.prisma.entregadorVendedor.deleteMany({ where: { vendedorId: user.vendedor.id } });
-        await this.prisma.configSistema.deleteMany({ where: { vendedorId: user.vendedor.id } });
+        await this.prisma.entregadorLoja.deleteMany({ where: { vendedorId: user.vendedor.id } });
+        await this.prisma.entregadorCheckin.deleteMany({ where: { vendedorId: user.vendedor.id } });
         await this.prisma.produto.deleteMany({ where: { vendedorId: user.vendedor.id } });
         await this.prisma.categoria.deleteMany({ where: { vendedorId: user.vendedor.id } });
-        await this.prisma.entregadorCheckin.deleteMany({ where: { vendedorId: user.vendedor.id } });
-        await this.prisma.whatsappInstance.deleteMany({ where: { vendedorId: user.vendedor.id } });
         await this.prisma.banner.deleteMany({ where: { vendedorId: user.vendedor.id } });
+        await this.prisma.despesa.deleteMany({ where: { vendedorId: user.vendedor.id } });
+        await this.prisma.mesa.deleteMany({ where: { vendedorId: user.vendedor.id } });
         await this.prisma.vendedor.delete({ where: { id: user.vendedor.id } });
       }
       await this.prisma.user.delete({ where: { id } });
@@ -161,9 +162,9 @@ export class AdminUsersService {
     if (tipo === 'ENTREGADOR') {
       const entregador = await this.prisma.entregador.findUnique({ where: { id } });
       if (!entregador) throw new NotFoundException('Entregador nao encontrado');
-      await this.prisma.entregadorVendedor.deleteMany({ where: { entregadorId: id } });
+      await this.prisma.entrega.deleteMany({ where: { entregadorId: id } });
+      await this.prisma.entregadorLoja.deleteMany({ where: { entregadorId: id } });
       await this.prisma.entregadorCheckin.deleteMany({ where: { entregadorId: id } });
-      await this.prisma.pedido.deleteMany({ where: { entregadorId: id } });
       await this.prisma.entregador.delete({ where: { id } });
       return { ok: true, mensagem: 'Entregador excluido' };
     }
