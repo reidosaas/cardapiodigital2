@@ -364,14 +364,12 @@ export class EntregadoresService {
       throw new Error('Vinculo nao encontrado ou nao aceito');
     }
 
-    // Verificar se já fez check-in hoje
-    const checkinExistente = await this.prisma.entregadorCheckin.findFirst({
+    // Verificar check-ins existentes hoje
+    const checkinsHoje = await this.prisma.entregadorCheckin.findMany({
       where: { entregadorId, vendedorId, data: hoje },
     });
 
-    if (checkinExistente) {
-      return { checkin: checkinExistente, message: 'Check-in ja realizado hoje', jaCheckin: true };
-    }
+    const isPrimeiroCheckinHoje = checkinsHoje.length === 0;
 
     const inicioHoje = new Date();
     inicioHoje.setHours(0, 0, 0, 0);
@@ -392,8 +390,12 @@ export class EntregadoresService {
     });
 
     const totalEntregas = entregasHoje.length;
-    const valorEntregas = totalEntregas * Number(vinculo.valorPorEntrega);
+    const valorPorEntrega = Number(vinculo.valorPorEntrega);
     const valorDiaria = Number(vinculo.diaria);
+
+    // Primeiro checkin do dia: diaria + entregas
+    // Checkins subsequentes: apenas diaria (bonus por turno extra)
+    const valorEntregas = isPrimeiroCheckinHoje ? totalEntregas * valorPorEntrega : 0;
     const valorTotal = valorDiaria + valorEntregas;
 
     const checkin = await this.prisma.entregadorCheckin.create({
@@ -405,12 +407,16 @@ export class EntregadoresService {
         valorDiaria: vinculo.diaria,
         valorEntregas,
         valorTotal,
-        totalEntregas,
+        totalEntregas: isPrimeiroCheckinHoje ? totalEntregas : 0,
         observacao,
       },
     });
 
-    return { checkin, message: 'Check-in realizado com sucesso', jaCheckin: false };
+    return { 
+      checkin, 
+      message: isPrimeiroCheckinHoje ? 'Check-in realizado com sucesso' : 'Check-in extra realizado (bonus diaria)', 
+      jaCheckin: !isPrimeiroCheckinHoje 
+    };
   }
 
   async pagarEntregador(entregadorId: string, vendedorId: string) {
