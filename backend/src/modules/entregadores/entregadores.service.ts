@@ -291,19 +291,6 @@ export class EntregadoresService {
       throw new Error('Vinculo nao encontrado ou nao aceito');
     }
 
-    const checkinExistente = await this.prisma.entregadorCheckin.findFirst({
-      where: {
-        entregadorId,
-        vendedorId,
-        lojaId: vinculo.id,
-        data: hoje,
-      },
-    });
-
-    if (checkinExistente) {
-      return { jaCheckin: true, checkin: checkinExistente, message: 'Ja fez check-in hoje' };
-    }
-
     const inicioHoje = new Date();
     inicioHoje.setHours(0, 0, 0, 0);
 

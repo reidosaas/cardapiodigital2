@@ -933,7 +933,6 @@ model EntregadorCheckin {
 
   entregador      Entregador  @relation(fields: [entregadorId], references: [id])
 
-  @@unique([entregadorId, vendedorId, data])
   @@index([vendedorId])
   @@index([entregadorId])
   @@index([vendedorId, data])

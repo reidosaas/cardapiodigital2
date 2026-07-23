@@ -250,7 +250,7 @@ export default function EntregadoresPage() {
                         </p>
                       </div>
                       <div className="flex items-center gap-0.5 shrink-0">
-                        {e.vinculoStatus === 'ACEITO' && !checkinId && !pago && (
+                        {e.vinculoStatus === 'ACEITO' && (
                           <button
                             onClick={() => handleCheckin(e.id)}
                             className="p-1.5 rounded hover:bg-green-50 text-green-600 hover:bg-green-100 transition-colors"
