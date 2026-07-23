@@ -449,7 +449,7 @@ export class EntregadorDashboardService {
       const pago = checkinsPagos.length > 0;
       const valorPago = checkinsPagos.reduce((sum: number, c: any) => sum + Number(c.valorTotal || 0), 0);
       const valorDevido = checkinsNaoPagos.reduce((sum: number, c: any) => sum + Number(c.valorTotal || 0), 0);
-      const aReceber = pago ? Math.max(valorDevido, 0) : Math.max(ganhoBruto - valorDevido, 0);
+      const aReceber = valorDevido;
 
       return {
         vendedorId: v.vendedorId,
