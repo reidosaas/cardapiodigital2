@@ -449,7 +449,7 @@ export class EntregadoresService {
         COUNT(DISTINCT en.id) FILTER (WHERE en.status = 'ENTREGUE' AND en."entregueEm" >= ${hoje}) AS "totalEntregasHoje",
         BOOL_OR(COALESCE(ec."pago", false)) AS "pago",
         MAX(ec."pagoEm") AS "pagoEm",
-        MAX(ec."id") AS "checkinId"
+        MAX(ec."id"::text) AS "checkinId"
       FROM entregadores e
       LEFT JOIN entregas en ON en."entregadorId" = e.id AND en."pedidoId" IN (
         SELECT p.id FROM pedidos p WHERE p."vendedorId" = ${vendedorId}::uuid
