@@ -591,21 +591,23 @@ export class EntregadoresService {
       const s = statsMap.get(e.id) || { totalEntregasHoje: 0 };
       const checkinsEntregador = checkinsPorEntregador.get(e.id) || [];
       
-      // Valor total a receber = soma de todos os checkins não pagos
-      const valorDevido = checkinsEntregador.reduce((sum: number, c: any) => sum + Number(c.valorTotal || 0), 0);
-      
-      // Valor de hoje (para mostrar no botão "Pagar hoje")
-      const checkinHoje = checkinsEntregador.find((c: any) => {
+      // Filtrar check-ins de hoje
+      const checkinsHoje = checkinsEntregador.filter((c: any) => {
         const d = new Date(c.data);
         return d.getFullYear() === hoje.getFullYear() && d.getMonth() === hoje.getMonth() && d.getDate() === hoje.getDate();
       });
       
+      // Valor total a receber = soma de todos os checkins não pagos
+      const valorDevido = checkinsEntregador.reduce((sum: number, c: any) => sum + Number(c.valorTotal || 0), 0);
+      
+      // Somar diarias e totais dos check-ins de hoje
+      const totalDiariasHoje = checkinsHoje.reduce((sum: number, c: any) => sum + Number(c.valorDiaria || 0), 0);
       const totalEntregasHoje = s.totalEntregasHoje;
       const valorEntregasHoje = totalEntregasHoje * Number(v.valorPorEntrega);
       const valorDiaria = Number(v.diaria);
       
-      // valorTotalHoje só inclui diaria se TEVE check-in hoje
-      const valorTotalHoje = checkinHoje ? (valorDiaria + valorEntregasHoje) : valorEntregasHoje;
+      // valorTotalHoje = soma das diarias dos checkins de hoje + valor das entregas de hoje
+      const valorTotalHoje = totalDiariasHoje + valorEntregasHoje;
 
       return {
         entregadorId: e.id,
@@ -614,9 +616,9 @@ export class EntregadoresService {
         valorPorEntrega: v.valorPorEntrega,
         totalEntregasHoje,
         valorEntregasHoje,
-        valorDiaria,
+        valorDiaria: totalDiariasHoje,  // Soma das diarias dos checkins de hoje
         valorTotalHoje,
-        checkin: checkinHoje ? { id: checkinHoje.id, data: checkinHoje.data } : null,
+        checkin: checkinsHoje[0] ? { id: checkinsHoje[0].id, data: checkinsHoje[0].data } : null,
         // NOVOS CAMPOS para controle de pagamento
         aReceber: valorDevido,  // Total a receber (todos os checkins não pagos)
         checkinsNaoPagos: checkinsEntregador.map((c: any) => ({
