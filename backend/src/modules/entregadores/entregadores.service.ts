@@ -138,7 +138,32 @@ export class EntregadoresService {
       orderBy: { createdAt: 'desc' },
     });
 
-    const agrupado: Record<string, { entregador: any; entregas: any[]; total: number; ganho: number }> = {};
+    // Buscar check-ins no período para calcular diárias corretamente
+    const checkins = await this.prisma.entregadorCheckin.findMany({
+      where: {
+        vendedorId,
+        data: { gte: inicio, lte: fim },
+      },
+      select: {
+        entregadorId: true,
+        data: true,
+        valorDiaria: true,
+        valorEntregas: true,
+        valorTotal: true,
+        totalEntregas: true,
+        pago: true,
+      },
+    });
+
+    // Mapear check-ins por entregador
+    const checkinsPorEntregador = new Map<string, any[]>();
+    for (const c of checkins) {
+      const arr = checkinsPorEntregador.get(c.entregadorId) || [];
+      arr.push(c);
+      checkinsPorEntregador.set(c.entregadorId, arr);
+    }
+
+    const agrupado: Record<string, { entregador: any; entregas: any[]; total: number; ganho: number; totalDiarias: number; totalCheckins: number }> = {};
 
     for (const e of entregas) {
       const key = e.entregadorId || 'terceirizado';
@@ -148,12 +173,29 @@ export class EntregadoresService {
           entregas: [],
           total: 0,
           ganho: 0,
+          totalDiarias: 0,
+          totalCheckins: 0,
         };
       }
       agrupado[key].entregas.push(e);
       agrupado[key].total++;
       if (e.status === 'ENTREGUE') {
         agrupado[key].ganho += Number(e.entregador?.valorPorEntrega || 0);
+      }
+    }
+
+    // Adicionar diárias dos check-ins
+    for (const [entregadorId, cks] of checkinsPorEntregador) {
+      if (agrupado[entregadorId]) {
+        const totalDiarias = cks.reduce((sum: number, c: any) => sum + Number(c.valorDiaria || 0), 0);
+        const totalEntregasCheckin = cks.reduce((sum: number, c: any) => sum + Number(c.totalEntregas || 0), 0);
+        const totalValorEntregasCheckin = cks.reduce((sum: number, c: any) => sum + Number(c.valorEntregas || 0), 0);
+        const totalValorTotal = cks.reduce((sum: number, c: any) => sum + Number(c.valorTotal || 0), 0);
+        
+        agrupado[entregadorId].totalDiarias = totalDiarias;
+        agrupado[entregadorId].totalCheckins = cks.length;
+        // O ganho total deve incluir diárias + valor das entregas dos check-ins
+        agrupado[entregadorId].ganho = totalValorTotal;
       }
     }
 
@@ -180,7 +222,16 @@ export class EntregadoresService {
       orderBy: { createdAt: 'desc' },
     });
 
-    const dias: Record<string, { date: Date; dia: string; entregas: any[]; total: number; ganho: number }> = {};
+    // Buscar check-ins no período
+    const checkins = await this.prisma.entregadorCheckin.findMany({
+      where: {
+        entregadorId,
+        data: { gte: inicio, lte: fim },
+      },
+      orderBy: { data: 'asc' },
+    });
+
+    const dias: Record<string, { date: Date; dia: string; entregas: any[]; total: number; ganho: number; checkin?: any }> = {};
     for (const e of entregas) {
       const dia = new Date(e.createdAt).toLocaleDateString('pt-BR');
       if (!dias[dia]) {
@@ -193,13 +244,35 @@ export class EntregadoresService {
       }
     }
 
+    // Adicionar dados do checkin aos dias
+    for (const c of checkins) {
+      const dia = new Date(c.data).toLocaleDateString('pt-BR');
+      if (dias[dia]) {
+        dias[dia].checkin = c;
+        // Atualizar ganho do dia com valor do checkin (diaria + entregas)
+        dias[dia].ganho = Number(c.valorTotal);
+      } else {
+        // Dia só com checkin (sem entregas registradas)
+        dias[dia] = {
+          date: c.data,
+          dia,
+          entregas: [],
+          total: 0,
+          ganho: Number(c.valorTotal),
+          checkin: c,
+        };
+      }
+    }
+
     const diasArray = Object.values(dias).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     const totalEntregas = entregas.length;
     const totalEntregues = entregas.filter((e) => e.status === 'ENTREGUE').length;
-    const totalGanho = totalEntregues * Number(entregador.valorPorEntrega);
-    const totalDiasTrabalhados = diasArray.length;
-    const totalDiarias = totalDiasTrabalhados * Number(entregador.diaria);
+    
+    // Calcular ganhos baseado nos check-ins (diarias + entregas do checkin)
+    const totalGanho = checkins.reduce((sum: number, c: any) => sum + Number(c.valorTotal || 0), 0);
+    const totalDiasTrabalhados = checkins.length; // Dias com check-in
+    const totalDiarias = checkins.reduce((sum: number, c: any) => sum + Number(c.valorDiaria || 0), 0);
 
     return {
       entregador,
