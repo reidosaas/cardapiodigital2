@@ -36,6 +36,27 @@ export class AdminNotifyService {
 
   async getWhatsAppStatus() {
     const config = await this.getConfig();
+
+    if (config.whatsappAdminToken && this.uazapi) {
+      try {
+        const info: any = await this.uazapi.instance.getStatus(config.whatsappAdminToken);
+        const conectado = info?.state === 'connected' || info?.status === 'connected';
+        if (conectado !== config.whatsappAdminConectado) {
+          await this.prisma.configSistema.update({
+            where: { id: config.id },
+            data: { whatsappAdminConectado: conectado },
+          });
+        }
+        return {
+          conectado,
+          numero: config.whatsappAdminNumero || null,
+          instancia: config.whatsappAdminInstancia || null,
+        };
+      } catch {
+        // fallback to DB
+      }
+    }
+
     return {
       conectado: config.whatsappAdminConectado || false,
       numero: config.whatsappAdminNumero || null,
