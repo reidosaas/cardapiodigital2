@@ -288,6 +288,38 @@ export default function RelatoriosPage() {
                     </CardContent></Card>
                   </div>
 
+                  {/* Resumo Financeiro */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <Card className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800">
+                      <CardContent className="p-3 text-center">
+                        <CheckCircle size={16} className="mx-auto mb-1 text-green-600 dark:text-green-400" />
+                        <p className="text-xs text-gray-500">Ja Recebido</p>
+                        <p className="text-lg font-bold text-green-700 dark:text-green-300">{formatCurrency(detalhesEntregador.jaRecebido || 0)}</p>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
+                      <CardContent className="p-3 text-center">
+                        <Clock size={16} className="mx-auto mb-1 text-blue-600 dark:text-blue-400" />
+                        <p className="text-xs text-gray-500">Diarias Recebidas</p>
+                        <p className="text-lg font-bold text-blue-700 dark:text-blue-300">{formatCurrency(detalhesEntregador.diariasRecebidas || 0)}</p>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-purple-50 dark:bg-purple-950/20 border-purple-200 dark:border-purple-800">
+                      <CardContent className="p-3 text-center">
+                        <Bike size={16} className="mx-auto mb-1 text-purple-600 dark:text-purple-400" />
+                        <p className="text-xs text-gray-500">Entregas Recebidas</p>
+                        <p className="text-lg font-bold text-purple-700 dark:text-purple-300">{formatCurrency(detalhesEntregador.entregasRecebidas || 0)}</p>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800">
+                      <CardContent className="p-3 text-center">
+                        <Clock size={16} className="mx-auto mb-1 text-yellow-600 dark:text-yellow-400" />
+                        <p className="text-xs text-gray-500">A Receber</p>
+                        <p className="text-lg font-bold text-yellow-700 dark:text-yellow-300">{formatCurrency(detalhesEntregador.aReceber || 0)}</p>
+                      </CardContent>
+                    </Card>
+                  </div>
+
                   <div className="border-t pt-6">
                     <h4 className="font-semibold mb-4 flex items-center gap-2">
                       <Calendar size={16} className="text-primary" />

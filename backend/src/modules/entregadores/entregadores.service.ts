@@ -273,6 +273,14 @@ export class EntregadoresService {
     const totalGanho = checkins.reduce((sum: number, c: any) => sum + Number(c.valorTotal || 0), 0);
     const totalDiasTrabalhados = checkins.length; // Dias com check-in
     const totalDiarias = checkins.reduce((sum: number, c: any) => sum + Number(c.valorDiaria || 0), 0);
+    const totalEntregasValor = checkins.reduce((sum: number, c: any) => sum + Number(c.valorEntregas || 0), 0);
+
+    // Calcular valores já recebidos (check-ins pagos)
+    const checkinsPagos = checkins.filter((c: any) => c.pago);
+    const jaRecebido = checkinsPagos.reduce((sum: number, c: any) => sum + Number(c.valorTotal || 0), 0);
+    const diariasRecebidas = checkinsPagos.reduce((sum: number, c: any) => sum + Number(c.valorDiaria || 0), 0);
+    const entregasRecebidas = checkinsPagos.reduce((sum: number, c: any) => sum + Number(c.valorEntregas || 0), 0);
+    const aReceber = Math.max(totalGanho - jaRecebido, 0);
 
     return {
       entregador,
@@ -281,6 +289,11 @@ export class EntregadoresService {
       totalGanho,
       totalDiasTrabalhados,
       totalDiarias,
+      totalEntregasValor,
+      jaRecebido,
+      diariasRecebidas,
+      entregasRecebidas,
+      aReceber,
       dias: diasArray,
       entregas,
     };
