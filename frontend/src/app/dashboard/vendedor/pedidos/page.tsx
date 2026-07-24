@@ -9,7 +9,7 @@ import api from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { formatCurrency } from '@/lib/utils';
 import { printPedido } from '@/lib/print';
-import { Clock, Package, Check, X, Utensils, Bike, ChefHat, ClipboardList, Phone, MapPin, MessageSquare, ChevronDown, ChevronUp, RefreshCw, Bell, Volume2, Printer, Plus, Search } from 'lucide-react';
+import { Clock, Package, Check, X, Utensils, Bike, ChefHat, ClipboardList, Phone, MapPin, MessageSquare, ChevronDown, ChevronUp, RefreshCw, Bell, Volume2, Printer, Plus, Search, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 
@@ -148,10 +148,11 @@ export default function PedidosPage() {
   const [entregadorSelecionado, setEntregadorSelecionado] = useState('');
   const [entregadorNomeTerceiro, setEntregadorNomeTerceiro] = useState('');
   const [ultimoCaixa, setUltimoCaixa] = useState<any>(null);
+  const [filtroDataInicio, setFiltroDataInicio] = useState<string>('');
+  const [filtroDataFim, setFiltroDataFim] = useState<string>('');
 
-  useEffect(() => {
+useEffect(() => {
     if (!user?.vendedor?.id) return;
-    api.get('/api/caixa/ultimo').then((r) => setUltimoCaixa(r.data)).catch(() => {});
     api.get(`/api/entregadores/stats/vendedor/${user.vendedor.id}`).then((r) => setEntregadores(r.data.filter((e: any) => e.vinculoStatus === 'ACEITO'))).catch(() => {});
   }, [user]);
 
@@ -175,18 +176,12 @@ export default function PedidosPage() {
   const carregarPedidos = useCallback(async () => {
     if (!user?.vendedor?.id) return;
     try {
-      const res = await api.get(`/api/pedidos/vendedor/${user.vendedor.id}`, { params: { status: undefined } });
+      const params: any = { status: undefined };
+      if (filtroDataInicio) params.dataInicio = filtroDataInicio;
+      if (filtroDataFim) params.dataFim = filtroDataFim;
+      
+      const res = await api.get(`/api/pedidos/vendedor/${user.vendedor.id}`, { params });
       let novos: Order[] = res.data;
-
-      if (ultimoCaixa?.dataFim) {
-        const desde = new Date(ultimoCaixa.dataFim).getTime();
-        novos = novos.filter((p) => {
-          if (p.status === 'ENTREGUE' || p.status === 'CANCELADO') {
-            return new Date(p.createdAt).getTime() > desde;
-          }
-          return true;
-        });
-      }
 
       setPedidos(novos);
 
@@ -203,7 +198,7 @@ export default function PedidosPage() {
     } finally {
       setLoading(false);
     }
-  }, [user, play, ultimoCaixa]);
+  }, [user, play, filtroDataInicio, filtroDataFim]);
 
   useEffect(() => {
     carregarPedidos();
@@ -303,7 +298,14 @@ export default function PedidosPage() {
             <h2 className="text-2xl font-bold">Pedidos</h2>
             <p className="text-gray-500">Acompanhe e gerencie seus pedidos em tempo real</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2">
+              <input type="date" value={filtroDataInicio} onChange={(e) => setFiltroDataInicio(e.target.value)}
+                className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm" title="Data início" />
+              <span className="text-gray-400">até</span>
+              <input type="date" value={filtroDataFim} onChange={(e) => setFiltroDataFim(e.target.value)}
+                className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm" title="Data fim" />
+            </div>
             <Button size="sm" onClick={() => setShowNovoPedido(true)}>
               <Plus size={16} className="mr-1" /> Novo Pedido
             </Button>
