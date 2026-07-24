@@ -166,6 +166,15 @@ export class EntregadorDashboardService {
       },
     });
 
+    // Buscar check-ins no período para calcular ganhos reais
+    const checkins = await this.prisma.entregadorCheckin.findMany({
+      where: {
+        entregadorId,
+        vendedorId: { in: vendedorIds },
+        data: { gte: inicio },
+      },
+    });
+
     const loja = await this.prisma.entregadorLoja.findFirst({
       where: { entregadorId, vendedorId: { in: vendedorIds }, ativo: true },
     });
@@ -174,9 +183,11 @@ export class EntregadorDashboardService {
     const valorPorEntrega = loja ? Number(loja.valorPorEntrega) : 0;
     const totalEntregas = entregas.length;
     const valorEntregas = totalEntregas * valorPorEntrega;
-    const diasTrabalhados = this.contarDiasTrabalhados(entregas);
-    const totalDiarias = diaria * diasTrabalhados;
-    const totalGanhos = valorEntregas + totalDiarias;
+
+    // Total ganhos = soma de todos os check-ins (diarias + entregas registradas no checkin)
+    const totalGanhos = checkins.reduce((sum: number, c: any) => sum + Number(c.valorTotal || 0), 0);
+    const diasTrabalhados = checkins.length; // Dias com check-in
+    const totalDiarias = checkins.reduce((sum: number, c: any) => sum + Number(c.valorDiaria || 0), 0);
 
     const diasPagos = await this.diasPagos(entregadorId, vendedorIds, inicio);
     const jaRecebido = await this.calcularRecebidoTotal(entregadorId, vendedorIds, inicio);
@@ -300,6 +311,15 @@ export class EntregadorDashboardService {
       orderBy: { entregueEm: 'asc' },
     });
 
+    // Buscar check-ins no período para calcular ganhos reais
+    const checkins = await this.prisma.entregadorCheckin.findMany({
+      where: {
+        entregadorId,
+        vendedorId: { in: vendedorIds },
+        data: { gte: inicio, lte: fim },
+      },
+    });
+
     const loja = await this.prisma.entregadorLoja.findFirst({
       where: { entregadorId, vendedorId: { in: vendedorIds }, ativo: true },
     });
@@ -308,9 +328,11 @@ export class EntregadorDashboardService {
     const valorPorEntrega = loja ? Number(loja.valorPorEntrega) : 0;
     const totalEntregas = entregas.length;
     const valorEntregas = totalEntregas * valorPorEntrega;
-    const diasTrabalhados = this.contarDiasTrabalhados(entregas);
-    const totalDiarias = diaria * diasTrabalhados;
-    const totalGanhos = valorEntregas + totalDiarias;
+
+    // Total ganhos = soma de todos os check-ins no período (diarias + entregas registradas no checkin)
+    const totalGanhos = checkins.reduce((sum: number, c: any) => sum + Number(c.valorTotal || 0), 0);
+    const diasTrabalhados = checkins.length; // Dias com check-in
+    const totalDiarias = checkins.reduce((sum: number, c: any) => sum + Number(c.valorDiaria || 0), 0);
 
     const diasPagos = await this.diasPagos(entregadorId, vendedorIds, inicio, fim);
     const jaRecebido = await this.calcularRecebidoTotal(entregadorId, vendedorIds, inicio);
