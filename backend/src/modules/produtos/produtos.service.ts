@@ -26,6 +26,10 @@ export class ProdutosService {
       include: {
         categoria: { select: { id: true, nome: true, icone: true } },
         categoriaGlobal: { select: { id: true, nome: true, icone: true } },
+        gruposAdicionais: {
+          include: { opcoes: { where: { ativo: true }, orderBy: { ordem: 'asc' } } },
+          orderBy: { ordem: 'asc' },
+        },
         _count: { select: { avaliacoes: true } },
       },
       orderBy: { createdAt: 'desc' },
@@ -37,6 +41,10 @@ export class ProdutosService {
       where: { id },
       include: {
         categoria: true,
+        gruposAdicionais: {
+          include: { opcoes: { where: { ativo: true }, orderBy: { ordem: 'asc' } } },
+          orderBy: { ordem: 'asc' },
+        },
         avaliacoes: { include: { cliente: { select: { nome: true } } }, take: 10 },
       },
     });
