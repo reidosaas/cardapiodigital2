@@ -16,6 +16,7 @@ export default function CatalogoPublico() {
   const [produtos, setProdutos] = useState<any[]>([]);
   const [banners, setBanners] = useState<any[]>([]);
   const [categorias, setCategorias] = useState<any[]>([]);
+  const [categoriasGlobais, setCategoriasGlobais] = useState<any[]>([]);
   const [categoriaAtiva, setCategoriaAtiva] = useState<string | null>(null);
   const [busca, setBusca] = useState('');
   const [cart, setCart] = useState<any[]>([]);
@@ -52,14 +53,16 @@ export default function CatalogoPublico() {
         } else {
           document.documentElement.classList.remove('dark');
         }
-        const [prodRes, catRes, banRes] = await Promise.all([
+        const [prodRes, catRes, banRes, globalCatRes] = await Promise.all([
           api.get(`/api/produtos/vendedor/${vRes.data.id}`),
           api.get(`/api/categorias/vendedor/${vRes.data.id}`),
           api.get(`/api/banners/vendedor/${vRes.data.id}`),
+          api.get(`/api/categorias-globais`),
         ]);
         setProdutos(prodRes.data);
         setCategorias(catRes.data);
         setBanners(banRes.data);
+        setCategoriasGlobais(globalCatRes.data);
       } catch {
         toast.error('Erro ao carregar catalogo');
       } finally {
@@ -111,19 +114,21 @@ export default function CatalogoPublico() {
   const totalItens = cart.reduce((a, i) => a + i.quantidade, 0);
 
   const filteredProdutos = produtos.filter((p) => {
-    const matchCategoria = !categoriaAtiva || p.categoriaId === categoriaAtiva;
+    const matchCategoria = !categoriaAtiva || p.categoriaId === categoriaAtiva || p.categoriaGlobalId === categoriaAtiva;
     const matchBusca = !busca || p.nome.toLowerCase().includes(busca.toLowerCase()) || p.descricao?.toLowerCase().includes(busca.toLowerCase());
     return p.ativo && matchCategoria && matchBusca;
   });
 
-  const produtosPorCategoria = categorias
+  const allCategorias = categorias.length > 0 ? categorias : categoriasGlobais;
+
+  const produtosPorCategoria = allCategorias
     .map((cat) => ({
       ...cat,
-      produtos: filteredProdutos.filter((p) => p.categoriaId === cat.id),
+      produtos: filteredProdutos.filter((p) => p.categoriaId === cat.id || p.categoriaGlobalId === cat.id),
     }))
     .filter((cat) => cat.produtos.length > 0);
 
-  const produtosSemCategoria = filteredProdutos.filter((p) => !p.categoriaId);
+  const produtosSemCategoria = filteredProdutos.filter((p) => !p.categoriaId && !p.categoriaGlobalId);
   const showSemCategoria = categoriaAtiva === null && produtosSemCategoria.length > 0;
 
   if (loading) return <Loading />;
