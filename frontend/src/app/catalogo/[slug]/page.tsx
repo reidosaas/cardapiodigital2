@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart, X, Package, Store, Phone, MapPin, Clock, ChevronRight, Search, Home, ClipboardList, User, MapPinned, Info, Download } from 'lucide-react';
+import { ShoppingCart, X, Package, Store, Phone, MapPin, Clock, ChevronRight, Search, MapPinned, Info, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
 import { Loading } from '@/components/shared/loading';
@@ -28,7 +28,6 @@ export default function CatalogoPublico() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const catScrollRef = useRef<HTMLDivElement>(null);
-  const [activeTab, setActiveTab] = useState<'home' | 'pedidos' | 'perfil'>('home');
   const { canInstall, isInstalled, install } = usePWAInstall();
 
   useEffect(() => {
@@ -410,23 +409,14 @@ export default function CatalogoPublico() {
         </div>
       )}
 
-      {/* Bottom Navigation Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 safe-area-bottom">
-        <div className="max-w-3xl mx-auto flex items-center justify-around h-16">
-          <button onClick={() => setActiveTab('home')} className={`flex flex-col items-center gap-0.5 px-4 py-1.5 ${activeTab === 'home' ? 'text-red-500' : 'text-gray-400'}`}>
-            <Home size={22} />
-            <span className="text-[10px] font-medium">Home</span>
-          </button>
-          <button onClick={() => setActiveTab('pedidos')} className={`flex flex-col items-center gap-0.5 px-4 py-1.5 ${activeTab === 'pedidos' ? 'text-red-500' : 'text-gray-400'}`}>
-            <ClipboardList size={22} />
-            <span className="text-[10px] font-medium">Pedidos</span>
-          </button>
-          <button onClick={() => setActiveTab('perfil')} className={`flex flex-col items-center gap-0.5 px-4 py-1.5 ${activeTab === 'perfil' ? 'text-red-500' : 'text-gray-400'}`}>
-            <User size={22} />
-            <span className="text-[10px] font-medium">Perfil</span>
-          </button>
-        </div>
-      </div>
+      {/* Footer */}
+      <CatalogoFooter
+        slug={slug as string}
+        vendedorId={vendedor?.id}
+        vendedor={vendedor}
+        categorias={categorias}
+        categoriasGlobais={categoriasGlobais}
+      />
 
       {/* Cart floating button */}
       {cart.length > 0 && !showCart && (
@@ -523,7 +513,6 @@ export default function CatalogoPublico() {
           setShowCheckout(true);
         }}
       />
-      <CatalogoFooter slug={slug} />
     </div>
   );
 }

@@ -186,7 +186,18 @@ export class ClienteGlobalService {
       where,
       include: {
         vendedor: { select: { id: true, nomeLoja: true, slug: true, logoUrl: true } },
-        itens: true,
+        itens: {
+          include: {
+            produto: {
+              select: {
+                id: true,
+                nome: true,
+                categoriaId: true,
+                categoriaGlobalId: true,
+              },
+            },
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
