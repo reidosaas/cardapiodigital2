@@ -7,7 +7,6 @@ import { toast } from 'sonner';
 import api from '@/lib/api';
 import { Loading } from '@/components/shared/loading';
 import { CheckoutPanel } from '@/components/catalog/checkout-panel';
-import { AuthModal } from '@/components/catalog/auth-modal';
 import { CatalogoFooter } from '@/components/catalog/catalogo-footer';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 
@@ -25,7 +24,6 @@ export default function CatalogoPublico() {
   const [showCheckout, setShowCheckout] = useState(false);
   const [showCatDropdown, setShowCatDropdown] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const catScrollRef = useRef<HTMLDivElement>(null);
   const { canInstall, isInstalled, install } = usePWAInstall();
@@ -488,8 +486,9 @@ export default function CatalogoPublico() {
                 </div>
                 <button
                   onClick={() => {
-                    if (typeof window !== 'undefined' && !localStorage.getItem('token_cliente')) {
-                      setShowAuthModal(true);
+                    const token = typeof window !== 'undefined' ? localStorage.getItem('token_cliente') : null;
+                    if (!token) {
+                      toast.info('Faca login para continuar');
                       return;
                     }
                     setShowCheckout(true);
@@ -504,15 +503,6 @@ export default function CatalogoPublico() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        onAuthSuccess={() => {
-          setShowAuthModal(false);
-          setShowCheckout(true);
-        }}
-      />
     </div>
   );
 }

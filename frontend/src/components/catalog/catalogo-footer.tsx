@@ -46,18 +46,11 @@ export function CatalogoFooter({ slug, vendedorId, vendedor, categorias = [], ca
   const [authLoading, setAuthLoading] = useState(false);
   const [showSenha, setShowSenha] = useState(false);
 
+  const [pendingAction, setPendingAction] = useState<'pedidos' | 'perfil' | null>(null);
+
   useEffect(() => {
     const token = localStorage.getItem('token_cliente');
     setIsLogged(!!token);
-  }, []);
-
-  const checkLogin = useCallback(() => {
-    const token = localStorage.getItem('token_cliente');
-    if (!token) {
-      setShowAuthModal(true);
-      return false;
-    }
-    return true;
   }, []);
 
   const handleHome = () => {
@@ -98,14 +91,22 @@ export function CatalogoFooter({ slug, vendedorId, vendedor, categorias = [], ca
 
   const handlePedidos = () => {
     setActiveTab('pedidos');
-    if (!checkLogin()) return;
+    if (!isLogged) {
+      setPendingAction('pedidos');
+      setShowAuthModal(true);
+      return;
+    }
     setShowPedidosModal(true);
     fetchPedidos();
   };
 
   const handlePerfil = () => {
     setActiveTab('perfil');
-    if (!checkLogin()) return;
+    if (!isLogged) {
+      setPendingAction('perfil');
+      setShowAuthModal(true);
+      return;
+    }
     setShowPerfilModal(true);
     fetchPerfil();
   };
@@ -119,6 +120,20 @@ export function CatalogoFooter({ slug, vendedorId, vendedor, categorias = [], ca
     toast.success('Deslogado com sucesso');
   };
 
+  const handleAuthSuccess = () => {
+    setIsLogged(true);
+    setShowAuthModal(false);
+    const action = pendingAction;
+    setPendingAction(null);
+    if (action === 'pedidos') {
+      setShowPedidosModal(true);
+      fetchPedidos();
+    } else if (action === 'perfil') {
+      setShowPerfilModal(true);
+      fetchPerfil();
+    }
+  };
+
   const handleAuthLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthLoading(true);
@@ -126,12 +141,9 @@ export function CatalogoFooter({ slug, vendedorId, vendedor, categorias = [], ca
       const res = await api.post('/api/cliente-global/login', loginForm);
       localStorage.setItem('token_cliente', res.data.accessToken);
       localStorage.setItem('cliente', JSON.stringify(res.data.cliente));
-      setIsLogged(true);
-      setShowAuthModal(false);
       setLoginForm({ email: '', senha: '' });
       toast.success('Login realizado com sucesso');
-      if (showPedidosModal) fetchPedidos();
-      if (showPerfilModal) fetchPerfil();
+      handleAuthSuccess();
     } catch {
       toast.error('Email ou senha incorretos');
     } finally {
@@ -154,12 +166,9 @@ export function CatalogoFooter({ slug, vendedorId, vendedor, categorias = [], ca
       });
       localStorage.setItem('token_cliente', loginRes.data.accessToken);
       localStorage.setItem('cliente', JSON.stringify(loginRes.data.cliente));
-      setIsLogged(true);
-      setShowAuthModal(false);
       setCadastroForm({ nome: '', email: '', telefone: '', senha: '' });
       toast.success('Conta criada com sucesso');
-      if (showPedidosModal) fetchPedidos();
-      if (showPerfilModal) fetchPerfil();
+      handleAuthSuccess();
     } catch {
       toast.error('Erro ao criar conta');
     } finally {
@@ -200,7 +209,7 @@ export function CatalogoFooter({ slug, vendedorId, vendedor, categorias = [], ca
   return (
     <>
       {/* Bottom Navigation Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 safe-area-bottom">
+      <div className="fixed bottom-0 left-0 right-0 z-[50] bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 safe-area-bottom">
         <div className="max-w-3xl mx-auto flex items-center justify-around h-16">
           <button
             onClick={handleHome}
@@ -232,163 +241,17 @@ export function CatalogoFooter({ slug, vendedorId, vendedor, categorias = [], ca
         </div>
       </div>
 
-      {/* Pedidos Modal */}
-      {showPedidosModal && (
-        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setShowPedidosModal(false)} />
-          <div className="relative bg-white dark:bg-gray-900 w-full max-w-lg max-h-[85vh] rounded-t-2xl sm:rounded-2xl flex flex-col shadow-2xl">
-            <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-800">
-              <h2 className="font-bold text-lg text-gray-900 dark:text-gray-100">Meus Pedidos</h2>
-              <button onClick={() => setShowPedidosModal(false)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-                <X size={20} className="text-gray-500" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4">
-              {pedidosLoading ? (
-                <div className="text-center py-12 text-gray-400">
-                  <div className="animate-spin w-8 h-8 border-2 border-gray-300 border-t-red-500 rounded-full mx-auto mb-3" />
-                  <p className="text-sm">Carregando pedidos...</p>
-                </div>
-              ) : pedidos.length === 0 ? (
-                <div className="text-center py-12 text-gray-400">
-                  <ShoppingBag className="h-12 w-12 mx-auto mb-3" />
-                  <p className="text-sm">Voce ainda nao fez nenhum pedido</p>
-                </div>
-              ) : (
-                <div className="space-y-5">
-                  {catOrder.map((catId) => {
-                    const cat = allCats.find((c) => c.id === catId);
-                    const catNome = cat ? `${cat.icone || ''} ${cat.nome}` : catId === 'sem-categoria' ? '📦 Outros' : '📦 Outros';
-                    const items = pedidosPorCategoria[catId];
-                    return (
-                      <div key={catId}>
-                        <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase mb-2">{catNome}</h3>
-                        <div className="space-y-2">
-                          {items.map((item: any, idx: number) => (
-                            <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{item.nome}</p>
-                                <div className="flex items-center gap-2 mt-1">
-                                  <span className="text-xs text-gray-500">x{item.quantidade}</span>
-                                  <span className="text-xs font-medium text-green-600">R$ {item.total.toFixed(2)}</span>
-                                </div>
-                                <div className="flex items-center gap-2 mt-1">
-                                  <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${STATUS_COLORS[item.pedidoStatus] || 'bg-gray-100 text-gray-600'}`}>
-                                    {STATUS_LABELS[item.pedidoStatus] || item.pedidoStatus}
-                                  </span>
-                                  <span className="text-[10px] text-gray-400">#{item.pedidoCodigo || item.pedidoId.slice(0, 8)}</span>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Perfil Modal */}
-      {showPerfilModal && (
-        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setShowPerfilModal(false)} />
-          <div className="relative bg-white dark:bg-gray-900 w-full max-w-lg max-h-[85vh] rounded-t-2xl sm:rounded-2xl flex flex-col shadow-2xl">
-            <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-800">
-              <h2 className="font-bold text-lg text-gray-900 dark:text-gray-100">Meu Perfil</h2>
-              <button onClick={() => setShowPerfilModal(false)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-                <X size={20} className="text-gray-500" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {perfilData ? (
-                <>
-                  <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                    <div className="w-14 h-14 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                      <User size={24} className="text-red-500" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-gray-900 dark:text-gray-100">{perfilData.nome}</p>
-                      <p className="text-sm text-gray-500 truncate">{perfilData.email}</p>
-                      {perfilData.telefone && <p className="text-sm text-gray-500">{perfilData.telefone}</p>}
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <button
-                      onClick={() => {
-                        setShowPerfilModal(false);
-                        if (typeof window !== 'undefined') window.location.href = `/cliente/perfil`;
-                      }}
-                      className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <User size={18} className="text-gray-500" />
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Editar Perfil</span>
-                      </div>
-                      <ChevronRight size={18} className="text-gray-400" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowPerfilModal(false);
-                        if (typeof window !== 'undefined') window.location.href = `/cliente/enderecos`;
-                      }}
-                      className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <MapPin size={18} className="text-gray-500" />
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Meus Enderecos</span>
-                      </div>
-                      <ChevronRight size={18} className="text-gray-400" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowPerfilModal(false);
-                        setActiveTab('pedidos');
-                        setShowPedidosModal(true);
-                        fetchPedidos();
-                      }}
-                      className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <ClipboardList size={18} className="text-gray-500" />
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Meus Pedidos</span>
-                      </div>
-                      <ChevronRight size={18} className="text-gray-400" />
-                    </button>
-                  </div>
-                  <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center justify-center gap-2 p-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
-                  >
-                    <LogOut size={18} />
-                    <span className="text-sm font-medium">Sair da conta</span>
-                  </button>
-                </>
-              ) : (
-                <div className="text-center py-12 text-gray-400">
-                  <div className="animate-spin w-8 h-8 border-2 border-gray-300 border-t-red-500 rounded-full mx-auto mb-3" />
-                  <p className="text-sm">Carregando perfil...</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Auth Modal */}
+      {/* Auth Modal - always renders, highest z-index */}
       {showAuthModal && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setShowAuthModal(false)} />
-          <div className="relative bg-white dark:bg-gray-900 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => { setShowAuthModal(false); setPendingAction(null); }} />
+          <div className="relative bg-white dark:bg-gray-900 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden z-[81]">
             <div className="bg-red-500 p-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <User size={20} className="text-white" />
                 <span className="text-white font-bold">{loginMode === 'login' ? 'Entrar' : 'Criar Conta'}</span>
               </div>
-              <button onClick={() => setShowAuthModal(false)} className="text-white/80 hover:text-white">
+              <button onClick={() => { setShowAuthModal(false); setPendingAction(null); }} className="text-white/80 hover:text-white">
                 <X size={20} />
               </button>
             </div>
@@ -501,6 +364,152 @@ export function CatalogoFooter({ slug, vendedorId, vendedor, categorias = [], ca
                     </button>
                   </p>
                 </form>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pedidos Modal */}
+      {showPedidosModal && (
+        <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowPedidosModal(false)} />
+          <div className="relative bg-white dark:bg-gray-900 w-full max-w-lg max-h-[85vh] rounded-t-2xl sm:rounded-2xl flex flex-col shadow-2xl z-[71]">
+            <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-800">
+              <h2 className="font-bold text-lg text-gray-900 dark:text-gray-100">Meus Pedidos</h2>
+              <button onClick={() => setShowPedidosModal(false)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+                <X size={20} className="text-gray-500" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              {pedidosLoading ? (
+                <div className="text-center py-12 text-gray-400">
+                  <div className="animate-spin w-8 h-8 border-2 border-gray-300 border-t-red-500 rounded-full mx-auto mb-3" />
+                  <p className="text-sm">Carregando pedidos...</p>
+                </div>
+              ) : pedidos.length === 0 ? (
+                <div className="text-center py-12 text-gray-400">
+                  <ShoppingBag className="h-12 w-12 mx-auto mb-3" />
+                  <p className="text-sm">Voce ainda nao fez nenhum pedido</p>
+                </div>
+              ) : (
+                <div className="space-y-5">
+                  {catOrder.map((catId) => {
+                    const cat = allCats.find((c) => c.id === catId);
+                    const catNome = cat ? `${cat.icone || ''} ${cat.nome}` : catId === 'sem-categoria' ? 'Outros' : 'Outros';
+                    const items = pedidosPorCategoria[catId];
+                    return (
+                      <div key={catId}>
+                        <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase mb-2">{catNome}</h3>
+                        <div className="space-y-2">
+                          {items.map((item: any, idx: number) => (
+                            <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{item.nome}</p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="text-xs text-gray-500">x{item.quantidade}</span>
+                                  <span className="text-xs font-medium text-green-600">R$ {item.total.toFixed(2)}</span>
+                                </div>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${STATUS_COLORS[item.pedidoStatus] || 'bg-gray-100 text-gray-600'}`}>
+                                    {STATUS_LABELS[item.pedidoStatus] || item.pedidoStatus}
+                                  </span>
+                                  <span className="text-[10px] text-gray-400">#{item.pedidoCodigo || item.pedidoId.slice(0, 8)}</span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Perfil Modal */}
+      {showPerfilModal && (
+        <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowPerfilModal(false)} />
+          <div className="relative bg-white dark:bg-gray-900 w-full max-w-lg max-h-[85vh] rounded-t-2xl sm:rounded-2xl flex flex-col shadow-2xl z-[71]">
+            <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-800">
+              <h2 className="font-bold text-lg text-gray-900 dark:text-gray-100">Meu Perfil</h2>
+              <button onClick={() => setShowPerfilModal(false)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+                <X size={20} className="text-gray-500" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {perfilData ? (
+                <>
+                  <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <div className="w-14 h-14 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                      <User size={24} className="text-red-500" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-gray-900 dark:text-gray-100">{perfilData.nome}</p>
+                      <p className="text-sm text-gray-500 truncate">{perfilData.email}</p>
+                      {perfilData.telefone && <p className="text-sm text-gray-500">{perfilData.telefone}</p>}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => {
+                        setShowPerfilModal(false);
+                        if (typeof window !== 'undefined') window.location.href = `/cliente/perfil`;
+                      }}
+                      className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <User size={18} className="text-gray-500" />
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Editar Perfil</span>
+                      </div>
+                      <ChevronRight size={18} className="text-gray-400" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowPerfilModal(false);
+                        if (typeof window !== 'undefined') window.location.href = `/cliente/enderecos`;
+                      }}
+                      className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <MapPin size={18} className="text-gray-500" />
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Meus Enderecos</span>
+                      </div>
+                      <ChevronRight size={18} className="text-gray-400" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowPerfilModal(false);
+                        setActiveTab('pedidos');
+                        setShowPedidosModal(true);
+                        fetchPedidos();
+                      }}
+                      className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <ClipboardList size={18} className="text-gray-500" />
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Meus Pedidos</span>
+                      </div>
+                      <ChevronRight size={18} className="text-gray-400" />
+                    </button>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center justify-center gap-2 p-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                  >
+                    <LogOut size={18} />
+                    <span className="text-sm font-medium">Sair da conta</span>
+                  </button>
+                </>
+              ) : (
+                <div className="text-center py-12 text-gray-400">
+                  <div className="animate-spin w-8 h-8 border-2 border-gray-300 border-t-red-500 rounded-full mx-auto mb-3" />
+                  <p className="text-sm">Carregando perfil...</p>
+                </div>
               )}
             </div>
           </div>
