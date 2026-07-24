@@ -8,6 +8,7 @@ import api from '@/lib/api';
 import { Loading } from '@/components/shared/loading';
 import { CheckoutPanel } from '@/components/catalog/checkout-panel';
 import { AuthModal } from '@/components/catalog/auth-modal';
+import { CatalogoFooter } from '@/components/catalog/catalogo-footer';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 
 export default function CatalogoPublico() {
@@ -522,6 +523,7 @@ export default function CatalogoPublico() {
           setShowCheckout(true);
         }}
       />
+      <CatalogoFooter slug={slug} />
     </div>
   );
 }
